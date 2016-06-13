@@ -24,6 +24,18 @@ public class DataAttributes implements Iterable<Attribute> {
       this.stride = last.offset + last.size;
    }
    
+   public Attribute getAttribute(final String name) {
+      Attribute foundAttribute = null;
+      for(final Attribute attribute : this.attributes) {
+         if(attribute.name.equals(name)) {
+            foundAttribute = attribute;
+            break;
+         }
+      }
+         
+      return foundAttribute;
+   }
+   
    public String getAttributeNames() {
       final StringBuilder sb = new StringBuilder();
       
