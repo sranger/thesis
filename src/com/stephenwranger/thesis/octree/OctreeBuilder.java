@@ -26,6 +26,7 @@ public class OctreeBuilder {
    private final int[] cellSplit;
    
    private final List<Point> points = new ArrayList<>();
+   private Octree octree = null;
    private DataAttributes attributes = null;
    
    public OctreeBuilder(final File inputDirectory, final int[] cellSplit) {
@@ -38,7 +39,8 @@ public class OctreeBuilder {
    private void importData() {
       System.out.println("importing data from " + this.inputDirectory);
       System.out.println("\treading attributes...");
-      attributes = new DataAttributes(readAttributes(this.inputDirectory, "root.csv"));
+      this.attributes = new DataAttributes(readAttributes(this.inputDirectory, "root.csv"));
+      this.octree = new Octree(this.attributes, this.cellSplit);
       System.out.println("\t\tattributes read: " + attributes.getAttributeNames());
       System.out.println("\treading data...");
       readDirectory(this.inputDirectory);
@@ -68,14 +70,44 @@ public class OctreeBuilder {
    }
    
    public void build() {
-      System.out.println("building octree...");
+      if(octree == null) {
+         throw new RuntimeException("Cannot build Octree before initialization is complete");
+      } else {
+         System.out.println("building octree...");
+         for(final Point point : this.points) {
+            this.octree.addPoint(point);
+         }
+         
+         System.out.println("octree built: " + this.octree.getOctetCount());
+      }
    }
    
    public void export(final File outputDirectory) {
-      System.out.println("exporting octree to " + outputDirectory);
+      if(octree == null) {
+         throw new RuntimeException("Cannot build Octree before initialization is complete");
+      } else {
+         System.out.println("exporting octree to " + outputDirectory);
+         
+         for(final Octet octet : this.octree) {
+            final String[] split = octet.path.substring(0, octet.path.length()-1).split("");
+            final char childIndex = octet.path.charAt(octet.path.length()-1);
+            final String dirPath = String.join("/", split);
+            final String fileName = childIndex + ".dat";
+            final File datFile = new File(outputDirectory, dirPath + "/" + fileName);
+            
+            try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(datFile))) {
+               for(final Point p : octet) {
+                  fout.write(p.getRawData());
+               }
+            } catch(final IOException e) {
+               throw new RuntimeException("Could not write octet point data: " + datFile.getAbsolutePath(), e);
+            }
+         }
+      }
    }
    
    public void exportFlat(final File outputDirectory) {
+      System.out.println("exporting flat file points to " + outputDirectory + " at attributes.csv and points.data");
       final StringBuilder sb = new StringBuilder();
       sb.append(Attribute.HEADER);
       
