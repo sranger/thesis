@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: com.stephenwranger.thesis
+Bundle-SymbolicName: com.stephenwranger.thesis
+Bundle-Version: 1.0.0.qualifier
+Bundle-ClassPath: lib/com.stephenwranger.graphics.jar,
+ .
+Export-Package: com.stephenwranger.thesis,
+ com.stephenwranger.thesis.data,
+ com.stephenwranger.thesis.geospatial,
+ com.stephenwranger.thesis.icosatree,
+ com.stephenwranger.thesis.octree
+Bundle-Vendor: com.stephenwranger
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: com.stephenwranger.graphics;bundle-version="1.0.0"
