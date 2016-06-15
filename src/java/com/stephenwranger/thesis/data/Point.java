@@ -2,31 +2,18 @@ package com.stephenwranger.thesis.data;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.stephenwranger.graphics.math.Tuple3d;
 
 public class Point {
-   private final Map<String, Number> values = new HashMap<>();
+   private final DataAttributes attributes;
    private final ByteBuffer rawData;
-   private final double x;
-   private final double y;
-   private final double z;
    
-   public Point(final TreeStructure tree, final DataAttributes attributes, final byte[] buffer) {
+   public Point(final DataAttributes attributes, final byte[] buffer) {
+      this.attributes = attributes;
       this.rawData = ByteBuffer.allocate(buffer.length).order(ByteOrder.LITTLE_ENDIAN);
       this.rawData.put(buffer);
       this.rawData.rewind();
-      
-      for(final Attribute attribute : attributes) {
-         values.put(attribute.name, attribute.getValue(this.rawData));
-      }
-      
-      this.x = tree.xAttribute.getValue(this.rawData).doubleValue();
-      this.y = tree.yAttribute.getValue(this.rawData).doubleValue();
-      this.z = tree.zAttribute.getValue(this.rawData).doubleValue();
    }
    
    public ByteBuffer getRawData() {
@@ -34,19 +21,24 @@ public class Point {
    }
    
    public Number getValue(final Attribute attribute) {
-      return this.values.get(attribute.name);
+      return attribute.getValue(this.rawData);
    }
    
-   public Tuple3d getXYZ() {
-      return new Tuple3d(x,y,z);
+   public Tuple3d getXYZ(final TreeStructure tree, final Tuple3d output) {
+      final Tuple3d outValue = (output == null) ? new Tuple3d() : output;
+      outValue.x = tree.xAttribute.getValue(this.rawData).doubleValue();
+      outValue.y = tree.yAttribute.getValue(this.rawData).doubleValue();
+      outValue.z = tree.zAttribute.getValue(this.rawData).doubleValue();
+      
+      return output;
    }
    
    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder();
       
-      for(final Entry<String, Number> entry : values.entrySet()) {
-         sb.append(entry.getKey()).append(" = ").append(entry.getValue()).append("\n");
+      for(final Attribute attribute : this.attributes) {
+         sb.append(attribute.name).append(" = ").append(attribute.getValue(this.rawData)).append("\n");
       }
       
       return sb.toString();

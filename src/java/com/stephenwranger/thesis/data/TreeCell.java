@@ -18,8 +18,8 @@ public abstract class TreeCell implements Iterable<Point> {
    private final BoundingVolume bounds;
    private final DataAttributes attributes;
    private final int[] cellSplit = new int[3];
-   private final Map<Integer, Point> points = new HashMap<>();
-   private final Map<String, BoundingVolume> childBounds = new HashMap<>();
+   private final Map<Integer, Point> points = new HashMap<>(100, 0.95f);
+   private final Map<Integer, BoundingVolume> childBounds = new HashMap<>();
    private final Map<String, Integer> pointsByChild = new HashMap<>();
    
    protected TreeCell(final TreeStructure tree, final String path) {
@@ -31,8 +31,7 @@ public abstract class TreeCell implements Iterable<Point> {
       this.attributes = tree.getAttributes();
       
       for(int i = 0; i < this.getMaxChildren(); i++) {
-         final String childPath = this.path + Integer.toString(i);
-         childBounds.put(childPath, tree.getBoundingVolume(childPath));
+         childBounds.put(i, tree.getBoundingVolume(this.path, i));
       }
    }
    
@@ -62,20 +61,21 @@ public abstract class TreeCell implements Iterable<Point> {
    }
    
    public void setData(final ByteBuffer buffer) {
-      // TODO: for use when not directly building octree from raw data but from reading pre-computed data structure files
+      // TODO: for use when not directly building tree from raw data but from reading pre-computed data structure files
    }
    
-   protected TreeCell getChildOctet(final TreeStructure octree, final Tuple3d point) {
+   protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {
       TreeCell child = null;
-      
-      for(final Entry<String, BoundingVolume> entry : this.childBounds.entrySet()) {
-         final String childPath = entry.getKey();
+      System.out.println("\n\n" + point);
+      for(final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
+         final int childIndex = entry.getKey();
          final BoundingVolume childBounds = entry.getValue();
+         System.out.println("\tcontains? " + childBounds.contains(point));
          
          if(childBounds.contains(point)) {
-            child = octree.getCell(childPath);
+            child = tree.getCell(this.path, childIndex);
             if(!child.getBoundingVolume().equals(childBounds)) {
-               System.err.println("child bounds dont match: " + child.getPath() + " ? " + childPath);
+               System.err.println("child bounds dont match: " + child.getPath());
                System.err.println("\tin octet = " + child.getBoundingVolume());
                System.err.println("\tcached   = " + childBounds);
             }
@@ -113,6 +113,10 @@ public abstract class TreeCell implements Iterable<Point> {
    
    public void addPoint(final Point point) {
       final TreeCell insertedInto = this.addPoint(this.tree, point);
+      
+      if(insertedInto == null) {
+         throw new NullPointerException("Point was not inserted into a TreeCell");
+      }
       
       if(insertedInto != this) {
          int count = 1;

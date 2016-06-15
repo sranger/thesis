@@ -65,23 +65,27 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
     * @param point the point to insert
     */
    public void addPoint(final Point point) {
-      final TreeCell root = this.getCell("");
+      final TreeCell root = this.getCell(null, 0);
       root.addPoint(point);
    }
    
-   public TreeCell getCell(final String path) {
-      TreeCell octet = this.treeCells.get(path);
+   /**
+    * Returns the {@link TreeCell} defined by the parent path and child index; if the parent path is null, the root node
+    * will be returned.
+    * 
+    * @param parentPath
+    * @param childIndex
+    * @return
+    */
+   public TreeCell getCell(final String parentPath, final int childIndex) {
+      TreeCell cell = this.treeCells.get(this.getPath(parentPath, childIndex));
       
-      if(octet == null) {
-         octet = this.createTreeCell(this, path);
-         this.treeCells.put(path, octet);
+      if(cell == null) {
+         cell = this.createTreeCell(this, parentPath, childIndex);
+         this.treeCells.put(cell.getPath(), cell);
       }
       
-      if(!path.equals(octet.getPath())) {
-         System.err.println("octet path does not equal requested path: " + octet.getPath() + " != " + path);
-      }
-      
-      return octet;
+      return cell;
    }
    
    public DataAttributes getAttributes() {
@@ -91,8 +95,21 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
    public int[] getCellSplit() {
       return this.cellSplit;
    }
-   
+
    public abstract BoundingVolume getBoundingVolume(final String path);
    
-   public abstract TreeCell createTreeCell(final TreeStructure tree, final String path);
+   public abstract BoundingVolume getBoundingVolume(final String parentPath, final int childIndex);
+   
+   /**
+    * Creates a new TreeCell with the given path to its parent cell and the specified index; if the parent path is null,
+    * the root node will be returned. Note: the implementation will determine how to build the path string.
+    * 
+    * @param tree
+    * @param parentPath
+    * @param childIndex
+    * @return
+    */
+   public abstract TreeCell createTreeCell(final TreeStructure tree, final String parentPath, final int childIndex);
+   
+   public abstract String getPath(final String parentPath, final int childIndex);
 }
