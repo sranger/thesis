@@ -1,13 +1,25 @@
 package com.stephenwranger.thesis.icosatree;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.thesis.data.Point;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
 
 public class Icosatet extends TreeCell {
+   
+   private final List<Point> points = new ArrayList<>();
+   private final int maxPoints;
+   
+   private final Tuple3d current = new Tuple3d();
 
    protected Icosatet(final TreeStructure tree, final String path) {
       super(tree, path);
+      
+      final int[] cellCount = tree.getCellSplit();
+      this.maxPoints = cellCount[0] * cellCount[1] * cellCount[2];
    }
 
    @Override
@@ -21,7 +33,16 @@ public class Icosatet extends TreeCell {
 
    @Override
    protected TreeCell addPoint(final TreeStructure tree, final Point point) {
-      // TODO Auto-generated method stub
-      return null;
+      // TODO: implement triangular prism subcells
+      TreeCell insertedInto = this;
+      
+      if(this.points.size() >= this.maxPoints) {
+         insertedInto = this.getChildCell(tree, point.getXYZ(tree, current));
+         insertedInto.addPoint(point);
+      } else {
+         this.points.add(point);
+      }
+      
+      return insertedInto;
    }
 }

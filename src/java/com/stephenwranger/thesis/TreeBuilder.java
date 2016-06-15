@@ -49,6 +49,7 @@ public class TreeBuilder {
    }
    
    private void importData() {
+      final long startTime = System.nanoTime();
       System.out.println("importing data from " + this.inputDirectory);
       System.out.println("\treading attributes...");
       this.attributes = new DataAttributes(readAttributes(this.inputDirectory, "root.csv"));
@@ -65,28 +66,39 @@ public class TreeBuilder {
       System.out.println("\treading data...");
       readDirectory(this.inputDirectory);
       System.out.println("\t\tpoint data read: " + points.size());
+      final long endTime = System.nanoTime();
+      System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
    }
    
    private void readDirectory(final File directory) {
-      for(final String name : directory.list()) {
-         final File path = new File(directory, name);
-         
-         if(path.isDirectory()) {
-            readDirectory(path);
-         } else if(name.endsWith(".dat")) {
-            try(final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(path))) {
-               final byte[] buffer = new byte[this.attributes.stride];
-               int index = -1;
-               
-               // read points until file is empty
-               while((index = fin.read(buffer)) != -1) {
-                  final Point point = new Point(this.tree, this.attributes, buffer);
-                  points.add(point);
+      try {
+         for(final String name : directory.list()) {
+            final File path = new File(directory, name);
+            
+            if(path.isDirectory()) {
+               readDirectory(path);
+            } else if(name.endsWith(".dat")) {
+               try(final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(path))) {
+                  final byte[] buffer = new byte[this.attributes.stride];
+                  int index = -1;
+                  
+                  // read points until file is empty
+                  while((index = fin.read(buffer)) != -1) {
+                     final Point point = new Point(this.attributes, buffer);
+                     points.add(point);
+                     
+                     if(points.size() % 1000000 == 0) {
+                        System.out.println("completed " + (points.size() / 1000000) + " million");
+                     }
+                  }
+               } catch(final IOException e) {
+                  e.printStackTrace();
                }
-            } catch(final IOException e) {
-               e.printStackTrace();
             }
          }
+      } catch(final OutOfMemoryError e) {
+         System.err.println("OutOfMemory: " + this.points.size() + " completed.");
+         throw e;
       }
    }
    
@@ -95,9 +107,18 @@ public class TreeBuilder {
          throw new RuntimeException("Cannot build Octree before initialization is complete");
       } else {
          final long startTime = System.nanoTime();
+         int count = 0;
          System.out.println("building octree...");
          for(final Point point : this.points) {
             this.tree.addPoint(point);
+            count++;
+            
+            if(count % 1000000 == 0) {
+               double percentage = (count / (double) points.size());
+               percentage *= 10000.0;
+               percentage = ((int) percentage) / 100.0;
+               System.out.println("completed " + count + " of " + points.size() + " (" + percentage + " %)");
+            }
          }
          
          System.out.println("octree built: " + this.tree.getCellCount());

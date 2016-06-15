@@ -3,7 +3,7 @@
 
 ##
 # Java VM flags
-JAVA_FLAGS='-Djava.net.useSystemProxies=true -XX:MaxPermSize=2g -Xmx225g'
+JAVA_FLAGS='-Djava.net.useSystemProxies=true -Xmx256g -Dcom.sun.management.jmxremote.port=3335 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false'
 
 ##
 # The main class

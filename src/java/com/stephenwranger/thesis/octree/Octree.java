@@ -14,18 +14,28 @@ public class Octree extends TreeStructure {
    }
 
    @Override
-   public TreeCell createTreeCell(final TreeStructure tree, final String path) {
+   public TreeCell createTreeCell(final TreeStructure tree, final String parentPath, final int childIndex) {
+      final String path = this.getPath(parentPath, childIndex);
       return new Octet(tree, path);
    }
    
-   public BoundingVolume getBoundingVolume(final String octetPath) {
+   @Override
+   public BoundingVolume getBoundingVolume(final String parentPath, final int childIndex) {
+      final String path = this.getPath(parentPath, childIndex);
+      
+      return this.getBoundingVolume(path);
+   }
+   
+   @Override
+   public BoundingVolume getBoundingVolume(final String path) {
       final Tuple3d childmin = new Tuple3d(-MAX_RADIUS, -MAX_RADIUS, -MAX_RADIUS);
       final Tuple3d childmax = new Tuple3d(MAX_RADIUS, MAX_RADIUS, MAX_RADIUS);
       final Tuple3d size = new Tuple3d();
       size.subtract(childmax, childmin);
       
-      for(int i = 0; i < octetPath.length(); i++) {
-         final int index = octetPath.charAt(i) - 48;
+      for(int i = 0; i < path.length(); i++) {
+         final int index = Integer.parseInt(Character.toString(path.charAt(i)));
+         
          if ((index & 0b0001) > 0) {
              childmin.z += size.z / 2.0;
          } else {
@@ -46,5 +56,10 @@ public class Octree extends TreeStructure {
       }
          
       return new BoundingBox(childmin.x, childmin.y, childmin.z, childmax.x, childmax.y, childmax.z);
+   }
+   
+   @Override
+   public String getPath(final String parentPath, final int childIndex) {
+      return (parentPath == null) ? "" : parentPath + childIndex;
    }
 }
