@@ -1,6 +1,7 @@
 package com.stephenwranger.thesis.geospatial;
 
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.utils.MathUtils;
 
 /**
  * Reference frame for WGS84 (World Geodesic System 1984) where X-Axis exits at 0 deg longitude, 0 deg latitude, Y-Axis
@@ -16,26 +17,83 @@ public class WGS84 {
    public static final double EQUATORIAL_RADIUS = 6378137.0;
    public static final double FLATTENING = 1.0 / 298.257223563;
    public static final double SEMI_MINOR_RADIUS = EQUATORIAL_RADIUS * (1.0 - FLATTENING); // 6356752.3142
+   public static final double MASS = 5.97219e24; // kg
+   public static final double ANGULAR_ECCENTRICITY = Math.acos((SEMI_MINOR_RADIUS / EQUATORIAL_RADIUS));
+   public static final double FIRST_ECCENTRICITY_SQUARED = (2.0 * FLATTENING) - (FLATTENING * FLATTENING);
    
    /**
-    * Return the cartesian coordinates for the given longitude, latitude and altitude (in degrees and meters).
+    * Return the cartesian coordinates for the given longitude, latitude and altitude (in degrees and meters).<br/><br/>
+    * https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_geodetic_to_ECEF_coordinates
     * 
     * @param lonLatAltDeg the longitude (in decimal degrees), latitude (in decimal degrees) and altitude (in meters)
     * @return the cartesian coordinate conversion of the given geodesic coordinates
     */
-   public Tuple3d geodesicToCartesian(final Tuple3d lonLatAltDeg) {
-      // TODO
-      return null;
+   public static Tuple3d geodesicToCartesian(final Tuple3d lonLatAltDeg) {
+      double lon = Math.toRadians(lonLatAltDeg.x);
+      double lat = Math.toRadians(lonLatAltDeg.y);
+      double alt = lonLatAltDeg.z;
+      
+      if (lon > Math.PI) {
+         lon -= MathUtils.TWO_PI;
+      }
+      final double sinLat = Math.sin(lat);
+      final double cosLat = Math.cos(lat);
+      final double sin2Lat = sinLat * sinLat;
+      final double Rn = EQUATORIAL_RADIUS / Math.sqrt(1 - FIRST_ECCENTRICITY_SQUARED * sin2Lat);  // earth radius at location
+
+      final Tuple3d result = new Tuple3d();
+      
+      result.x = (Rn + alt) * cosLat * Math.cos(lon);
+      result.y = (Rn + alt) * cosLat * Math.sin(lon);
+      result.z = ((Rn * (1 - FIRST_ECCENTRICITY_SQUARED)) + alt) * sinLat;
+      
+      return result;
    }
 
    /**
-    * Return the geodesic coordinates (in degrees and meters) for the given longitude, latitude and altitude (in degrees and meters).
+    * Return the geodesic coordinates (in degrees and meters) for the given longitude, latitude and altitude (in degrees and meters).<br/><br/>
+    * https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_geodetic_to_ECEF_coordinates<br/>
     * 
     * @param xyz the cartesian coordinates
     * @return the geodesic coordinate conversion of the given cartesian coordinates as longitude (in decimal degrees), latitude (in decimal degrees) and altitude (in meters)
     */
-   public Tuple3d cartesianToGeodesic(final Tuple3d xyz) {
+   public static Tuple3d cartesianToGeodesic(final Tuple3d xyz) {
       // TODO
       return null;
+   }
+   
+   /**
+    * Computes Ellipsoid height at given lon/lat<br/>
+    * https://www.physicsforums.com/threads/radius-of-ellipsoid.251321/ (their major/minor axis variables are swapped it looks like)
+    * 
+    * <pre>
+    * http://www.wolframalpha.com/input/?i=(r%5E2+*+cos%5E2(t)+*+sin%5E2(p))+%2F+a%5E2+%2B+(r%5E2+*+sin%5E2(t)+*+sin%5E2(p))+%2F+b%5E2+%2B+(r%5E2+*+cos%5E2(p))+%2F+c%5E2+%3D+1,+solve+for+r
+    * 
+    * r = ±(a b c)/sqrt(c^2 sin^2(p) (a^2 sin^2(t)+b^2 cos^2(t))+a^2 b^2 cos^2(p))
+    *    OR
+    * r = sqrt(c^2 sin^2(p) (a^2 sin^2(t)+b^2 cos^2(t))+a^2 b^2 cos^2(p))!=0 and a b c!=0
+    * </pre>
+    * 
+    * @param lonDeg
+    * @param latDeg
+    * @return
+    */
+   public static double getAltitude(final double lonDeg, final double latDeg) {
+      // TODO: add DTED
+      final double a = EQUATORIAL_RADIUS;
+      final double c = SEMI_MINOR_RADIUS;
+      final double a2 = a * a;
+      final double c2 = c * c;
+      
+      final double phi = Math.toRadians(latDeg);
+      final double sinPhi = Math.sin(phi);
+      final double sin2Phi = sinPhi * sinPhi;
+      final double cosPhi = Math.cos(phi);
+      final double cos2Phi = cosPhi * cosPhi;
+      final double numerator = a2 * c2;
+      final double denominator = a2 * sin2Phi + c2 * cos2Phi;
+      final double r = Math.sqrt(numerator / denominator);
+      
+      return r;
    }
 }
