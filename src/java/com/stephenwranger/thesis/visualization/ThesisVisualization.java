@@ -11,13 +11,13 @@ import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.BoundingSphere;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.color.Color4f;
-import com.stephenwranger.graphics.controls.SphericalNavigator;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.thesis.data.Attribute;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.geospatial.Earth;
+import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.geospatial.WGS84;
 import com.stephenwranger.thesis.icosatree.Icosatree;
 
@@ -36,7 +36,7 @@ public class ThesisVisualization extends JFrame {
       this.scene.addRenderable(this.earth);
       this.scene.setViewingVolume(new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS / 2.0));
       
-      final SphericalNavigator navigator = new SphericalNavigator(this.scene, WGS84.EQUATORIAL_RADIUS);
+      final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       
       final List<Attribute> attributes = new ArrayList<>();
       attributes.add(new Attribute("0,X,0,8,DOUBLE,8,-2671529.167771962,-2670791.4207160836,-2671206.533690431,148.32056658828276"));
@@ -45,11 +45,11 @@ public class ThesisVisualization extends JFrame {
 
       final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
       
-      for(int i = 0; i < 20; i++) {
+      for(int i = 0; i < 1; i++) {
          final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
          final Triangle3d[] faces = volume.getFaces();
          final Color4f color = new Color4f((float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), 1f);
-         final TriangleMesh mesh = new TriangleMesh(new Triangle3d[] { faces[7] }, color);
+         final TriangleMesh mesh = new TriangleMesh(faces, color);
          this.scene.addRenderable(mesh);
       }
       
