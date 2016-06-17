@@ -45,7 +45,7 @@ public class ThesisVisualization extends JFrame {
 
       final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
       
-      for(int i = 0; i < 1; i++) {
+      for(int i = 0; i < 20; i++) {
          final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
          final Triangle3d[] faces = volume.getFaces();
          final Color4f color = new Color4f((float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), 1f);
