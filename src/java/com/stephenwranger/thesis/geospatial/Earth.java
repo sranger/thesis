@@ -39,7 +39,7 @@ public class Earth extends Renderable {
          this.geometry.setTexture(EARTH_1K);
       }
       
-      gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
+      gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_LINE);
       geometry.render(gl, glu, glDrawable, scene);
    }
    

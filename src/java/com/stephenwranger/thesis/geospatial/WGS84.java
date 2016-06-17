@@ -1,7 +1,5 @@
 package com.stephenwranger.thesis.geospatial;
 
-import java.util.List;
-
 import com.stephenwranger.graphics.math.PickingRay;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
@@ -156,25 +154,36 @@ public class WGS84 {
     */
    public static Tuple3d getNearIntersection(final PickingRay ray, final double altitude, final boolean isGeodetic) {
       final Ellipsoid ellipsoid = (altitude == 0) ? WGS84.ELLIPSOID : new Ellipsoid(new Tuple3d(), altitude, FLATTENING, FIRST_ECCENTRICITY_SQUARED, SECOND_ECCENTRICITY_SQUARED);
-      final List<Tuple3d> intersections = ellipsoid.getIntersection(ray);
+      final double[] intersections = ellipsoid.getIntersection(ray);
       Tuple3d solution = null;
       
-      if(intersections.size() == 1) {
-         solution = intersections.get(0);
-      } else if(intersections.size() == 2) {
-         final Tuple3d origin = ray.getOrigin();
-         final Tuple3d a = intersections.get(0);
-         final Tuple3d b = intersections.get(1);
-         final double aDist = a.distance(origin);
-         final double bDist = b.distance(origin);
-         
-         solution = (aDist <= bDist) ? a : b;
+      if (intersections.length == 0) {
+         return null;
       }
-      
-      if(solution != null && isGeodetic) {
-         solution = ellipsoid.toLonLatAlt(solution);
+
+      if (intersections.length == 1) {
+         solution = ellipsoid.intersectionToLonLat(ray, intersections[0]);
+      } else if (Math.signum(intersections[0]) != Math.signum(intersections[1])) {
+         /*
+          * Opposite signs means we are inside the ellipsoid. In this case we return the intersection point with the
+          * smallest magnitude.
+          */
+         if (Math.abs(intersections[0]) < Math.abs(intersections[1])) {
+            solution = ellipsoid.intersectionToLonLat(ray, intersections[0]);
+         } else {
+            solution = ellipsoid.intersectionToLonLat(ray, intersections[1]);
+         }
+      } else if (intersections[0] >= 0 && (intersections[1] < 0 || intersections[0] < intersections[1])) {
+         solution = ellipsoid.intersectionToLonLat(ray, intersections[0]);
+      } else if (intersections[1] >= 0) {
+         solution = ellipsoid.intersectionToLonLat(ray, intersections[1]);
+      } else {
+         return null;
       }
-      
+      if (Double.isNaN(solution.x) || Double.isNaN(solution.y)) {
+         return null;
+      }
+
       return solution;
    }
 }

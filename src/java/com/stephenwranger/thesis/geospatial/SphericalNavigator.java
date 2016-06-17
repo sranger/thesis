@@ -90,54 +90,10 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
    
    public void moveAnchor(final Tuple3d anchor) {
       this.anchor.set(anchor);
+      System.out.println("new anchor xyz: " + anchor);
+      System.out.println("new anchor lla: " + WGS84.cartesianToGeodesic(anchor));
       
-//      // get geodetic coordinate of anchor
-//      final Tuple3d lonLatAlt = WGS84.cartesianToGeodesic(anchor);
-//      // get orientation of anchor in relation to local surface reference frame (up is surface normal at anchor)
-//      final Quat4d orientation = WGS84.getOrientation(lonLatAlt.x, lonLatAlt.y);
-//      // invert to go from global location to a local one
-//      orientation.inverse();
-//
-//      // create rotation that converts local reference vector to point towards local camera position
-//      final Quat4d azimuthRotation = new Quat4d(AZIMUTH_ROTATION_AXIS, camera.azimuth);
-//      final Quat4d elevationRotation = new Quat4d(ELEVATION_ROTATION_AXIS, camera.elevation);
-//      final Quat4d sphericalRotation = new Quat4d(azimuthRotation);
-//      sphericalRotation.mult(elevationRotation);
-//      
-//      // rotate reference vector by spherical camera coordinate and then by the anchor orientation
-//      final Vector3d cameraVector = new Vector3d(START_VECTOR);
-//      sphericalRotation.mult(cameraVector);
-//      cameraVector.normalize();
-//      orientation.mult(cameraVector);
-//      cameraVector.normalize();
-//      // scale vector by new camera range
-//      cameraVector.scale(camera.range);
-//      
-//      // get new global camera coordinate by adding new anchor and new scaled direction vector
-//      final Tuple3d cameraPosition = new Tuple3d(anchor);
-//      cameraPosition.add(cameraVector);
-//      
-//      // compute new up vector by getting old up vector and rotating it the same amount that the new view vector has compared to old view vector
-//      final Tuple3d oldCamera = this.scene.getCameraPosition();
-//      final Tuple3d oldLookAt = this.scene.getLookAt();
-//      final Vector3d oldUp = this.scene.getUp();
-//      final Vector3d oldView = new Vector3d();
-//      oldView.subtract(oldLookAt, oldCamera);
-//      oldView.normalize();
-//      
-//      final Vector3d newView = new Vector3d(cameraVector);
-//      newView.normalize();
-//      newView.scale(-1);
-//      
-//      final Vector3d axis = new Vector3d();
-//      axis.cross(newView, oldView);
-//      final double angle = Math.toDegrees(newView.angle(oldView));
-//      final Quat4d rotation = new Quat4d(axis, angle);
-//      final Vector3d newUp = new Vector3d(oldUp);
-//      rotation.mult(newUp);
-//
-////      this.scene.setLookAt(anchor, newUp);
-//      this.scene.setCameraPosition(new Tuple3d(cameraPosition));
+      this.scene.setLookAt(this.anchor, this.scene.getUp());
    }
    
    private Point previousEvent = null;
