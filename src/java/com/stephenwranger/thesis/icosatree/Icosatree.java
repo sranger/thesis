@@ -114,7 +114,6 @@ public class Icosatree extends TreeStructure {
          for(int i = 0; i < 3; i++) {
             top[i] = new Vector3d(corners[i]).scale(radii[0] * RADIUS_MODIFIER);
             
-            // swap bottom corner winding so it faces "in"
             bottom[i] = new Vector3d(corners[i]).scale(radii[1] * RADIUS_MODIFIER);
          }
          
