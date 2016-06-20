@@ -1,11 +1,13 @@
 package com.stephenwranger.thesis.geospatial;
 
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.text.DecimalFormat;
 
 import javax.swing.SwingUtilities;
 
@@ -16,27 +18,32 @@ import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.SphericalCoordinate;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
+import com.stephenwranger.graphics.renderables.TextRenderable;
 import com.stephenwranger.graphics.utils.MathUtils;
 
 public class SphericalNavigator implements MouseListener, MouseMotionListener, MouseWheelListener {
    private static final Vector3d RIGHT_VECTOR = new Vector3d(0,1,0);
-   private static final Vector3d UP_VECTOR = new Vector3d(-1,0,0);
-   private static final Vector3d AZIMUTH_ROTATION_AXIS = new Vector3d(0,1,0);
-   private static final Vector3d ELEVATION_ROTATION_AXIS = new Vector3d(0,0,-1);
+   private static final Vector3d UP_VECTOR = new Vector3d(0,0,-1);
+   private static final Vector3d AZIMUTH_ROTATION_AXIS = new Vector3d(0,-1,0);
+   private static final Vector3d ELEVATION_ROTATION_AXIS = new Vector3d(1,0,0);
    
+   private final DecimalFormat formatter = new DecimalFormat("0.000");
    private final Scene scene;
+   private final TextRenderable textRenderer;
    private final Tuple3d anchor = WGS84.geodesicToCartesian(new Tuple3d());
    private final SphericalCoordinate cameraCoordinate = new SphericalCoordinate(0, 0, 1e7);
 
    public SphericalNavigator(final Scene scene) {
       this.scene = scene;
 
-      this.scene.setLookAt(this.anchor, new Vector3d(0,-1,0));
-      this.scene.setCameraPosition(WGS84.geodesicToCartesian(new Tuple3d(0,0,1e7)));
+      this.scene.setCameraPosition(WGS84.geodesicToCartesian(new Tuple3d(0,0,1e7)), this.anchor, new Vector3d(0,0,1));
 
       scene.addMouseListener(this);
       scene.addMouseMotionListener(this);
       scene.addMouseWheelListener(this);
+      
+      this.textRenderer = new TextRenderable(new Font("SansSerif", Font.PLAIN, 32));
+      this.scene.addRenderableOrthographic(this.textRenderer);
    }
 
    public void removeListeners() {
@@ -52,16 +59,15 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
       final SphericalCoordinate coordinate = new SphericalCoordinate(this.cameraCoordinate);
       coordinate.range = Math.max(0.0, coordinate.range * (1.0 + (0.1 * count)));
 
-      this.setCameraPosition(coordinate);
+      this.setCameraPosition(this.anchor, coordinate);
    }
    
-   public void setCameraPosition(final SphericalCoordinate cameraCoordinate) {
+   public void setCameraPosition(final Tuple3d anchor, final SphericalCoordinate cameraCoordinate) {
+      this.anchor.set(anchor);
       this.cameraCoordinate.set(cameraCoordinate);
       
       // get geodetic coordinate of anchor
       final Tuple3d lonLatAlt = WGS84.cartesianToGeodesic(this.anchor);
-      System.out.println("anchor xyz: " + this.anchor);
-      System.out.println("anchor lla: " + lonLatAlt);
       // get orientation of anchor in relation to local surface reference frame (up is surface normal at anchor)
       final Quat4d orientation = WGS84.getOrientation(lonLatAlt.x, lonLatAlt.y);
 
@@ -84,29 +90,42 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
       sphericalRotation.mult(up);
       orientation.mult(up);
       
-      this.scene.setLookAt(this.anchor, up);
-      this.scene.setCameraPosition(cameraPosition);
-   }
-   
-   public void moveAnchor(final Tuple3d anchor) {
-      this.anchor.set(anchor);
-      System.out.println("new anchor xyz: " + anchor);
-      System.out.println("new anchor lla: " + WGS84.cartesianToGeodesic(anchor));
-      
-      this.scene.setLookAt(this.anchor, this.scene.getUp());
+      this.scene.setCameraPosition(cameraPosition, this.anchor, up);
    }
    
    private Point previousEvent = null;
+   private Tuple3d previousLonLatAlt = null;
 
    @Override
    public void mouseDragged(final MouseEvent event) {      
       if(SwingUtilities.isLeftMouseButton(event)) {
          final Vector3d currentVector = SphericalNavigator.getMouseVector(this.scene, event);
          final Tuple3d lonLatAltIntersection = WGS84.getNearIntersection(new PickingRay(this.scene.getCameraPosition(), currentVector), 0, true);
+         System.out.println("dragged intersection: " + lonLatAltIntersection);
          
-         if(lonLatAltIntersection != null) {
-            this.moveAnchor(WGS84.geodesicToCartesian(lonLatAltIntersection));
+         if(this.previousLonLatAlt != null && lonLatAltIntersection != null) {
+            final Tuple3d currentXyz = WGS84.geodesicToCartesian(lonLatAltIntersection);
+            final Tuple3d previousXyz = WGS84.geodesicToCartesian(this.previousLonLatAlt);
+            final Vector3d toCurrent = new Vector3d(currentXyz);
+            toCurrent.scale(-1);
+            toCurrent.normalize();
+            
+            final Vector3d toPrevious = new Vector3d(previousXyz);
+            toPrevious.scale(-1);
+            toPrevious.normalize();
+            
+            final Vector3d axis = new Vector3d();
+            axis.cross(toCurrent, toPrevious);
+            
+            final double angle = Math.toDegrees(toCurrent.angle(toPrevious));
+            final Tuple3d anchor = new Tuple3d(this.anchor);
+            final Quat4d rotation = new Quat4d(axis, angle);
+            
+            rotation.mult(anchor);
+            this.setCameraPosition(anchor, this.cameraCoordinate);
          }
+
+         this.previousLonLatAlt = lonLatAltIntersection;
       } else if(SwingUtilities.isRightMouseButton(event) && previousEvent != null) {
          final int x = event.getX() - previousEvent.x;
          final int y = event.getY() - previousEvent.y;
@@ -120,18 +139,29 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
             
             coordinates.elevation = MathUtils.clamp(0, MathUtils.HALF_PI, coordinates.elevation);
             
-            this.setCameraPosition(coordinates);
+            this.setCameraPosition(this.anchor, coordinates);
             this.previousEvent = event.getPoint();
          }
       } else {
          this.previousEvent = null;
+         this.previousLonLatAlt = null;
       }
    }
 
    @Override
    public void mouseMoved(final MouseEvent event) {
-      // nothing atm
+      final Vector3d currentVector = SphericalNavigator.getMouseVector(this.scene, event);
+      final Tuple3d lonLatAltIntersection = WGS84.getNearIntersection(new PickingRay(this.scene.getCameraPosition(), currentVector), 0, true);
 
+      this.textRenderer.clearText();
+      System.out.println("moved intersection? "  + lonLatAltIntersection);
+      if(lonLatAltIntersection != null) {
+         final Tuple3d xyz = WGS84.geodesicToCartesian(lonLatAltIntersection);
+         this.textRenderer.addText(xyz.toString(), new Point(100, 50));
+         this.textRenderer.addText("lon: " + formatter.format(lonLatAltIntersection.x) + "\n"
+               + "lat: " + formatter.format(lonLatAltIntersection.y) + "\n"
+               + "alt: " + formatter.format(lonLatAltIntersection.z), new Point(100, 100));
+      }
    }
 
    @Override
@@ -141,18 +171,23 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
          final PickingRay ray = new PickingRay(this.scene.getCameraPosition(), mouseVector);
          final Tuple3d anchor = WGS84.getNearIntersection(ray, 0, false);
 
-         this.moveAnchor(anchor);
+         if(anchor != null) {
+            this.setCameraPosition(anchor, this.cameraCoordinate);
+         }
       }
    }
 
    @Override
    public void mousePressed(final MouseEvent event) {
       this.previousEvent = event.getPoint();
+      final Vector3d currentVector = SphericalNavigator.getMouseVector(this.scene, event);
+      this.previousLonLatAlt = WGS84.getNearIntersection(new PickingRay(this.scene.getCameraPosition(), currentVector), 0, true);
    }
 
    @Override
    public void mouseReleased(final MouseEvent event) {
       this.previousEvent = null;
+      this.previousLonLatAlt = null;
    }
 
    @Override
@@ -168,12 +203,17 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
    }
    
    private static Vector3d getMouseVector(final Scene scene, final MouseEvent event) {
+      System.out.println("\ngetMouseVector");
       final Vector3d vector = new Vector3d();
       final Tuple3d cameraWorld = scene.getCameraPosition();
-      final Tuple3d cameraScreen = CameraUtils.getScreenCoordinates(scene, cameraWorld);
-      final Tuple3d screenCoordinates = new Tuple3d(event.getX(), scene.getHeight() - event.getY(), cameraScreen.z + 0.2);
-      vector.subtract(CameraUtils.getWorldCoordinates(scene, screenCoordinates), cameraWorld);
+      System.out.println("cam xyz: " + cameraWorld);
+      final Tuple3d screenCoordinates = new Tuple3d(event.getX(), scene.getHeight() - event.getY(), 1.0);
+      System.out.println("mouse screen: " + screenCoordinates);
+      final Tuple3d mouseWorld = CameraUtils.getWorldCoordinates(scene, screenCoordinates);
+      System.out.println("mouse xyz: " + mouseWorld);
+      vector.subtract(mouseWorld, cameraWorld);
       vector.normalize();
+      System.out.println("vector: " + vector);
       
       return vector;
    }
