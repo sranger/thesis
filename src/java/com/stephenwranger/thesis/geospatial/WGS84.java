@@ -160,7 +160,7 @@ public class WGS84 {
       if (intersections.length == 0) {
          return null;
       }
-
+      
       if (intersections.length == 1) {
          solution = ellipsoid.intersectionToLonLat(ray, intersections[0]);
       } else if (Math.signum(intersections[0]) != Math.signum(intersections[1])) {

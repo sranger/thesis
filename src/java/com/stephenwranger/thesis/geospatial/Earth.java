@@ -1,9 +1,8 @@
 package com.stephenwranger.thesis.geospatial;
 
-import javax.media.opengl.GL2;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.glu.GLU;
-
+import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.BoundingSphere;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
@@ -11,6 +10,7 @@ import com.stephenwranger.graphics.math.PickingHit;
 import com.stephenwranger.graphics.math.PickingRay;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.renderables.EllipticalGeometry;
 import com.stephenwranger.graphics.renderables.Renderable;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
@@ -53,6 +53,16 @@ public class Earth extends Renderable {
    @Override
    public BoundingVolume getBoundingVolume() {
       return Earth.BOUNDS;
+   }
+   
+   @Override
+   public double[] getNearFar(final Scene scene) {
+      final Tuple3d cameraPosition = scene.getCameraPosition();
+      
+      final Vector3d camVector = new Vector3d(cameraPosition);
+      final double distance = camVector.length();
+
+      return new double[] { distance / 3000.0, distance };
    }
    
    @Override
