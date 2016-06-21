@@ -62,7 +62,7 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
       this.setCameraPosition(this.anchor, coordinate);
    }
    
-   public void setCameraPosition(final Tuple3d anchor, final SphericalCoordinate cameraCoordinate) {
+   public synchronized void setCameraPosition(final Tuple3d anchor, final SphericalCoordinate cameraCoordinate) {
       if(MathUtils.isFinite(anchor)) {
          this.anchor.set(anchor);
          this.cameraCoordinate.set(cameraCoordinate);
@@ -76,8 +76,8 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
          final Quat4d azimuthRotation = new Quat4d(AZIMUTH_ROTATION_AXIS, Math.toDegrees(cameraCoordinate.azimuth));
          final Quat4d elevationRotation = new Quat4d(ELEVATION_ROTATION_AXIS, Math.toDegrees(cameraCoordinate.elevation));
          final Quat4d sphericalRotation = new Quat4d();
-         sphericalRotation.mult(azimuthRotation);
          sphericalRotation.mult(elevationRotation);
+         sphericalRotation.mult(azimuthRotation);
          
          final Vector3d toCamera = new Vector3d(RIGHT_VECTOR);
          sphericalRotation.mult(toCamera);
@@ -143,18 +143,19 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
          if(this.mouseLonLatAlt != null && lonLatAltIntersection != null) {
             final Tuple3d currentXyz = WGS84.geodesicToCartesian(lonLatAltIntersection);
             final Tuple3d previousXyz = WGS84.geodesicToCartesian(this.mouseLonLatAlt);
-            final Vector3d toCurrent = new Vector3d(currentXyz);
-            toCurrent.scale(-1);
+            final Vector3d toCurrent = new Vector3d();
+            toCurrent.subtract(currentXyz, this.scene.getCameraPosition());
             toCurrent.normalize();
             
-            final Vector3d toPrevious = new Vector3d(previousXyz);
-            toPrevious.scale(-1);
+            final Vector3d toPrevious = new Vector3d();
+            toPrevious.subtract(previousXyz, this.scene.getCameraPosition());
             toPrevious.normalize();
             
             final Vector3d axis = new Vector3d();
-            axis.cross(toCurrent, toPrevious);
+            axis.cross(toPrevious, toCurrent);
+            axis.normalize();
             
-            final double angle = toCurrent.angleDegrees(toPrevious);
+            final double angle = toPrevious.angleDegrees(toCurrent);
             final Tuple3d anchor = new Tuple3d(this.anchor);
             final Quat4d rotation = new Quat4d(axis, angle);
             
