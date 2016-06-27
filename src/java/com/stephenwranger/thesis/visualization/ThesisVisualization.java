@@ -57,7 +57,7 @@ public class ThesisVisualization extends JFrame {
 
          final Color4f color = new Color4f((float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), 1f);
          final TriangleMesh mesh = new TriangleMesh(faces, color);
-         mesh.setWireframe(false);
+         mesh.setWireframe(true);
          this.scene.addRenderable(mesh);
       }
       
