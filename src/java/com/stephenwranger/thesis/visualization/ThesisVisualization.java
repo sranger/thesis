@@ -8,8 +8,8 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import com.stephenwranger.graphics.Scene;
+import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingSphere;
-import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.color.Color4f;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
@@ -19,7 +19,7 @@ import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.geospatial.WGS84;
-import com.stephenwranger.thesis.icosatree.Icosatree;
+import com.stephenwranger.thesis.octree.Octree;
 
 public class ThesisVisualization extends JFrame {
    private static final long serialVersionUID = 545923577250987084L;
@@ -31,6 +31,7 @@ public class ThesisVisualization extends JFrame {
       super("Thesis Visualization");
       
       this.earth = new Earth();
+      this.earth.setWireframe(true);
       
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);
@@ -43,14 +44,21 @@ public class ThesisVisualization extends JFrame {
       attributes.add(new Attribute("1,Y,8,8,DOUBLE,8,-4469545.061828081,-4468937.152562849,-4469280.47211661,27.343033140313597"));
       attributes.add(new Attribute("2,Z,16,8,DOUBLE,8,3671282.354341662,3671858.9230972063,3671551.800912032,105.13728902370654"));
 
-      final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
+//      final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
       
-      for(int i = 0; i < 20; i++) {
+      final Octree tree = new Octree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
+      
+      for(int i = 0; i < 8; i++) {
 //         final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
 //         final Triangle3d[] faces = volume.getFaces();
-//         final Color4f color = new Color4f((float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), 1f);
-//         final TriangleMesh mesh = new TriangleMesh(faces, color);
-//         this.scene.addRenderable(mesh);
+         
+         final BoundingBox volume = (BoundingBox) tree.getBoundingVolume(Integer.toString(i));
+         final Triangle3d[] faces = volume.getFaces();
+
+         final Color4f color = new Color4f((float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), 1f);
+         final TriangleMesh mesh = new TriangleMesh(faces, color);
+         mesh.setWireframe(false);
+         this.scene.addRenderable(mesh);
       }
       
       this.getContentPane().add(this.scene);
