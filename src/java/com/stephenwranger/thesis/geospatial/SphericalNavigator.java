@@ -144,36 +144,41 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
       
       if(SwingUtilities.isLeftMouseButton(event)) {
          if(this.mouseLonLatAlt != null && lonLatAltIntersection != null) {
-            final Tuple3d cameraScreen = new Tuple3d(scene.getWidth() / 2.0, scene.getHeight() / 2.0, 0.0);
-            final Tuple3d cameraWorld = CameraUtils.gluUnProject(scene, cameraScreen);
-            final Tuple3d currentXyz = WGS84.geodesicToCartesian(lonLatAltIntersection);
-            final Tuple3d previousXyz = WGS84.geodesicToCartesian(this.mouseLonLatAlt);
-            final Vector3d toCurrent = new Vector3d();
-            toCurrent.subtract(currentXyz, cameraWorld);
-            toCurrent.normalize();
-            
-            final Vector3d toPrevious = new Vector3d();
-            toPrevious.subtract(previousXyz, cameraWorld);
-            toPrevious.normalize();
-            
-            final Vector3d axis = new Vector3d();
-            axis.cross(toPrevious, toCurrent);
-            axis.normalize();
-            
-            if(axis.angleDegrees(toPrevious) < 85) {
-               final Vector3d other = new Vector3d(toCurrent);
-               other.x = -other.x;
-               axis.cross(other, toPrevious);
-            }
-            
-            final double angle = toPrevious.angleDegrees(toCurrent);
-            final Tuple3d anchor = new Tuple3d(this.anchor);
-            final Quat4d rotation = new Quat4d(axis, angle);
-            
-            rotation.mult(anchor);
-            this.anchor.set(anchor);
-            
+            final RotationTransformation transformation = WGS84.getRotationTransformation(this.mouseLonLatAlt, lonLatAltIntersection);
+            transformation.apply(this.anchor);
             this.setCameraPosition();
+//            final Tuple3d cameraScreen = new Tuple3d(scene.getWidth() / 2.0, scene.getHeight() / 2.0, 0.0);
+//            final Tuple3d cameraWorld = CameraUtils.gluUnProject(scene, cameraScreen);
+//            final Tuple3d currentXyz = WGS84.geodesicToCartesian(lonLatAltIntersection);
+//            final Tuple3d previousXyz = WGS84.geodesicToCartesian(this.mouseLonLatAlt);
+//            System.out.println("distance: " + currentXyz.distance(previousXyz));
+//            final Vector3d toCurrent = new Vector3d();
+//            toCurrent.subtract(currentXyz, cameraWorld);
+//            toCurrent.normalize();
+//            
+//            final Vector3d toPrevious = new Vector3d();
+//            toPrevious.subtract(previousXyz, cameraWorld);
+//            toPrevious.normalize();
+//            
+//            final Vector3d axis = new Vector3d();
+//            axis.cross(toPrevious, toCurrent);
+//            axis.normalize();
+//            
+//            if(axis.angleDegrees(toPrevious) < 85) {
+//               final Vector3d other = new Vector3d(toCurrent);
+//               other.x = -other.x;
+//               axis.cross(other, toPrevious);
+//            }
+//            
+//            final double angle = toPrevious.angleDegrees(toCurrent);
+//            System.out.println("angle: " + angle);
+//            final Tuple3d anchor = new Tuple3d(this.anchor);
+//            final Quat4d rotation = new Quat4d(axis, angle);
+//            
+//            rotation.mult(anchor);
+//            this.anchor.set(anchor);
+//            
+//            this.setCameraPosition();
          }
       } else if(SwingUtilities.isRightMouseButton(event) && previousEvent != null) {
          final int x = event.getX() - previousEvent.x;
@@ -249,6 +254,14 @@ public class SphericalNavigator implements MouseListener, MouseMotionListener, M
    public void mouseExited(final MouseEvent event) {
       // nothing atm
 
+   }
+   
+   public SphericalCoordinate getCameraCoordinate() {
+      return new SphericalCoordinate(this.cameraCoordinate);
+   }
+   
+   public Tuple3d getAnchor() {
+      return new Tuple3d(this.anchor);
    }
    
    private Vector3d getMouseVector(final Scene scene, final MouseEvent event) {
