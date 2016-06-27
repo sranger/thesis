@@ -29,7 +29,7 @@ import com.stephenwranger.thesis.geospatial.WGS84;
 public class Icosatree extends TreeStructure {
    // TODO: better radii
    private static final double RADIUS_MAX = TreeStructure.MAX_RADIUS * 2.0;
-   private static final double RADIUS_MIN = TreeStructure.MAX_RADIUS / 2.0;
+   private static final double RADIUS_MIN = TreeStructure.MAX_RADIUS * 0.8;
    private static final double RADIUS_MODIFIER = 1.0 / (2.0 * Math.sin(MathUtils.TWO_PI / 5.0));
    private static final double G = 0.5 * (1.0 + Math.sqrt(5.0));
    private static final double B = 1.0 / Math.sqrt(1.0 + G * G);

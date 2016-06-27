@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN" "http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!--This file was converted to xhtml by LibreOffice - see http://cgit.freedesktop.org/libreoffice/core/tree/filter/source/xslt for the code. -->
+	<head profile="http://dublincore.org/documents/dcmi-terms/">
+		<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+		<title xml:lang="en-US">Stephen Ranger - Thesis Update #1: Octree, Icosatree, and Interactive Visualization</title>
+		<meta name="DCTERMS.title" content="" xml:lang="en-US" />
+		<meta name="DCTERMS.language" content="en-US" scheme="DCTERMS.RFC4646" />
+		<meta name="DCTERMS.source" content="http://xml.openoffice.org/odf2xhtml" />
+		<meta name="DCTERMS.creator" content="rangers " />
+		<meta name="DCTERMS.issued" content="2016-06-27T06:58:46.616874227" scheme="DCTERMS.W3CDTF" />
+		<meta name="DCTERMS.contributor" content="rangers " />
+		<meta name="DCTERMS.modified" content="2016-06-27T08:11:44.857598807" scheme="DCTERMS.W3CDTF" />
+		<meta name="DCTERMS.provenance" content="" xml:lang="en-US" />
+		<meta name="DCTERMS.subject" content="," xml:lang="en-US" />
+		<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/" hreflang="en" />
+		<link rel="schema.DCTERMS" href="http://purl.org/dc/terms/" hreflang="en" />
+		<link rel="schema.DCTYPE" href="http://purl.org/dc/dcmitype/" hreflang="en" />
+		<link rel="schema.DCAM" href="http://purl.org/dc/dcam/" hreflang="en" />
+		<style type="text/css">
+			@page { }
+			table { border-collapse:collapse; border-spacing:0; empty-cells:show }
+			td, th { vertical-align:top; font-size:12pt;}
+			h1, h2, h3, h4, h5, h6 { clear:both }
+			ol, ul { margin:0; padding:0;}
+			li { list-style: none; margin:0; padding:0;}
+			<!-- "li span.odfLiEnd" - IE 7 issue -->
+			li span. { clear: both; line-height:0; width:0; height:0; margin:0; padding:0; }
+			span.footnodeNumber { padding-right:1em; }
+			span.annotation_style_by_filter { font-size:95%; font-family:Arial; background-color:#fff000; margin:0; border:0; padding:0; }
+			* { margin:0;}
+			.fr1 { font-size:12pt; font-family:Liberation Serif; text-align:center; vertical-align:top; writing-mode:lr-tb; }
+			.P1 { font-size:12pt; font-family:Liberation Serif; writing-mode:page; }
+			.P2 { font-size:12pt; font-family:Liberation Serif; writing-mode:page; font-weight:bold; }
+			<!-- ODF styles with no properties representable as CSS -->
+			{ }
+		</style>
+	</head>
+	<body dir="ltr" style="max-width:8.5in;margin-top:0.7874in; margin-bottom:0.7874in; margin-left:0.7874in; margin-right:0.7874in; ">
+		<p class="P1">Stephen Ranger</p>
+		<p class="P1">Thesis Update #1</p>
+		<p class="P1">2016-06-27</p>
+		<p class="P1"> </p>
+		<p class="P2">Octree, Icosatree, and Interactive Visualization</p>
+		<p class="P1"> </p>
+		<p class="P1"> </p>
+		<p class="P1">Currently, the system being designed to test and evaluate my thesis is in the early stages of development. I have developed a storage system for both my Octree and Icosatree data structure that can be accessed via a local storage system as well as through a web server for remote access. Each data structure is defined by a logical file tree based on the depth and location of each node in the data structure. Each node, in turn, is given a unique identifier based on the path taken from the root node in the tree to itself. </p>
+		<p class="P1"> </p>
+		<p class="P1">The Octree, for example, has a single root node and each child node has, at most, eight children. Each child appends an index onto its parent's identifier. The root node is defined by the empty string and as the tree is traversed this identifier is expanded. The root node will potentially contain a child node for the indexes 0-7. Each of these will potentially then contain a child with index 0-7. Any nodes that contain zero points are not created in order to save disk space. </p>
+		<p class="P1"> </p><!--Next 'div' was a 'text:p'. -->
+		<div class="P1"><!--Next 'div' is emulating the top hight of a draw:frame. --><!--Next ' div' is a draw:frame. -->
+			<div style="height:4.328in;width:6.9252in; padding:0;  float:left; position:relative; left:0cm; " class="fr1" id="Image3">
+				<img style="height:10.9931cm;width:17.59cm;" alt="" src="octree.png" />
+			</div>
+		</div>
+		<div style="clear:both; line-height:0; width:0; height:20px; margin:0; padding:0;"> </div><!--Next 'div' was a 'text:p'. -->
+		<div class="P1"><!--Next 'div' is emulating the top hight of a draw:frame. --><!--Next ' div' is a draw:frame. -->
+			<div style="height:4.328in;width:6.9252in; padding:0;  float:left; position:relative; left:0cm; " class="fr1" id="Image4">
+				<img style="height:10.9931cm;width:17.59cm;" alt="" src="octree_wireframe.png" />
+			</div>
+		</div>
+		<div style="clear:both; line-height:0; width:0; height:0; margin:0; padding:0;"> </div>
+		<p class="P1">The Icosatree data structure is very similar to the Octree structure with a few exceptions. First, the root node has, at most, twenty child nodes; these uses index values from A to T as the root is split into twenty triangular prisms. Then, each node thereafter is split into eight child nodes. These triangular prisms are split into four equal sections along its face and then split a second time along its altitude. These nodes use the same 0-7 index structure as the Octree does.</p>
+		<p class="P1"> </p><!--Next 'div' was a 'text:p'. -->
+		<div class="P1"><!--Next 'div' is emulating the top hight of a draw:frame. --><!--Next ' div' is a draw:frame. -->
+			<div style="height:4.328in;width:6.9252in; padding:0;  float:left; position:relative; left:0cm; " class="fr1" id="Image5">
+				<img style="height:10.9931cm;width:17.59cm;" alt="" src="icosahedron.png" />
+			</div>
+		</div>
+		<div style="clear:both; line-height:0; width:0; height:20px; margin:0; padding:0;"> </div><!--Next 'div' was a 'text:p'. -->
+		<div class="P1"><!--Next 'div' is emulating the top hight of a draw:frame. --><!--Next ' div' is a draw:frame. -->
+			<div style="height:4.328in;width:6.9252in; padding:0;  float:left; position:relative; left:0cm; " class="fr1" id="Image6">
+				<img style="height:10.9931cm;width:17.59cm;" alt="" src="icosahedron_wireframe.png" />
+			</div>
+		</div>
+		<div style="clear:both; line-height:0; width:0; height:0; margin:0; padding:0;"> </div>
+		<p class="P1">The reasoning behind this setup is twofold. First, the defined unique identifiers double as an identifier for each node as well as a defined path through the tree. Second, it should allow the visualization component the ability to work on both datasets without modification. </p>
+		<p class="P1"> </p>
+		<p class="P1">The interactive visualization component is in its infancy at this time, however, it is at the point where the geospatial visualization is starting to take shape. A WGS84 based World element has been created and a navigation system designed around it. The World element is currently a tessellated ellipsoid and, in the future, will be augmented to tessellate itself based on a level-of-detail algorithm defined by the distance of the camera to each individual triangle. Optimally, this will be done with a geometry and tessellation shader. The navigation system contains a Cartesian anchor point that is defined by a mouse-ellipsoid intersection and a spherical orientation (elevation, azimuth, range) for the camera location relative to the anchor point. The mouse modifies these values in a few ways. First, the left click and drag motion modifies the anchor directly by rotating the camera around the ellipsoid and keeping the mouse pointer tethered to the geodetic coordinate it
+			first intersected. As the mouse is dragged, this point is moved with it; the anchor is then rotated to compensate. A right click and drag modifies the camera's spherical coordinate by changing the elevation and azimuth as the user drags the mouse along to X- and Y-axis of the screen. This movement is bound within the [0-PI] range for elevation and the [-PI, PI] range for azimuth. The mouse wheel scrolling is used to modify the distance from the anchor to the camera and the speed at which this occurs is scaled as the camera gets closer to, or further from, the anchor.</p>
+		<p class="P1"> </p><!--Next 'div' was a 'text:p'. -->
+		<div class="P1"><!--Next 'div' is emulating the top hight of a draw:frame. --><!--Next ' div' is a draw:frame. -->
+			<div style="height:4.328in;width:6.9252in; padding:0;  float:left; position:relative; left:0cm; " class="fr1" id="Image1">
+				<img style="height:10.9931cm;width:17.59cm;" alt="" src="earth.png" />
+			</div>
+         <div style="clear:both; line-height:0; width:0; height:20px; margin:0; padding:0;"> </div><!--Next 'div' was a 'text:p'. -->
+			<div style="height:4.328in;width:6.9252in; padding:0;  float:left; position:relative; left:0cm; " class="fr1" id="Image2">
+				<img style="height:10.9931cm;width:17.59cm;" alt="" src="earth_wireframe.png" />
+			</div>
+		</div>
+		<div style="clear:both; line-height:0; width:0; height:0; margin:0; padding:0;"> </div>
+	</body>
+</html>

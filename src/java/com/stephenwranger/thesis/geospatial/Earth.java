@@ -27,6 +27,7 @@ public class Earth extends Renderable {
    private static final Texture2d EARTH_1K = Texture2d.getTexture(Earth.class.getResourceAsStream("Earth.png"), GL2.GL_RGBA);
    
    private EllipticalGeometry geometry = null;
+   private boolean isWireframe = false;
    
    public Earth() {
       super(new Tuple3d(), new Quat4d());
@@ -39,7 +40,7 @@ public class Earth extends Renderable {
          this.geometry.setTexture(EARTH_1K);
       }
       
-      gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
+      gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, (isWireframe) ? GL2.GL_LINE : GL2.GL_FILL);
       geometry.render(gl, glu, glDrawable, scene);
    }
    
@@ -68,5 +69,13 @@ public class Earth extends Renderable {
    @Override
    public PickingHit getIntersection(final PickingRay ray) {
       return (this.geometry == null) ? PickingRay.NO_HIT : this.geometry.getIntersection(ray);
+   }
+   
+   public void setWireframe(final boolean isWireframe) {
+      this.isWireframe = isWireframe;
+   }
+   
+   public boolean isWireframe() {
+      return this.isWireframe;
    }
 }
