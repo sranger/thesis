@@ -3,6 +3,7 @@ package com.stephenwranger.thesis.geospatial;
 import com.stephenwranger.graphics.math.PickingRay;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Ellipsoid;
 import com.stephenwranger.graphics.utils.MathUtils;
 
@@ -185,5 +186,22 @@ public class WGS84 {
       }
 
       return solution;
+   }
+   
+
+   public static RotationTransformation getRotationTransformation(final Tuple3d lonLatAlt1, final Tuple3d lonLatAlt2) {
+      final Vector3d xyz1 = new Vector3d(WGS84.geodesicToCartesian(lonLatAlt1));
+      final Vector3d xyz2 = new Vector3d(WGS84.geodesicToCartesian(lonLatAlt2));
+
+      final double angle = xyz2.angleRadians(xyz1);
+      
+      if (angle == 0) {
+         return null;
+      }
+
+      final Vector3d axis = new Vector3d();
+      axis.cross(xyz2, xyz1);
+      axis.normalize();
+      return new RotationTransformation(axis, angle);
    }
 }
