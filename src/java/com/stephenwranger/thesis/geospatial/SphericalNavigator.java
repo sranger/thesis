@@ -15,6 +15,7 @@ import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
+import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.math.CameraUtils;
 import com.stephenwranger.graphics.math.PickingRay;
 import com.stephenwranger.graphics.math.Quat4d;
@@ -54,6 +55,15 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       
       this.textRenderer = new TextRenderable(new Font("SansSerif", Font.PLAIN, 32));
       this.scene.addRenderableOrthographic(this.textRenderer);
+   }
+   
+   public synchronized void setViewingVolume(final BoundingVolume boundingVolume) {
+      final Tuple3d center = boundingVolume.getCenter();
+      final Tuple3d centerLonLatAlt = WGS84.cartesianToGeodesic(center);
+      centerLonLatAlt.z = 0.0;
+      this.anchor.set(WGS84.geodesicToCartesian(centerLonLatAlt));
+      this.cameraCoordinate.setRange(boundingVolume.getSpannedDistance(null) / 2.0);
+      this.update = true;
    }
 
    public void removeListeners() {
@@ -130,24 +140,10 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
          final Tuple3d from = (this.mouseLonLatAlt == null) ? this.getIntersection(this.previousEvent) : new Tuple3d(this.mouseLonLatAlt);
          final Tuple3d to = this.getIntersection(this.currentEvent);
          
-         if(this.mouseLonLatAlt == null) {
-            this.mouseLonLatAlt = new Tuple3d(from);
-         }
-         
          if(from != null && to != null) {
-//            final Vector3d fromVector = new Vector3d(from);
-//            fromVector.normalize();
-//            final Vector3d toVector = new Vector3d(to);
-//            toVector.normalize();
-//            final Vector3d axis = new Vector3d();
-//            axis.cross(fromVector, toVector);
-//            axis.normalize();
-//            
-//            final double angleDegrees = fromVector.angleDegrees(toVector);
-//            System.out.println(from + ", " + to + ", " + angleDegrees);
-//            final Quat4d rotation = new Quat4d(axis, angleDegrees);
-//            
-//            rotation.rotateVector(this.anchor);
+            if(this.mouseLonLatAlt == null) {
+               this.mouseLonLatAlt = new Tuple3d(from);
+            }
             
             final RotationTransformation transformation = WGS84.getRotationTransformation(from, to);
             transformation.apply(this.anchor);
