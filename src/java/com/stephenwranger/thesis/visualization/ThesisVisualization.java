@@ -8,17 +8,14 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import com.stephenwranger.graphics.Scene;
-import com.stephenwranger.graphics.bounds.BoundingSphere;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.color.Color4f;
-import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.thesis.data.Attribute;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
-import com.stephenwranger.thesis.geospatial.WGS84;
 import com.stephenwranger.thesis.icosatree.Icosatree;
 
 public class ThesisVisualization extends JFrame {
@@ -57,6 +54,7 @@ public class ThesisVisualization extends JFrame {
 //      for(int i = start; i < end; i++) {
       
       final int[] list = new int[] { 10, 11, 16 }; // over USA
+      final boolean drawNormals = false;
       
       for(final int i : list) {
          final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
@@ -68,10 +66,15 @@ public class ThesisVisualization extends JFrame {
          final Triangle3d[] faces = volume.getFaces();
 
          final TriangleMesh mesh01 = new TriangleMesh(new Triangle3d[] { faces[0], faces[1] }, color01);
+         mesh01.setDrawNormals(drawNormals);
          final TriangleMesh mesh23 = new TriangleMesh(new Triangle3d[] { faces[2], faces[3] }, color23);
+         mesh23.setDrawNormals(drawNormals);
          final TriangleMesh mesh45 = new TriangleMesh(new Triangle3d[] { faces[4], faces[5] }, color45);
+         mesh45.setDrawNormals(drawNormals);
          final TriangleMesh meshTop = new TriangleMesh(new Triangle3d[] { faces[6] }, colorTop);
+         meshTop.setDrawNormals(drawNormals);
          final TriangleMesh meshBottom = new TriangleMesh(new Triangle3d[] { faces[7] }, colorBottom);
+         meshBottom.setDrawNormals(drawNormals);
          this.scene.addRenderable(mesh01);
          this.scene.addRenderable(mesh23);
          this.scene.addRenderable(mesh45);
