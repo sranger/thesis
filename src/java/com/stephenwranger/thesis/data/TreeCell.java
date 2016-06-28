@@ -67,13 +67,14 @@ public abstract class TreeCell implements Iterable<Point> {
    protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {
       TreeCell child = null;
       System.out.println("\n\n" + point);
+      
       for(final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
          final int childIndex = entry.getKey();
          final BoundingVolume childBounds = entry.getValue();
-         System.out.println("\tcontains? " + childBounds.contains(point));
          
          if(childBounds.contains(point)) {
             child = tree.getCell(this.path, childIndex);
+      
             if(!child.getBoundingVolume().equals(childBounds)) {
                System.err.println("child bounds dont match: " + child.getPath());
                System.err.println("\tin octet = " + child.getBoundingVolume());

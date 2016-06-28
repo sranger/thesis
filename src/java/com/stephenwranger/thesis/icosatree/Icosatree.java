@@ -10,11 +10,12 @@ import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
-import com.stephenwranger.thesis.geospatial.WGS84;
 
 /**
  * Icosahedron structure based on icosahedron stellar grid from Stellarium (http://www.stellarium.org/).<br/>
  * Radius computation from http://math.stackexchange.com/a/441378<br/><br/>
+ * 
+ * icosphere construction: http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html<br/><br/>
  * 
  * The root cell of the Icosatree will initially be an axis-aligned bounding box with TreeStructure.MAX_RADIUS * 4.0 as 
  * the x, y, and z dimension sizes. The first split will occur and twenty triangular prisms will be created with the top
@@ -28,49 +29,101 @@ import com.stephenwranger.thesis.geospatial.WGS84;
  */
 public class Icosatree extends TreeStructure {
    // TODO: better radii
-   private static final double RADIUS_MAX = TreeStructure.MAX_RADIUS * 2.0;
-   private static final double RADIUS_MIN = TreeStructure.MAX_RADIUS * 0.8;
+   private static final double RADIUS_MAX = TreeStructure.MAX_RADIUS * 1.258408572364819; // causes internal spherical radius to equal the MAX_RADIUS value
+   private static final double RADIUS_MIN = RADIUS_MAX * 0.5;
    private static final double RADIUS_MODIFIER = 1.0 / (2.0 * Math.sin(MathUtils.TWO_PI / 5.0));
-   private static final double G = 0.5 * (1.0 + Math.sqrt(5.0));
-   private static final double B = 1.0 / Math.sqrt(1.0 + G * G);
-   private static final double A = B * G;
 
+// stellarium
+//   private static final double G = 0.5 * (1.0 + Math.sqrt(5.0));
+//   private static final double B = 1.0 / Math.sqrt(1.0 + G * G);
+//   private static final double A = B * G;
+//
+//   private static final Vector3d[] ICOSAHEDRON_CORNERS = new Vector3d[] {
+//      new Vector3d(  A,   -B,  0.0),
+//      new Vector3d(  A,    B,  0.0),
+//      new Vector3d( -A,    B,  0.0),
+//      new Vector3d( -A,   -B,  0.0),
+//      new Vector3d(0.0,    A,   -B),
+//      new Vector3d(0.0,    A,    B),
+//      new Vector3d(0.0,   -A,    B),
+//      new Vector3d(0.0,   -A,   -B),
+//      new Vector3d( -B,  0.0,    A),
+//      new Vector3d(  B,  0.0,    A),
+//      new Vector3d(  B,  0.0,   -A),
+//      new Vector3d( -B,  0.0,   -A)
+//   };
+//
+//   private static final Vector3d[][] ICOSAHEDRON_FACES = new Vector3d[][] {
+//      { ICOSAHEDRON_CORNERS[1],    ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[10] }, // 0
+//      { ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[1],    ICOSAHEDRON_CORNERS[9] },  // 1
+//      { ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[6] },  // 2
+//      { ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[6] },  // 3
+//      { ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[10] }, // 4
+//      { ICOSAHEDRON_CORNERS[6],    ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[0] },  // 5
+//      { ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[6],    ICOSAHEDRON_CORNERS[3] },  // 6
+//      { ICOSAHEDRON_CORNERS[6],    ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[3] },  // 7
+//      { ICOSAHEDRON_CORNERS[11],   ICOSAHEDRON_CORNERS[10],   ICOSAHEDRON_CORNERS[7] },  // 8
+//      { ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[3],    ICOSAHEDRON_CORNERS[11] }, // 9
+//      { ICOSAHEDRON_CORNERS[3],    ICOSAHEDRON_CORNERS[2],    ICOSAHEDRON_CORNERS[11] }, // 10
+//      { ICOSAHEDRON_CORNERS[2],    ICOSAHEDRON_CORNERS[3],    ICOSAHEDRON_CORNERS[8] },  // 11
+//      { ICOSAHEDRON_CORNERS[10],   ICOSAHEDRON_CORNERS[11],   ICOSAHEDRON_CORNERS[4] },  // 12
+//      { ICOSAHEDRON_CORNERS[11],    ICOSAHEDRON_CORNERS[2],   ICOSAHEDRON_CORNERS[4] },  // 13
+//      { ICOSAHEDRON_CORNERS[5],    ICOSAHEDRON_CORNERS[4],    ICOSAHEDRON_CORNERS[2] },  // 14
+//      { ICOSAHEDRON_CORNERS[2],    ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[5] },  // 15
+//      { ICOSAHEDRON_CORNERS[4],    ICOSAHEDRON_CORNERS[1],    ICOSAHEDRON_CORNERS[10] }, // 16
+//      { ICOSAHEDRON_CORNERS[4],    ICOSAHEDRON_CORNERS[5],    ICOSAHEDRON_CORNERS[1] },  // 17
+//      { ICOSAHEDRON_CORNERS[5],    ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[1] },  // 18
+//      { ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[5] }   // 19
+//   };
+   
+   
+   // andreaskahler.com
+   private static final double T = (1.0 + Math.sqrt(5.0)) / 2.0;
    private static final Vector3d[] ICOSAHEDRON_CORNERS = new Vector3d[] {
-      new Vector3d(  A,   -B,  0.0),
-      new Vector3d(  A,    B,  0.0),
-      new Vector3d( -A,    B,  0.0),
-      new Vector3d( -A,   -B,  0.0),
-      new Vector3d(0.0,    A,   -B),
-      new Vector3d(0.0,    A,    B),
-      new Vector3d(0.0,   -A,    B),
-      new Vector3d(0.0,   -A,   -B),
-      new Vector3d( -B,  0.0,    A),
-      new Vector3d(  B,  0.0,    A),
-      new Vector3d(  B,  0.0,   -A),
-      new Vector3d( -B,  0.0,   -A)
+      new Vector3d(-1,  T,  0),
+      new Vector3d( 1,  T,  0),
+      new Vector3d(-1, -T,  0),
+      new Vector3d( 1, -T,  0),
+   
+      new Vector3d( 0, -1,  T),
+      new Vector3d( 0,  1,  T),
+      new Vector3d( 0, -1, -T),
+      new Vector3d( 0,  1, -T),
+   
+      new Vector3d( T,  0, -1),
+      new Vector3d( T,  0,  1),
+      new Vector3d(-T,  0, -1),
+      new Vector3d(-T,  0,  1)
    };
-
+   
    private static final Vector3d[][] ICOSAHEDRON_FACES = new Vector3d[][] {
-      { ICOSAHEDRON_CORNERS[1],    ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[10] }, // 0
-      { ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[1],    ICOSAHEDRON_CORNERS[9] },  // 1
-      { ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[6] },  // 2
-      { ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[6] },  // 3
-      { ICOSAHEDRON_CORNERS[0],    ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[10] }, // 4
-      { ICOSAHEDRON_CORNERS[6],    ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[0] },  // 5
-      { ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[6],    ICOSAHEDRON_CORNERS[3] },  // 6
-      { ICOSAHEDRON_CORNERS[6],    ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[3] },  // 7
-      { ICOSAHEDRON_CORNERS[11],   ICOSAHEDRON_CORNERS[10],   ICOSAHEDRON_CORNERS[7] },  // 8
-      { ICOSAHEDRON_CORNERS[7],    ICOSAHEDRON_CORNERS[3],    ICOSAHEDRON_CORNERS[11] }, // 9
-      { ICOSAHEDRON_CORNERS[3],    ICOSAHEDRON_CORNERS[2],    ICOSAHEDRON_CORNERS[11] }, // 10
-      { ICOSAHEDRON_CORNERS[2],    ICOSAHEDRON_CORNERS[3],    ICOSAHEDRON_CORNERS[8] },  // 11
-      { ICOSAHEDRON_CORNERS[10],   ICOSAHEDRON_CORNERS[11],   ICOSAHEDRON_CORNERS[4] },  // 12
-      { ICOSAHEDRON_CORNERS[11],    ICOSAHEDRON_CORNERS[2],   ICOSAHEDRON_CORNERS[4] },  // 13
-      { ICOSAHEDRON_CORNERS[5],    ICOSAHEDRON_CORNERS[4],    ICOSAHEDRON_CORNERS[2] },  // 14
-      { ICOSAHEDRON_CORNERS[2],    ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[5] },  // 15
-      { ICOSAHEDRON_CORNERS[4],    ICOSAHEDRON_CORNERS[1],    ICOSAHEDRON_CORNERS[10] }, // 16
-      { ICOSAHEDRON_CORNERS[4],    ICOSAHEDRON_CORNERS[5],    ICOSAHEDRON_CORNERS[1] },  // 17
-      { ICOSAHEDRON_CORNERS[5],    ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[1] },  // 18
-      { ICOSAHEDRON_CORNERS[8],    ICOSAHEDRON_CORNERS[9],    ICOSAHEDRON_CORNERS[5] }   // 19
+      // 5 faces around point 0
+      { ICOSAHEDRON_CORNERS[0], ICOSAHEDRON_CORNERS[11], ICOSAHEDRON_CORNERS[5] },
+      { ICOSAHEDRON_CORNERS[0], ICOSAHEDRON_CORNERS[5], ICOSAHEDRON_CORNERS[1] },
+      { ICOSAHEDRON_CORNERS[0], ICOSAHEDRON_CORNERS[1], ICOSAHEDRON_CORNERS[7] },
+      { ICOSAHEDRON_CORNERS[0], ICOSAHEDRON_CORNERS[7], ICOSAHEDRON_CORNERS[10] },
+      { ICOSAHEDRON_CORNERS[0], ICOSAHEDRON_CORNERS[10], ICOSAHEDRON_CORNERS[11] },
+
+      // 5 adjacent faces
+      { ICOSAHEDRON_CORNERS[1], ICOSAHEDRON_CORNERS[5], ICOSAHEDRON_CORNERS[9] },
+      { ICOSAHEDRON_CORNERS[5], ICOSAHEDRON_CORNERS[11], ICOSAHEDRON_CORNERS[4] },
+      { ICOSAHEDRON_CORNERS[11], ICOSAHEDRON_CORNERS[10], ICOSAHEDRON_CORNERS[2] },
+      { ICOSAHEDRON_CORNERS[10], ICOSAHEDRON_CORNERS[7], ICOSAHEDRON_CORNERS[6] },
+      { ICOSAHEDRON_CORNERS[7], ICOSAHEDRON_CORNERS[1], ICOSAHEDRON_CORNERS[8] },
+
+      // 5 faces around point 3
+      { ICOSAHEDRON_CORNERS[3], ICOSAHEDRON_CORNERS[9], ICOSAHEDRON_CORNERS[4] },
+      { ICOSAHEDRON_CORNERS[3], ICOSAHEDRON_CORNERS[4], ICOSAHEDRON_CORNERS[2] },
+      { ICOSAHEDRON_CORNERS[3], ICOSAHEDRON_CORNERS[2], ICOSAHEDRON_CORNERS[6] },
+      { ICOSAHEDRON_CORNERS[3], ICOSAHEDRON_CORNERS[6], ICOSAHEDRON_CORNERS[8] },
+      { ICOSAHEDRON_CORNERS[3], ICOSAHEDRON_CORNERS[8], ICOSAHEDRON_CORNERS[9] },
+
+      // 5 adjacent faces
+      { ICOSAHEDRON_CORNERS[4], ICOSAHEDRON_CORNERS[9], ICOSAHEDRON_CORNERS[5] },
+      { ICOSAHEDRON_CORNERS[2], ICOSAHEDRON_CORNERS[4], ICOSAHEDRON_CORNERS[11] },
+      { ICOSAHEDRON_CORNERS[6], ICOSAHEDRON_CORNERS[2], ICOSAHEDRON_CORNERS[10] },
+      { ICOSAHEDRON_CORNERS[8], ICOSAHEDRON_CORNERS[6], ICOSAHEDRON_CORNERS[7] },
+      { ICOSAHEDRON_CORNERS[9], ICOSAHEDRON_CORNERS[8], ICOSAHEDRON_CORNERS[1] }
    };
 
    public Icosatree(DataAttributes attributes, int[] cellSplit) {
@@ -197,43 +250,27 @@ public class Icosatree extends TreeStructure {
       final Tuple3d origin = new Tuple3d();
       
       for(int i = 0; i < ICOSAHEDRON_FACES.length; i++) {
+         System.out.println("\n\nface #" + i);
+         
          final String path = "" + (char) (i + 65);
-         final Triangle3d triangle = new Triangle3d(ICOSAHEDRON_FACES[i][0], ICOSAHEDRON_FACES[i][1], ICOSAHEDRON_FACES[i][2]);
-         System.out.println("\n\nface # " + i + " origin inside? " + triangle.isBehind(origin));
-         final double[] radii = getRadii(path);
-         final Vector3d[] faceVertices = getFaceVertices(path);
+         Triangle3d triangle = new Triangle3d(ICOSAHEDRON_FACES[i][0], ICOSAHEDRON_FACES[i][1], ICOSAHEDRON_FACES[i][2]);
          
-//         System.out.println("Path: " + path);
-//         System.out.println("radii: " + Arrays.toString(radii));
-//         System.out.println("corners normalized: " + Arrays.toString(faceVertices));
-         
-         final Tuple3d[] top = new Tuple3d[3];
-         final Tuple3d[] bottom = new Tuple3d[3];
-         final Tuple3d testPoint = new Tuple3d(WGS84.EQUATORIAL_RADIUS, 0, 0); // should be lon/lat = 0,0
-         
-         for(int j = 0; j < 3; j++) {
-            top[j] = new Vector3d(ICOSAHEDRON_FACES[i][j]).scale(radii[0] * RADIUS_MODIFIER);
-            
-            // swap bottom corner winding so it faces "in"
-            bottom[2-j] = new Vector3d(ICOSAHEDRON_FACES[i][j]).scale(radii[1] * RADIUS_MODIFIER);
-
-//            average.add(top[j]);
-//            average.add(bottom[2-j]);
-         }
-
-//         average.x /= 6;
-//         average.y /= 6;
-//         average.z /= 6;
-         
-//         System.out.println("average: " + average);
+//         System.out.println("face # " + i + " origin inside? " + triangle.isBehind(origin));
+//         final double[] radii = getRadii(path);
+//         final Vector3d[] faceVertices = getFaceVertices(path);
+//         
+//         final Tuple3d[] top = new Tuple3d[3];
+//         final Tuple3d[] bottom = new Tuple3d[3];
 //
-//         final Triangle3d topTriangle = new Triangle3d(top[0], top[1], top[2]);
-//         final Triangle3d bottomTriangle = new Triangle3d(bottom[0], bottom[1], bottom[2]);
-//         System.out.println("isBehind top? " + topTriangle.isBehind(origin));
-//         System.out.println("isNotBehind bottom? " + !bottomTriangle.isBehind(origin));
-         
-            final TrianglePrismVolume bounds = new TrianglePrismVolume(top, bottom);
-            System.out.println("prism average in bounds? " + bounds.contains(testPoint));
+//         for(int j = 0; j < 3; j++) {
+//            top[j] = new Vector3d(ICOSAHEDRON_FACES[i][j]).scale(radii[0] * RADIUS_MODIFIER);
+//            
+//            bottom[j] = new Vector3d(ICOSAHEDRON_FACES[i][j]).scale(radii[1] * RADIUS_MODIFIER);
+//         }
+//         
+//         final TrianglePrismVolume bounds = new TrianglePrismVolume(top, bottom);
+//         final Tuple3d center = bounds.getCenter();
+//         System.out.println("prism average in bounds? " + bounds.contains(center));
       }
    }
 }

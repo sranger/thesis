@@ -9,11 +9,17 @@ import javax.swing.SwingUtilities;
 
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.BoundingSphere;
+import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
+import com.stephenwranger.graphics.color.Color4f;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.intersection.Triangle3d;
+import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.thesis.data.Attribute;
+import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.geospatial.WGS84;
+import com.stephenwranger.thesis.icosatree.Icosatree;
 
 public class ThesisVisualization extends JFrame {
    private static final long serialVersionUID = 545923577250987084L;
@@ -29,7 +35,7 @@ public class ThesisVisualization extends JFrame {
       
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);
-      this.scene.setViewingVolume(new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS / 2.0));
+//      this.scene.setViewingVolume(new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS / 2.0));
       
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       this.scene.addPreRenderable(navigator);
@@ -39,21 +45,38 @@ public class ThesisVisualization extends JFrame {
       attributes.add(new Attribute("1,Y,8,8,DOUBLE,8,-4469545.061828081,-4468937.152562849,-4469280.47211661,27.343033140313597"));
       attributes.add(new Attribute("2,Z,16,8,DOUBLE,8,3671282.354341662,3671858.9230972063,3671551.800912032,105.13728902370654"));
 
-//      final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
+      final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
+      final Color4f color01 = new Color4f(1f,0f,0f,1f);
+      final Color4f color23 = new Color4f(0f,1f,0f,1f);
+      final Color4f color45 = new Color4f(0f,0f,1f,1f);
+      final Color4f colorTop = new Color4f(1f,1f,1f,1f);
+      final Color4f colorBottom = new Color4f(0.3f,0.3f,0.3f,1f);
       
-//      final Octree tree = new Octree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
+//      final int start = 16;
+//      final int end = start + 1;
+//      for(int i = start; i < end; i++) {
       
-      for(int i = 0; i < 8; i++) {
-//         final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
-//         final Triangle3d[] faces = volume.getFaces();
+      final int[] list = new int[] { 10, 11, 16 }; // over USA
+      
+      for(final int i : list) {
+         final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
          
-//         final BoundingBox volume = (BoundingBox) tree.getBoundingVolume(Integer.toString(i));
-//         final Triangle3d[] faces = volume.getFaces();
+         if(i == 11) {
+            navigator.setViewingVolume(volume);
+         }
+         
+         final Triangle3d[] faces = volume.getFaces();
 
-//         final Color4f color = new Color4f((float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), (float) Math.max(0.5, Math.random()), 1f);
-//         final TriangleMesh mesh = new TriangleMesh(faces, color);
-//         mesh.setWireframe(true);
-//         this.scene.addRenderable(mesh);
+         final TriangleMesh mesh01 = new TriangleMesh(new Triangle3d[] { faces[0], faces[1] }, color01);
+         final TriangleMesh mesh23 = new TriangleMesh(new Triangle3d[] { faces[2], faces[3] }, color23);
+         final TriangleMesh mesh45 = new TriangleMesh(new Triangle3d[] { faces[4], faces[5] }, color45);
+         final TriangleMesh meshTop = new TriangleMesh(new Triangle3d[] { faces[6] }, colorTop);
+         final TriangleMesh meshBottom = new TriangleMesh(new Triangle3d[] { faces[7] }, colorBottom);
+         this.scene.addRenderable(mesh01);
+         this.scene.addRenderable(mesh23);
+         this.scene.addRenderable(mesh45);
+         this.scene.addRenderable(meshTop);
+         this.scene.addRenderable(meshBottom);
       }
       
       this.getContentPane().add(this.scene);
