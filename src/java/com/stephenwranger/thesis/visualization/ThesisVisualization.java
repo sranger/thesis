@@ -14,6 +14,7 @@ import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.thesis.data.Attribute;
 import com.stephenwranger.thesis.data.DataAttributes;
+import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.icosatree.Icosatree;
@@ -53,11 +54,13 @@ public class ThesisVisualization extends JFrame {
 //      final int end = start + 1;
 //      for(int i = start; i < end; i++) {
       
-      final int[] list = new int[] { 10, 11, 16 }; // over USA
+//      final int[] list = new int[] { 10, 11, 16 }; // over USA
+      final int[] list = new int[] { 0, 1, 2, 3, 4, 5, 6, 7 }; // all children
       final boolean drawNormals = false;
       
       for(final int i : list) {
-         final TrianglePrismVolume volume = (TrianglePrismVolume) tree.getBoundingVolume(Character.toString((char)(i + 65)));
+         final TreeCell cell = tree.getCell("K0", i);
+         final TrianglePrismVolume volume = (TrianglePrismVolume) cell.getBoundingVolume();
          
          if(i == 11) {
             navigator.setViewingVolume(volume);
