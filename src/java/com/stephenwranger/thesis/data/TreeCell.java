@@ -66,7 +66,6 @@ public abstract class TreeCell implements Iterable<Point> {
    
    protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {
       TreeCell child = null;
-      System.out.println("\n\n" + point);
       
       for(final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
          final int childIndex = entry.getKey();
@@ -128,6 +127,11 @@ public abstract class TreeCell implements Iterable<Point> {
          
          pointsByChild.put(insertedInto.getPath(), count);
       }
+   }
+   
+   @Override
+   public String toString() {
+      return "[TreeCell: " + this.path + ", point count: " + this.points.size() + "]";
    }
    
    protected abstract TreeCell addPoint(final TreeStructure tree, final Point point);

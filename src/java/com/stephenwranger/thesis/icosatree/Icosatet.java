@@ -1,8 +1,5 @@
 package com.stephenwranger.thesis.icosatree;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.thesis.data.Point;
 import com.stephenwranger.thesis.data.TreeCell;
@@ -10,7 +7,6 @@ import com.stephenwranger.thesis.data.TreeStructure;
 
 public class Icosatet extends TreeCell {
    
-   private final List<Point> points = new ArrayList<>();
    private final int maxPoints;
    
    private final Tuple3d current = new Tuple3d();
@@ -36,11 +32,17 @@ public class Icosatet extends TreeCell {
       // TODO: implement triangular prism subcells
       TreeCell insertedInto = this;
       
-      if(this.points.size() >= this.maxPoints) {
+      if(this.getPointCount() >= this.maxPoints) {
          insertedInto = this.getChildCell(tree, point.getXYZ(tree, current));
+         
+//         if(insertedInto == null) {
+//            insertedInto = this;
+//            System.err.println("cannot find child node: " + point + "\npath: " + this.path + "\ncontains? " + this.getBoundingVolume().contains(point.getXYZ(tree, new Tuple3d())));
+//         }
+         System.out.println("inserting into: " + insertedInto);
          insertedInto.addPoint(point);
       } else {
-         this.points.add(point);
+         super.addPoint(this.getPointCount(), point);
       }
       
       return insertedInto;

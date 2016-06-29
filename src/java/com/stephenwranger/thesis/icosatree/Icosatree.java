@@ -28,6 +28,7 @@ import com.stephenwranger.thesis.data.TreeStructure;
  *
  */
 public class Icosatree extends TreeStructure {
+   private static final int ASCII_A = 65;
    // TODO: better radii
    private static final double RADIUS_MAX = TreeStructure.MAX_RADIUS * 1.258408572364819; // causes internal spherical radius to equal the MAX_RADIUS value
    private static final double RADIUS_MIN = RADIUS_MAX * 0.5;
@@ -153,7 +154,7 @@ public class Icosatree extends TreeStructure {
          double[] radii = null;
          
          if(path.length() == 1) {
-            final int index = path.charAt(0) - 65;
+            final int index = path.charAt(0) - ASCII_A;
             corners = ICOSAHEDRON_FACES[index];
             radii = new double[] { RADIUS_MAX, RADIUS_MIN };
          } else {
@@ -186,7 +187,7 @@ public class Icosatree extends TreeStructure {
       
       for(int i = 0; i < path.length(); i++) {
          final char ch = path.charAt(i);
-         final int index = (i == 0) ? ch - 65 : Integer.parseInt(Character.toString(ch));
+         final int index = (i == 0) ? ch - ASCII_A : Integer.parseInt(Character.toString(ch));
          final double midRadius = (topRadius - bottomRadius) / 2.0 + bottomRadius;
          
          if(index < 4) {
@@ -213,13 +214,13 @@ public class Icosatree extends TreeStructure {
       
       for(int i = 0; i < path.length(); i++) {
          final char ch = path.charAt(i);
-         final int index = (i == 0) ? ch - 65 : Integer.parseInt(Character.toString(ch));
+         final int index = (i == 0) ? ch - ASCII_A : Integer.parseInt(Character.toString(ch));
          
          if(i == 0) {
             face = new Triangle3d(ICOSAHEDRON_FACES[index][0], ICOSAHEDRON_FACES[index][1], ICOSAHEDRON_FACES[index][2]);
          } else {
             final Triangle3d[] splitFaces = face.split();
-            face = splitFaces[index];
+            face = splitFaces[index % 4]; // 0-3 are top half, 4-7 are bottom half
          }
       }
       
@@ -237,7 +238,7 @@ public class Icosatree extends TreeStructure {
       } else if(path.isEmpty()) {
          // the first level can't use integers as it can have up to twenty children; using letters instead [A-T]
          // 65 in ASCII is A
-         path += (char)(childIndex + 65);
+         path += (char)(childIndex + ASCII_A);
       } else {
          path += childIndex;
       }
@@ -252,7 +253,7 @@ public class Icosatree extends TreeStructure {
       for(int i = 0; i < ICOSAHEDRON_FACES.length; i++) {
          System.out.println("\n\nface #" + i);
          
-         final String path = "" + (char) (i + 65);
+         final String path = "" + (char) (i + ASCII_A);
          Triangle3d triangle = new Triangle3d(ICOSAHEDRON_FACES[i][0], ICOSAHEDRON_FACES[i][1], ICOSAHEDRON_FACES[i][2]);
          
 //         System.out.println("face # " + i + " origin inside? " + triangle.isBehind(origin));
