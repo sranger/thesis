@@ -21,13 +21,14 @@ public abstract class TreeCell implements Iterable<Point> {
    private final Map<Integer, Point> points = new HashMap<>(100, 0.95f);
    private final Map<Integer, BoundingVolume> childBounds = new HashMap<>();
    private final Map<String, Integer> pointsByChild = new HashMap<>();
+   private final Tuple3d tempTuple = new Tuple3d();
    
    protected TreeCell(final TreeStructure tree, final String path) {
       this.tree = tree;
       this.path = path;
       System.arraycopy(tree.getCellSplit(), 0, this.cellSplit, 0, 3);
       
-      this.bounds = (BoundingBox) tree.getBoundingVolume(this.path);
+      this.bounds = tree.getBoundingVolume(this.path);
       this.attributes = tree.getAttributes();
       
       for(int i = 0; i < this.getMaxChildren(); i++) {
@@ -111,11 +112,37 @@ public abstract class TreeCell implements Iterable<Point> {
       return this.cellSplit;
    }
    
-   public void addPoint(final Point point) {
-      final TreeCell insertedInto = this.addPoint(this.tree, point);
+   /*
+      TreeCell insertedInto = this;
       
-      if(insertedInto == null) {
-         throw new NullPointerException("Point was not inserted into a TreeCell");
+      if(this.getPointCount() >= this.maxPoints) {
+         insertedInto = this.getChildCell(tree, point.getXYZ(tree, current));
+         insertedInto.addPoint(point);
+      } else {
+         super.addPoint(this.getPointCount(), point);
+      }
+      
+      return insertedInto;
+    */
+   
+   public void addPoint(final Point point) {
+      final int index = this.getIndex(this.tree, point);
+      TreeCell insertedInto = this;
+      
+      if(this.points.containsKey(index)) {
+         insertedInto = this.getChildCell(this.tree, point.getXYZ(this.tree, this.tempTuple));
+         final Point current = this.getPoint(index);
+         final boolean swap = this.swapPointCheck(this.tree, current, point);
+         Point toInsert = point;
+         
+         if(swap) {
+            // this swap point should be the same as current
+            toInsert = this.swapPoint(index, point);
+         }
+         
+         insertedInto.addPoint(toInsert);
+      } else {
+         this.addPoint(index, point);
       }
       
       if(insertedInto != this) {
@@ -133,7 +160,30 @@ public abstract class TreeCell implements Iterable<Point> {
    public String toString() {
       return "[TreeCell: " + this.path + ", point count: " + this.points.size() + "]";
    }
+
+   /**
+    * Returns the index that the given {@link Point} should be stored in.
+    * 
+    * @param tree the TreeStructure this cell belongs to
+    * @param point
+    * @return
+    */
+   protected abstract int getIndex(final TreeStructure tree, final Point point);
    
-   protected abstract TreeCell addPoint(final TreeStructure tree, final Point point);
+   /**
+    * Called when a cell is currently full; return true to swap pending point with current point. 
+    * 
+    * @param tree the TreeStructure this cell belongs to
+    * @param current point currently in index cell
+    * @param pending point overlapping with current point
+    * @return true to swap points; false to send pending point to child node
+    */
+   protected abstract boolean swapPointCheck(final TreeStructure tree, final Point current, final Point pending);
+   
+   /**
+    * Returns the max number of child nodes this cell will split into.
+    * 
+    * @return
+    */
    public abstract int getMaxChildren();
 }
