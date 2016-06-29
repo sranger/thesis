@@ -34,12 +34,6 @@ public class Icosatet extends TreeCell {
       
       if(this.getPointCount() >= this.maxPoints) {
          insertedInto = this.getChildCell(tree, point.getXYZ(tree, current));
-         
-//         if(insertedInto == null) {
-//            insertedInto = this;
-//            System.err.println("cannot find child node: " + point + "\npath: " + this.path + "\ncontains? " + this.getBoundingVolume().contains(point.getXYZ(tree, new Tuple3d())));
-//         }
-         System.out.println("inserting into: " + insertedInto);
          insertedInto.addPoint(point);
       } else {
          super.addPoint(this.getPointCount(), point);
