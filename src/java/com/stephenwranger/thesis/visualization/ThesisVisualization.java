@@ -29,7 +29,7 @@ public class ThesisVisualization extends JFrame {
       super("Thesis Visualization");
       
       this.earth = new Earth();
-      this.earth.setWireframe(false);
+      this.earth.setWireframe(true);
       
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);
@@ -55,11 +55,11 @@ public class ThesisVisualization extends JFrame {
 //      for(int i = start; i < end; i++) {
       
 //      final int[] list = new int[] { 10, 11, 16 }; // over USA
-      final int[] list = new int[] { 0, 1, 2, 3, 4, 5, 6, 7 }; // all children
+      final int[] list = new int[] { 0 };//, 1, 2, 3, 4, 5, 6, 7 }; // all children
       final boolean drawNormals = false;
       
       for(final int i : list) {
-         final TreeCell cell = tree.getCell("K0", i);
+         final TreeCell cell = tree.getCell("K", i);
          final TrianglePrismVolume volume = (TrianglePrismVolume) cell.getBoundingVolume();
          
          if(i == 11) {
@@ -83,6 +83,28 @@ public class ThesisVisualization extends JFrame {
          this.scene.addRenderable(mesh45);
          this.scene.addRenderable(meshTop);
          this.scene.addRenderable(meshBottom);
+         
+         for(int j = 0; j < 8; j++) {
+            final TreeCell cellIn = tree.getCell("K" + i, j);
+            final TrianglePrismVolume volumeIn = (TrianglePrismVolume) cellIn.getBoundingVolume();
+            final Triangle3d[] facesIn = volumeIn.getFaces();
+
+            final TriangleMesh meshIn01 = new TriangleMesh(new Triangle3d[] { facesIn[0], facesIn[1] }, color01);
+            meshIn01.setDrawNormals(drawNormals);
+            final TriangleMesh meshIn23 = new TriangleMesh(new Triangle3d[] { facesIn[2], facesIn[3] }, color23);
+            meshIn23.setDrawNormals(drawNormals);
+            final TriangleMesh meshIn45 = new TriangleMesh(new Triangle3d[] { facesIn[4], facesIn[5] }, color45);
+            meshIn45.setDrawNormals(drawNormals);
+            final TriangleMesh meshInTop = new TriangleMesh(new Triangle3d[] { facesIn[6] }, colorTop);
+            meshInTop.setDrawNormals(drawNormals);
+            final TriangleMesh meshInBottom = new TriangleMesh(new Triangle3d[] { facesIn[7] }, colorBottom);
+            meshInBottom.setDrawNormals(drawNormals);
+            this.scene.addRenderable(meshIn01);
+            this.scene.addRenderable(meshIn23);
+            this.scene.addRenderable(meshIn45);
+            this.scene.addRenderable(meshInTop);
+            this.scene.addRenderable(meshInBottom);
+         }
       }
       
       this.getContentPane().add(this.scene);
