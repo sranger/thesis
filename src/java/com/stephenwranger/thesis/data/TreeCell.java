@@ -1,6 +1,7 @@
 package com.stephenwranger.thesis.data;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map.Entry;
 
 import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
+import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
 
 public abstract class TreeCell implements Iterable<Point> {
@@ -83,6 +85,41 @@ public abstract class TreeCell implements Iterable<Point> {
             break;
          }
       }
+
+      if(child == null) {
+         final StringBuilder sb = new StringBuilder();
+         
+         if(this.bounds instanceof TrianglePrismVolume) {
+            final TrianglePrismVolume tpv = (TrianglePrismVolume) this.bounds;
+            final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
+            final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
+            
+            for(final Tuple3d corner : topCorners) {
+               sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",-1");
+            }
+            
+            for(final Tuple3d corner : botCorners) {
+               sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",-1");
+            }
+         }
+         
+         for(final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
+            if(entry.getValue() instanceof TrianglePrismVolume) {
+               final TrianglePrismVolume tpv = (TrianglePrismVolume) entry.getValue();
+               final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
+               final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
+               
+               for(final Tuple3d corner : topCorners) {
+                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append(entry.getKey());
+               }
+               
+               for(final Tuple3d corner : botCorners) {
+                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append(entry.getKey());
+               }
+            }
+         }
+         throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",8" + sb.toString());
+      }
       
       return child;
    }
@@ -112,25 +149,13 @@ public abstract class TreeCell implements Iterable<Point> {
       return this.cellSplit;
    }
    
-   /*
-      TreeCell insertedInto = this;
-      
-      if(this.getPointCount() >= this.maxPoints) {
-         insertedInto = this.getChildCell(tree, point.getXYZ(tree, current));
-         insertedInto.addPoint(point);
-      } else {
-         super.addPoint(this.getPointCount(), point);
-      }
-      
-      return insertedInto;
-    */
-   
    public void addPoint(final Point point) {
       final int index = this.getIndex(this.tree, point);
       TreeCell insertedInto = this;
       
       if(this.points.containsKey(index)) {
          insertedInto = this.getChildCell(this.tree, point.getXYZ(this.tree, this.tempTuple));
+         
          final Point current = this.getPoint(index);
          final boolean swap = this.swapPointCheck(this.tree, current, point);
          Point toInsert = point;
