@@ -25,7 +25,7 @@ import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.octree.Octree;
 
 public class TreeBuilder {
-   private static final String USAGE = "OctreeBuilder <type [octree|icosatree; default octree]> <input directory> <output directory> <cell split x> [<cell split y> <cell split z>]";
+   private static final String USAGE = "TreeBuilder <type [octree|icosatree; default octree]> <input directory> <output directory> <cell split x> [<cell split y> <cell split z>]";
    
    public enum TreeTypes {
       OCTREE, ICOSATREE;
@@ -84,11 +84,15 @@ public class TreeBuilder {
                   
                   // read points until file is empty
                   while((index = fin.read(buffer)) != -1) {
-                     final Point point = new Point(this.attributes, buffer);
-                     points.add(point);
-                     
-                     if(points.size() % 1000000 == 0) {
-                        System.out.println("completed " + (points.size() / 1000000) + " million");
+                     if(index == buffer.length) {
+                        final Point point = new Point(this.attributes, buffer);
+                        points.add(point);
+                        
+                        if(points.size() % 1000000 == 0) {
+                           System.out.println("completed " + (points.size() / 1000000) + " million");
+                        }
+                     } else {
+                        throw new IOException("Could not read full buffer");
                      }
                   }
                } catch(final IOException e) {
@@ -104,11 +108,11 @@ public class TreeBuilder {
    
    public void build() {
       if(tree == null) {
-         throw new RuntimeException("Cannot build Octree before initialization is complete");
+         throw new RuntimeException("Cannot build tree before initialization is complete");
       } else {
          final long startTime = System.nanoTime();
          int count = 0;
-         System.out.println("building octree...");
+         System.out.println("building tree...");
          for(final Point point : this.points) {
             this.tree.addPoint(point);
             count++;
@@ -121,7 +125,7 @@ public class TreeBuilder {
             }
          }
          
-         System.out.println("octree built: " + this.tree.getCellCount());
+         System.out.println("tree built: " + this.tree.getCellCount());
          final long endTime = System.nanoTime();
          System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
       }
@@ -129,13 +133,13 @@ public class TreeBuilder {
    
    public void export(final File outputDirectory) {
       if(tree == null) {
-         throw new RuntimeException("Cannot build Octree before initialization is complete");
+         throw new RuntimeException("Cannot build tree before initialization is complete");
       } else {
          final long startTime = System.nanoTime();
-         System.out.println("exporting octree to " + outputDirectory);
+         System.out.println("exporting tree to " + outputDirectory);
          
-         for(final TreeCell octet : this.tree) {
-            final String path = octet.getPath();
+         for(final TreeCell treeCell : this.tree) {
+            final String path = treeCell.getPath();
             File datFile = null;
             File metaFile = null;
             
@@ -143,8 +147,8 @@ public class TreeBuilder {
                datFile = new File(outputDirectory, "/root.dat");
                metaFile = new File(outputDirectory, "/root.txt");
             } else {
-               final String[] split = octet.getPath().substring(0, octet.getPath().length()).split("");
-               final char childIndex = octet.getPath().charAt(octet.getPath().length()-1);
+               final String[] split = treeCell.getPath().substring(0, treeCell.getPath().length()).split("");
+               final char childIndex = treeCell.getPath().charAt(treeCell.getPath().length()-1);
                final String dirPath = String.join("/", split);
                final String datName = childIndex + ".dat";
                final String metaName = childIndex + ".txt";
@@ -155,17 +159,17 @@ public class TreeBuilder {
             }
             
             try(final BufferedWriter fout = new BufferedWriter(new FileWriter(metaFile))) {
-               fout.write(String.join(",", octet.getChildList()));
+               fout.write(String.join(",", treeCell.getChildList()));
             } catch(final IOException e) {
-               throw new RuntimeException("Could not write octet metadata: " + metaFile.getAbsolutePath(), e);
+               throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);
             }
             
             try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(datFile))) {
-               for(final Point p : octet) {
+               for(final Point p : treeCell) {
                   fout.write(p.getRawData().array());
                }
             } catch(final IOException e) {
-               throw new RuntimeException("Could not write octet point data: " + datFile.getAbsolutePath(), e);
+               throw new RuntimeException("Could not write tree cell point data: " + datFile.getAbsolutePath(), e);
             }
          }
          
