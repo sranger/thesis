@@ -15,6 +15,7 @@ import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.thesis.data.Attribute;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.TreeCell;
+import com.stephenwranger.thesis.data.TreeStructure;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.icosatree.Icosatree;
@@ -44,66 +45,17 @@ public class ThesisVisualization extends JFrame {
       attributes.add(new Attribute("2,Z,16,8,DOUBLE,8,3671282.354341662,3671858.9230972063,3671551.800912032,105.13728902370654"));
 
       final Icosatree tree = new Icosatree(new DataAttributes(attributes), new int[] { 10, 10, 10 });
-      final Color4f color01 = new Color4f(1f,0f,0f,1f);
-      final Color4f color23 = new Color4f(0f,1f,0f,1f);
-      final Color4f color45 = new Color4f(0f,0f,1f,1f);
-      final Color4f colorTop = new Color4f(1f,1f,1f,1f);
-      final Color4f colorBottom = new Color4f(0.3f,0.3f,0.3f,1f);
-      
-//      final int start = 16;
-//      final int end = start + 1;
-//      for(int i = start; i < end; i++) {
-      
-//      final int[] list = new int[] { 10, 11, 16 }; // over USA
-      final int[] list = new int[] { 0 };//, 1, 2, 3, 4, 5, 6, 7 }; // all children
+
+//    final int[] list = new int[] { 10, 11, 16 }; // over USA
+      final int[] list = new int[] { 11 };
       final boolean drawNormals = false;
       
       for(final int i : list) {
-         final TreeCell cell = tree.getCell("K", i);
-         final TrianglePrismVolume volume = (TrianglePrismVolume) cell.getBoundingVolume();
+         final TreeCell cell = tree.getCell("", i);
+         this.addRenderables(tree, cell, drawNormals, 3);
          
          if(i == 11) {
-            navigator.setViewingVolume(volume);
-         }
-         
-         final Triangle3d[] faces = volume.getFaces();
-
-         final TriangleMesh mesh01 = new TriangleMesh(new Triangle3d[] { faces[0], faces[1] }, color01);
-         mesh01.setDrawNormals(drawNormals);
-         final TriangleMesh mesh23 = new TriangleMesh(new Triangle3d[] { faces[2], faces[3] }, color23);
-         mesh23.setDrawNormals(drawNormals);
-         final TriangleMesh mesh45 = new TriangleMesh(new Triangle3d[] { faces[4], faces[5] }, color45);
-         mesh45.setDrawNormals(drawNormals);
-         final TriangleMesh meshTop = new TriangleMesh(new Triangle3d[] { faces[6] }, colorTop);
-         meshTop.setDrawNormals(drawNormals);
-         final TriangleMesh meshBottom = new TriangleMesh(new Triangle3d[] { faces[7] }, colorBottom);
-         meshBottom.setDrawNormals(drawNormals);
-         this.scene.addRenderable(mesh01);
-         this.scene.addRenderable(mesh23);
-         this.scene.addRenderable(mesh45);
-         this.scene.addRenderable(meshTop);
-         this.scene.addRenderable(meshBottom);
-         
-         for(int j = 0; j < 8; j++) {
-            final TreeCell cellIn = tree.getCell("K" + i, j);
-            final TrianglePrismVolume volumeIn = (TrianglePrismVolume) cellIn.getBoundingVolume();
-            final Triangle3d[] facesIn = volumeIn.getFaces();
-
-            final TriangleMesh meshIn01 = new TriangleMesh(new Triangle3d[] { facesIn[0], facesIn[1] }, color01);
-            meshIn01.setDrawNormals(drawNormals);
-            final TriangleMesh meshIn23 = new TriangleMesh(new Triangle3d[] { facesIn[2], facesIn[3] }, color23);
-            meshIn23.setDrawNormals(drawNormals);
-            final TriangleMesh meshIn45 = new TriangleMesh(new Triangle3d[] { facesIn[4], facesIn[5] }, color45);
-            meshIn45.setDrawNormals(drawNormals);
-            final TriangleMesh meshInTop = new TriangleMesh(new Triangle3d[] { facesIn[6] }, colorTop);
-            meshInTop.setDrawNormals(drawNormals);
-            final TriangleMesh meshInBottom = new TriangleMesh(new Triangle3d[] { facesIn[7] }, colorBottom);
-            meshInBottom.setDrawNormals(drawNormals);
-            this.scene.addRenderable(meshIn01);
-            this.scene.addRenderable(meshIn23);
-            this.scene.addRenderable(meshIn45);
-            this.scene.addRenderable(meshInTop);
-            this.scene.addRenderable(meshInBottom);
+            navigator.setViewingVolume(cell.getBoundingVolume());
          }
       }
       
@@ -116,6 +68,42 @@ public class ThesisVisualization extends JFrame {
          scene.start();
          setVisible(true);
       });
+   }
+   
+   private void addRenderables(final TreeStructure tree, final TreeCell cell, final boolean drawNormals, final int maxDepth) {
+      final Color4f color01 = new Color4f(1f,0f,0f,1f);
+      final Color4f color23 = new Color4f(0f,1f,0f,1f);
+      final Color4f color45 = new Color4f(0f,0f,1f,1f);
+      final Color4f colorTop = new Color4f(1f,1f,1f,1f);
+      final Color4f colorBottom = new Color4f(0.3f,0.3f,0.3f,1f);
+      final TrianglePrismVolume volume = (TrianglePrismVolume) cell.getBoundingVolume();
+      
+      final Triangle3d[] faces = volume.getFaces();
+
+      final TriangleMesh mesh01 = new TriangleMesh(new Triangle3d[] { faces[0], faces[1] }, color01);
+      mesh01.setDrawNormals(drawNormals);
+      final TriangleMesh mesh23 = new TriangleMesh(new Triangle3d[] { faces[2], faces[3] }, color23);
+      mesh23.setDrawNormals(drawNormals);
+      final TriangleMesh mesh45 = new TriangleMesh(new Triangle3d[] { faces[4], faces[5] }, color45);
+      mesh45.setDrawNormals(drawNormals);
+      final TriangleMesh meshTop = new TriangleMesh(new Triangle3d[] { faces[6] }, colorTop);
+      meshTop.setDrawNormals(drawNormals);
+      final TriangleMesh meshBottom = new TriangleMesh(new Triangle3d[] { faces[7] }, colorBottom);
+      meshBottom.setDrawNormals(drawNormals);
+      this.scene.addRenderable(mesh01);
+      this.scene.addRenderable(mesh23);
+      this.scene.addRenderable(mesh45);
+      this.scene.addRenderable(meshTop);
+      this.scene.addRenderable(meshBottom);
+      
+      final String path = cell.getPath();
+      
+      if(path.length() <= maxDepth) {
+         for(int j = 0; j < 8; j++) {
+            final TreeCell cellIn = tree.getCell(path, j);               
+            this.addRenderables(tree, cellIn, drawNormals, maxDepth);
+         }
+      }
    }
    
    public static void main(final String[] args) {
