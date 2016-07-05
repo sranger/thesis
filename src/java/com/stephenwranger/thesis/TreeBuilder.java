@@ -160,6 +160,11 @@ public class TreeBuilder {
             
             try(final BufferedWriter fout = new BufferedWriter(new FileWriter(metaFile))) {
                fout.write(String.join(",", treeCell.getChildList()));
+               
+               if(path.isEmpty()) {
+                  fout.write("\n");
+                  fout.write(this.getMaxPointCount());
+               }
             } catch(final IOException e) {
                throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);
             }
@@ -204,6 +209,16 @@ public class TreeBuilder {
       }
       final long endTime = System.nanoTime();
       System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
+   }
+   
+   private int getMaxPointCount() {
+      int maxCount = 0;
+      
+      for(final TreeCell treeCell : this.tree) {
+         maxCount = Math.max(maxCount, treeCell.getPointCount());
+      }
+      
+      return maxCount;
    }
    
    private static List<Attribute> readAttributes(final File directory, final String name) {

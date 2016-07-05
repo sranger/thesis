@@ -31,12 +31,12 @@ public class Attribute {
       this.variance = Double.parseDouble(split[9]);
    }
    
-   public Number getValue(final ByteBuffer buffer) {
-      return this.type.get(buffer, this.offset);
+   public Number getValue(final ByteBuffer buffer, final int index, final int stride) {
+      return this.type.get(buffer, index * stride + this.offset);
    }
    
-   public byte[] getBytes(final ByteBuffer buffer) {
-      return this.type.getBytes(buffer, this.offset, this.size);
+   public byte[] getBytes(final ByteBuffer buffer, final int index, final int stride) {
+      return this.type.getBytes(buffer, index * stride + this.offset, this.size);
    }
    
    @Override

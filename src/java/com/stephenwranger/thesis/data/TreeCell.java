@@ -1,29 +1,43 @@
 package com.stephenwranger.thesis.data;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 
-public abstract class TreeCell implements Iterable<Point> {
+public abstract class TreeCell implements Iterable<Point>, SegmentObject {
+   public enum Status {
+      EMPTY, PENDING, COMPLETE
+   }
    
    public final String path;
    
    private final TreeStructure tree;
    private final BoundingVolume bounds;
    private final DataAttributes attributes;
+   private final int stride;
+   private final Map<Integer, BoundingVolume> childBounds = new HashMap<>();
+   private final Tuple3d tempTuple = new Tuple3d();
+   private int poolIndex = -1;
+   private int bufferIndex = -1;
+   
+   // used only when building tree manually
    private final int[] cellSplit = new int[3];
    private final Map<Integer, Point> points = new HashMap<>(100, 0.95f);
-   private final Map<Integer, BoundingVolume> childBounds = new HashMap<>();
    private final Map<String, Integer> pointsByChild = new HashMap<>();
-   private final Tuple3d tempTuple = new Tuple3d();
+   
+   // used only when reading tree from filesystem or http
+   private byte[] pointBuffer = null;
+   private String[] children = null;
+   private Status status = Status.EMPTY;
    
    protected TreeCell(final TreeStructure tree, final String path) {
       this.tree = tree;
@@ -32,6 +46,7 @@ public abstract class TreeCell implements Iterable<Point> {
       
       this.bounds = tree.getBoundingVolume(this.path);
       this.attributes = tree.getAttributes();
+      this.stride = this.attributes.stride;
       
       for(int i = 0; i < this.getMaxChildren(); i++) {
          childBounds.put(i, tree.getBoundingVolume(this.path, i));
@@ -40,15 +55,42 @@ public abstract class TreeCell implements Iterable<Point> {
    
    @Override
    public Iterator<Point> iterator() {
-      return this.points.values().iterator();
+      if(this.pointBuffer == null) {
+         return this.points.values().iterator();
+      } else {
+         final int pointCount = this.getPointCount();
+         
+         return new Iterator<Point>() {
+            private int index = 0;
+            
+            @Override
+            public boolean hasNext() {
+               return index < pointCount;
+            }
+
+            @Override
+            public Point next() {
+               final Point point = getPoint(index);
+               index++;
+               
+               return point;
+            }
+         };
+      }
    }
    
    protected Point getPoint(final int index) {
-      return this.points.get(index);
+      if(this.pointBuffer == null) {
+         return this.points.get(index);
+      } else {
+         return new Point(attributes, Arrays.copyOfRange(pointBuffer, index * stride, stride));
+      }
    }
    
    protected void addPoint(final int index, final Point point) {
-      if(this.points.containsKey(index)) {
+      if(this.pointBuffer != null) {
+         throw new RuntimeException("Cannot add points to a TreeCell initialized via byte array");
+      } else if(this.points.containsKey(index)) {
          throw new RuntimeException("Cannot add new Point when existing Point resides at the given index; use TreeCell.getPoint(int) to determine whether an index is occupied and TreeCell.swapPoint(int, Point) to replace a Point at a given index.");
       }
       
@@ -56,15 +98,51 @@ public abstract class TreeCell implements Iterable<Point> {
    }
    
    protected Point swapPoint(final int index, final Point point) {
-      if(!this.points.containsKey(index)) {
+      if(this.pointBuffer != null) {
+         throw new RuntimeException("Cannot modify points to a TreeCell initialized via byte array");
+      } else if(!this.points.containsKey(index)) {
          throw new RuntimeException("Cannot swap new Point when existing Point does not exist at the given index; use TreeCell.getPoint(int) to determine whether an index is occupied and TreeCell.addPoint(int, Point) to add a new Point at a given index.");
       }
       
       return this.points.put(index, point);
    }
    
-   public void setData(final ByteBuffer buffer) {
-      // TODO: for use when not directly building tree from raw data but from reading pre-computed data structure files
+   public void setData(final byte[] buffer, final String[] children) {
+      System.out.println("setData: " + buffer.length);
+      this.pointBuffer = buffer;
+      this.children = children;
+      this.points.clear();
+      this.pointsByChild.clear();
+      this.status = Status.COMPLETE;
+   }
+   
+   public void setPending() {
+      this.status = Status.PENDING;
+   }
+   
+   public boolean isEmpty() {
+      return this.status == Status.EMPTY;
+   }
+   
+   public boolean isComplete() {
+      return this.status == Status.COMPLETE;
+   }
+   
+   public Status getStatus() {
+      return this.status;
+   }
+   
+   /**
+    * Will load into buffer X,Y,Z,R,G,B,Altitude,Intensity as float values.
+    * 
+    * @param buffer
+    */
+   public void loadBuffer(final FloatBuffer buffer) {
+      final ByteBuffer wrappedData = ByteBuffer.wrap(pointBuffer);
+      
+      for(int i = 0; i < this.getPointCount(); i++) {
+         this.attributes.loadBuffer(buffer, wrappedData, i);
+      }
    }
    
    protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {
@@ -130,7 +208,11 @@ public abstract class TreeCell implements Iterable<Point> {
     * @return
     */
    public String[] getChildList() {
-      return this.pointsByChild.keySet().toArray(new String[this.pointsByChild.size()]);
+      if(this.children == null) {
+         return this.pointsByChild.keySet().toArray(new String[this.pointsByChild.size()]);
+      } else {
+         return this.children.clone();
+      }
    }
 
    public String getPath() {
@@ -138,7 +220,7 @@ public abstract class TreeCell implements Iterable<Point> {
    }
 
    public int getPointCount() {
-      return this.points.size();
+      return (this.pointBuffer == null) ? this.points.size() : this.pointBuffer.length / stride;
    }
 
    public BoundingVolume getBoundingVolume() {
@@ -150,6 +232,10 @@ public abstract class TreeCell implements Iterable<Point> {
    }
    
    public void addPoint(final Point point) {
+      if(this.pointBuffer != null) {
+         throw new RuntimeException("Cannot add points to a TreeCell initialized via byte array");
+      }
+      
       final int index = this.getIndex(this.tree, point);
       TreeCell insertedInto = this;
       
@@ -182,8 +268,34 @@ public abstract class TreeCell implements Iterable<Point> {
    }
    
    @Override
+   public void setSegmentLocation(final int poolIndex, final int bufferIndex) {
+      this.poolIndex = poolIndex;
+      this.bufferIndex = bufferIndex;
+   }
+
+   @Override
+   public int getSegmentPoolIndex() {
+      return this.poolIndex;
+   }
+
+   @Override
+   public int getBufferIndex() {
+      return this.bufferIndex;
+   }
+
+   @Override
+   public byte[] getBuffer() {
+      return this.pointBuffer;
+   }
+
+   @Override
+   public int getVertexCount() {
+      return this.getPointCount();
+   }
+
+   @Override
    public String toString() {
-      return "[TreeCell: " + this.path + ", point count: " + this.points.size() + "]";
+      return "[TreeCell: " + this.path + ", point count: " + this.getPointCount() + "]";
    }
 
    /**
