@@ -163,7 +163,7 @@ public class TreeBuilder {
                
                if(path.isEmpty()) {
                   fout.write("\n");
-                  fout.write(this.getMaxPointCount());
+                  fout.write(Integer.toString(this.getMaxPointCount()));
                }
             } catch(final IOException e) {
                throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);

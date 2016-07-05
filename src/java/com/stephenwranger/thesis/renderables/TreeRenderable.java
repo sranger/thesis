@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
@@ -35,7 +37,7 @@ public class TreeRenderable extends Renderable {
    private final TreeServerConnection connection;
    private final SegmentedVertexBufferPool vboPool;
    private final Set<SegmentObject> segments = new HashSet<>();
-   private final Set<TreeCell> pending = new HashSet<>();
+   private final Queue<TreeCell> pending = new LinkedBlockingQueue<>();
 
    public TreeRenderable(final String basePath, final ConnectionType connectionType) {
       super(new Tuple3d(), new Quat4d());
@@ -49,7 +51,7 @@ public class TreeRenderable extends Renderable {
             new AttributeRegion(10, 1, DataType.FLOAT),  // Altitude
             new AttributeRegion(11, 1, DataType.FLOAT)   // Intensity
       };
-      this.vboPool = new SegmentedVertexBufferPool(50000, 100, GL2.GL_POINTS, bufferRegions);
+      this.vboPool = new SegmentedVertexBufferPool(this.tree.maxPoints == -1 ? 50000 : this.tree.maxPoints, 100, GL2.GL_POINTS, bufferRegions);
    }
 
    @Override
@@ -65,7 +67,7 @@ public class TreeRenderable extends Renderable {
 
       gl.glPushAttrib(GL2.GL_LIGHTING_BIT);
       gl.glDisable(GL2.GL_LIGHTING);
-      gl.glPointSize(40f);
+      gl.glPointSize(4f);
       
       this.vboPool.render(gl, segments);
       
@@ -73,37 +75,26 @@ public class TreeRenderable extends Renderable {
    }
    
    private void checkPending(final GL2 gl) {
-      final Set<TreeCell> stillPending = new HashSet<>();
-      int checked = 0;
-      
-      for(final TreeCell cell : this.pending) {
-         if(checked == 10) {
-            stillPending.add(cell);
-         } else {
-            checked++;
-            if(cell.isComplete()) {            
-               if(cell.getSegmentPoolIndex() == -1) {
-                  this.vboPool.setSegmentObject(gl, cell);
-                  this.segments.add(cell);
-                  
-                  if(cell.path.length() < 20) {
-                     for(final String child : cell.getChildList()) {
-                        final TreeCell childCell = this.tree.getCell(child);
-                        this.connection.request(childCell);
-                        stillPending.add(childCell);
-                     }
+      if(!this.pending.isEmpty()) {
+         final TreeCell cell = this.pending.remove();
+         
+         if(cell.isComplete()) {
+            if(cell.getSegmentPoolIndex() == -1 && cell.getPointCount() > 0) {
+               this.vboPool.setSegmentObject(gl, cell);
+               this.segments.add(cell);
+               
+               if(cell.path.length() < 10) {
+                  for(final String child : cell.getChildList()) {
+                     final TreeCell childCell = this.tree.getCell(child);
+                     this.connection.request(childCell);
+                     this.pending.add(childCell);
                   }
                }
-            } else {
-               stillPending.add(cell);
             }
+         } else {
+            this.pending.add(cell);
          }
       }
-      
-      this.pending.clear();
-      this.pending.addAll(stillPending);
-      
-      gl.glPopAttrib();
    }
 
    @Override
@@ -115,16 +106,19 @@ public class TreeRenderable extends Renderable {
       DataAttributes attributes = null;
       String[] children = null;
       TreeStructure tree = null;
+      int maxPoints = -1;
       
       try {
          switch(connectionType) {
             case FILESYSTEM:
                children = TreeServerProcessor.getChildren(new File(basePath, "root.txt"));
                attributes = TreeServerProcessor.getAttributes(new File(basePath, "attributes.csv"));
+               maxPoints = TreeServerProcessor.getMaxPoints(new File(basePath, "root.txt"));
                break;
             case HTTP:
                children = TreeServerProcessor.getChildren(new URL(basePath + "/root.txt"));
                attributes = TreeServerProcessor.getAttributes(new URL(basePath + "/attributes.csv"));
+               maxPoints = TreeServerProcessor.getMaxPoints(new URL(basePath + "/root.txt"));
                break;
          }
       } catch(final IOException e) {
@@ -133,9 +127,9 @@ public class TreeRenderable extends Renderable {
       
       if(attributes != null && children != null && children.length > 0) {
          if(Character.isAlphabetic(children[0].charAt(0))) {
-            tree = new Icosatree(attributes);
+            tree = new Icosatree(attributes, maxPoints);
          } else {
-            tree = new Octree(attributes);
+            tree = new Octree(attributes, maxPoints);
          }
       }
       

@@ -1,11 +1,13 @@
 package com.stephenwranger.thesis.data;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
+import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.thesis.geospatial.WGS84;
 
 public class DataAttributes implements Iterable<Attribute> {
    private static final String X_ATTRIBUTE_NAME = "X";
@@ -19,6 +21,8 @@ public class DataAttributes implements Iterable<Attribute> {
    
    private static final String[] USED_ATTRIBUTE_NAMES = new String[] { X_ATTRIBUTE_NAME, Y_ATTRIBUTE_NAME, 
          Z_ATTRIBUTE_NAME, R_ATTRIBUTE_NAME, G_ATTRIBUTE_NAME, B_ATTRIBUTE_NAME, A_ATTRIBUTE_NAME, I_ATTRIBUTE_NAME };
+   
+   private static final boolean[] normalize = new boolean[] { false, false, false, true, true, true, false, true };
    
    private final List<Attribute> attributes = new ArrayList<>();
    private final Comparator<Attribute> indexComparator = new Comparator<Attribute>() {
@@ -80,12 +84,32 @@ public class DataAttributes implements Iterable<Attribute> {
     * @param buffer
     * @param pointIndex
     */
-   public void loadBuffer(final FloatBuffer buffer, final ByteBuffer pointData, final int pointIndex) {
-      for(final Attribute attribute : this.usedAttributes) {
+   public void loadBuffer(final ByteBuffer buffer, final ByteBuffer pointData, final int pointIndex) {
+//      double x = 0, y = 0, z = 0;
+      
+      for(int i = 0; i < this.usedAttributes.length; i++) {
+         final Attribute attribute = this.usedAttributes[i];
+         final boolean normalize = DataAttributes.normalize[i];
+         
          if(attribute == null) {
-            buffer.put(0);
+            buffer.putFloat(0f);
          } else {
-            buffer.put(attribute.getValue(pointData, pointIndex, this.stride).floatValue());
+            float value = attribute.getValue(pointData, pointIndex, this.stride).floatValue();
+            
+//            if(i == 0) {
+//               x = (double) value;
+//            } else if(i == 1) {
+//               y = (double) value;
+//            } else if(i == 2) {
+//               z = (double) value;
+//               System.out.println("lon/lat/alt: " + WGS84.cartesianToGeodesic(new Tuple3d(x,y,z)));
+//            }
+            
+            if(normalize) {
+               value /= Math.pow(2, attribute.size * 8); // 2^numBits
+            }
+
+            buffer.putFloat(value);
          }
       }
    }

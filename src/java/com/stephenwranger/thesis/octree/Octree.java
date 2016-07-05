@@ -9,12 +9,12 @@ import com.stephenwranger.thesis.data.TreeStructure;
 
 public class Octree extends TreeStructure {
    
-   public Octree(final DataAttributes attributes) {
-      super(attributes, new int[3]);
+   public Octree(final DataAttributes attributes, final int maxPoints) {
+      super(attributes, new int[3], maxPoints);
    }
    
    public Octree(final DataAttributes attributes, final int[] cellSplit) {
-      super(attributes, cellSplit);
+      super(attributes, cellSplit, -1);
    }
 
    @Override

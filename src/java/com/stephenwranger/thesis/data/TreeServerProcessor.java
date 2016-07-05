@@ -129,6 +129,26 @@ public class TreeServerProcessor extends Thread {
       return children;
    }
    
+   public static int getMaxPoints(final File file) {
+      int maxPoints = -1;
+      
+      try(final BufferedReader reader = new BufferedReader(new FileReader(file))) {
+         final String line = reader.readLine();
+         
+         if(line != null && !line.isEmpty()) {
+            final String pointsLine = reader.readLine();
+            
+            if(pointsLine != null && !pointsLine.isEmpty()) {
+               maxPoints = Integer.parseInt(pointsLine);
+            }
+         }
+      } catch (final IOException e) {
+         e.printStackTrace();
+      }
+      
+      return maxPoints;
+   }
+   
    public static DataAttributes getAttributes(final File file) {
       final List<Attribute> attributes = new ArrayList<>();
       
@@ -179,6 +199,26 @@ public class TreeServerProcessor extends Thread {
       }
       
       return children;
+   }
+   
+   public static int getMaxPoints(final URL url) {
+      int maxPoints = -1;
+
+      try(final BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+         final String line = reader.readLine();
+         
+         if(line != null && !line.isEmpty()) {
+            final String pointsLine = reader.readLine();
+            
+            if(pointsLine != null && !pointsLine.isEmpty()) {
+               maxPoints = Integer.parseInt(pointsLine);
+            }
+         }
+      } catch (final IOException e) {
+         e.printStackTrace();
+      }
+      
+      return maxPoints;
    }
    
    public static DataAttributes getAttributes(final URL url) {
