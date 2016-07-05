@@ -6,7 +6,6 @@ import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
-import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
@@ -79,16 +78,18 @@ public class Icosatree extends TreeStructure {
       { ICOSAHEDRON_CORNERS[8], ICOSAHEDRON_CORNERS[6], ICOSAHEDRON_CORNERS[7] },
       { ICOSAHEDRON_CORNERS[9], ICOSAHEDRON_CORNERS[8], ICOSAHEDRON_CORNERS[1] }
    };
+   
+   public Icosatree(final DataAttributes attributes) {
+      super(attributes, new int[3]);
+   }
 
    public Icosatree(DataAttributes attributes, int[] cellSplit) {
       super(attributes, cellSplit);
    }
 
    @Override
-   public TreeCell createTreeCell(final TreeStructure tree, final String parentPath, final int childIndex) {
-      final String path = this.getPath(parentPath, childIndex);
-      
-      return new Icosatet(tree, path);
+   public TreeCell createTreeCell(final TreeStructure tree, final String childPath) {
+      return new Icosatet(tree, childPath);
    }
 
    @Override
@@ -243,34 +244,5 @@ public class Icosatree extends TreeStructure {
       }
       
       return path;
-   }
-   
-   public static void main(final String[] args) {
-      // verify icosahedron triangles are facing in
-      final Tuple3d origin = new Tuple3d();
-      
-      for(int i = 0; i < ICOSAHEDRON_FACES.length; i++) {
-         System.out.println("\n\nface #" + i);
-         
-         final String path = "" + (char) (i + ASCII_A);
-         Triangle3d triangle = new Triangle3d(ICOSAHEDRON_FACES[i][0], ICOSAHEDRON_FACES[i][1], ICOSAHEDRON_FACES[i][2]);
-         
-//         System.out.println("face # " + i + " origin inside? " + triangle.isBehind(origin));
-//         final double[] radii = getRadii(path);
-//         final Vector3d[] faceVertices = getFaceVertices(path);
-//         
-//         final Tuple3d[] top = new Tuple3d[3];
-//         final Tuple3d[] bottom = new Tuple3d[3];
-//
-//         for(int j = 0; j < 3; j++) {
-//            top[j] = new Vector3d(ICOSAHEDRON_FACES[i][j]).scale(radii[0] * RADIUS_MODIFIER);
-//            
-//            bottom[j] = new Vector3d(ICOSAHEDRON_FACES[i][j]).scale(radii[1] * RADIUS_MODIFIER);
-//         }
-//         
-//         final TrianglePrismVolume bounds = new TrianglePrismVolume(top, bottom);
-//         final Tuple3d center = bounds.getCenter();
-//         System.out.println("prism average in bounds? " + bounds.contains(center));
-      }
    }
 }

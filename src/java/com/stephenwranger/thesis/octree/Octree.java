@@ -9,14 +9,17 @@ import com.stephenwranger.thesis.data.TreeStructure;
 
 public class Octree extends TreeStructure {
    
+   public Octree(final DataAttributes attributes) {
+      super(attributes, new int[3]);
+   }
+   
    public Octree(final DataAttributes attributes, final int[] cellSplit) {
       super(attributes, cellSplit);
    }
 
    @Override
-   public TreeCell createTreeCell(final TreeStructure tree, final String parentPath, final int childIndex) {
-      final String path = this.getPath(parentPath, childIndex);
-      return new Octet(tree, path);
+   public TreeCell createTreeCell(final TreeStructure tree, final String childPath) {
+      return new Octet(tree, childPath);
    }
    
    @Override

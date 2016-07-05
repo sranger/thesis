@@ -78,10 +78,20 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
     * @return
     */
    public TreeCell getCell(final String parentPath, final int childIndex) {
-      TreeCell cell = this.treeCells.get(this.getPath(parentPath, childIndex));
+      return this.getCell(this.getPath(parentPath, childIndex));
+   }
+   
+   /**
+    * Returns the {@link TreeCell} defined by the given child path. Note: this should only be called with a child string returned from a parent tree cell.
+    * 
+    * @param childPath
+    * @return
+    */
+   public TreeCell getCell(final String childPath) {
+      TreeCell cell = this.treeCells.get(childPath);
       
       if(cell == null) {
-         cell = this.createTreeCell(this, parentPath, childIndex);
+         cell = this.createTreeCell(this, childPath);
          this.treeCells.put(cell.getPath(), cell);
       }
       
@@ -101,15 +111,13 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
    public abstract BoundingVolume getBoundingVolume(final String parentPath, final int childIndex);
    
    /**
-    * Creates a new TreeCell with the given path to its parent cell and the specified index; if the parent path is null,
-    * the root node will be returned. Note: the implementation will determine how to build the path string.
+    * Creates a new TreeCell with the given path. Note: this should only be called with a child string returned from a parent tree cell.
     * 
     * @param tree
-    * @param parentPath
-    * @param childIndex
+    * @param childPath
     * @return
     */
-   public abstract TreeCell createTreeCell(final TreeStructure tree, final String parentPath, final int childIndex);
+   public abstract TreeCell createTreeCell(final TreeStructure tree, final String childPath);
    
    public abstract String getPath(final String parentPath, final int childIndex);
 }
