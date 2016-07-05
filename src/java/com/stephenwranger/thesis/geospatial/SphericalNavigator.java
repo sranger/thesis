@@ -57,6 +57,25 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       this.scene.addRenderableOrthographic(this.textRenderer);
    }
    
+   /**
+    * Moves the {@link SphericalNavigator}'s anchor to the given geodetic coordinate and the spherical camera coordinate
+    * to the given azimuth, elevation, and range. 
+    * 
+    * @param longitudeDegrees
+    * @param latitudeDegrees
+    * @param altitudeMeters
+    * @param azimuthRadians
+    * @param elevationRadians
+    * @param rangeMeters
+    */
+   public synchronized void moveTo(final double longitudeDegrees, final double latitudeDegrees, final double altitudeMeters, final double azimuthRadians, final double elevationRadians, final double rangeMeters) {
+      this.anchor.set(WGS84.geodesicToCartesian(new Tuple3d(longitudeDegrees, latitudeDegrees, altitudeMeters)));
+      this.cameraCoordinate.setAzimuth(azimuthRadians);
+      this.cameraCoordinate.setElevation(elevationRadians);
+      this.cameraCoordinate.setRange(rangeMeters);
+      this.update = true;
+   }
+   
    public synchronized void setViewingVolume(final BoundingVolume boundingVolume) {
       final Tuple3d center = boundingVolume.getCenter();
       final Tuple3d centerLonLatAlt = WGS84.cartesianToGeodesic(center);

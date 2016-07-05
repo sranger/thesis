@@ -79,12 +79,12 @@ public class Icosatree extends TreeStructure {
       { ICOSAHEDRON_CORNERS[9], ICOSAHEDRON_CORNERS[8], ICOSAHEDRON_CORNERS[1] }
    };
    
-   public Icosatree(final DataAttributes attributes) {
-      super(attributes, new int[3]);
+   public Icosatree(final DataAttributes attributes, final int maxPoints) {
+      super(attributes, new int[3], maxPoints);
    }
 
    public Icosatree(DataAttributes attributes, int[] cellSplit) {
-      super(attributes, cellSplit);
+      super(attributes, cellSplit, -1);
    }
 
    @Override

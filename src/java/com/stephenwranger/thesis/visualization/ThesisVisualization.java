@@ -1,25 +1,14 @@
 package com.stephenwranger.thesis.visualization;
 
 import java.awt.Dimension;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import com.stephenwranger.graphics.Scene;
-import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
-import com.stephenwranger.graphics.color.Color4f;
-import com.stephenwranger.graphics.math.intersection.Triangle3d;
-import com.stephenwranger.graphics.renderables.TriangleMesh;
-import com.stephenwranger.thesis.data.Attribute;
-import com.stephenwranger.thesis.data.DataAttributes;
-import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeServerProcessor.ConnectionType;
-import com.stephenwranger.thesis.data.TreeStructure;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
-import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
 
 public class ThesisVisualization extends JFrame {
@@ -40,6 +29,7 @@ public class ThesisVisualization extends JFrame {
 //      this.scene.setViewingVolume(new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS / 2.0));
       
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
+      navigator.moveTo(-120, 35.6, 0, 0, 0, 200);
       this.scene.addPreRenderable(navigator);
       
 //      final List<Attribute> attributes = new ArrayList<>();

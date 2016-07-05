@@ -30,10 +30,13 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
    public final Attribute rAttribute;
    public final Attribute gAttribute;
    public final Attribute bAttribute;
+   public final Attribute aAttribute;
    public final Attribute iAttribute;
+   public final int maxPoints;
    
-   public TreeStructure(final DataAttributes attributes, final int[] cellSplit) {
+   public TreeStructure(final DataAttributes attributes, final int[] cellSplit, final int maxPoints) {
       this.attributes = attributes;
+      this.maxPoints = maxPoints;
       System.arraycopy(cellSplit, 0, this.cellSplit, 0, 3);
       
       // TODO: change hard-coded
@@ -43,6 +46,7 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
       rAttribute = this.attributes.getAttribute("Red");
       gAttribute = this.attributes.getAttribute("Green");
       bAttribute = this.attributes.getAttribute("Blue");
+      aAttribute = this.attributes.getAttribute("Altitude");
       iAttribute = this.attributes.getAttribute("Intensity");
    }
    

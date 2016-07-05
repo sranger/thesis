@@ -1,6 +1,7 @@
 package com.stephenwranger.thesis.data;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -108,7 +109,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    }
    
    public void setData(final byte[] buffer, final String[] children) {
-      System.out.println("setData: " + buffer.length);
       this.pointBuffer = buffer;
       this.children = children;
       this.points.clear();
@@ -137,11 +137,13 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
     * 
     * @param buffer
     */
-   public void loadBuffer(final FloatBuffer buffer) {
-      final ByteBuffer wrappedData = ByteBuffer.wrap(pointBuffer);
+   @Override
+   public void loadBuffer(final ByteBuffer buffer) {
+      final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
+      final int pointCount = this.getPointCount();
       
-      for(int i = 0; i < this.getPointCount(); i++) {
-         this.attributes.loadBuffer(buffer, wrappedData, i);
+      for(int i = 0; i < pointCount; i++) {
+         this.attributes.loadBuffer(buffer, temp, i);
       }
    }
    
@@ -281,11 +283,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    @Override
    public int getBufferIndex() {
       return this.bufferIndex;
-   }
-
-   @Override
-   public byte[] getBuffer() {
-      return this.pointBuffer;
    }
 
    @Override
