@@ -13,8 +13,13 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
+import com.stephenwranger.graphics.bounds.BoundsUtils;
+import com.stephenwranger.graphics.bounds.BoundsUtils.FrustumResult;
+import com.stephenwranger.graphics.math.CameraUtils;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.Vector3d;
+import com.stephenwranger.graphics.math.intersection.Plane;
 import com.stephenwranger.graphics.renderables.Renderable;
 import com.stephenwranger.graphics.utils.buffers.AttributeRegion;
 import com.stephenwranger.graphics.utils.buffers.BufferRegion;
@@ -33,6 +38,10 @@ import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.octree.Octree;
 
 public class TreeRenderable extends Renderable {
+   private static final long TEN_MILLISECONDS_IN_NANOSECONDS = 10L * 1000L * 1000L;
+   private static final double MIN_SCREEN_RENDER_AREA = Math.PI * 100.0 * 100.0; // 100 px radius circle
+   private static final double MIN_SCREEN_SPLIT_AREA = Math.PI * 400.0 * 400.0; // 100 px radius circle
+   
    private final TreeStructure tree;
    private final TreeServerConnection connection;
    private final SegmentedVertexBufferPool vboPool;
@@ -57,13 +66,12 @@ public class TreeRenderable extends Renderable {
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
       final TreeCell root = this.tree.getCell(null, 0);
+
+      this.segments.clear();
+      this.pending.clear();
       
-      if(root.isEmpty()) {
-         this.connection.request(root);
-         this.pending.add(root);
-      }
-      
-      this.checkPending(gl);
+      this.frustumCulling(gl, scene, false, root);
+      this.uploadPending(gl, scene);
 
       gl.glPushAttrib(GL2.GL_LIGHTING_BIT);
       gl.glDisable(GL2.GL_LIGHTING);
@@ -74,27 +82,119 @@ public class TreeRenderable extends Renderable {
       gl.glPopAttrib();
    }
    
-   private void checkPending(final GL2 gl) {
-      if(!this.pending.isEmpty()) {
-         final TreeCell cell = this.pending.remove();
+   /**
+    * Checks frustum and level of detail.
+    * 
+    * @param gl
+    * @param scene
+    * @param ignoreFrustum
+    */
+   private void frustumCulling(final GL2 gl, final Scene scene, final boolean ignoreFrustum, final TreeCell cell) {
+      boolean shouldIgnoreFrustum = ignoreFrustum;
+      
+      if(!ignoreFrustum) {
+         final Plane[] frustum = scene.getFrustumPlanes();
          
-         if(cell.isComplete()) {
-            if(cell.getSegmentPoolIndex() == -1 && cell.getPointCount() > 0) {
-               this.vboPool.setSegmentObject(gl, cell);
+         final BoundingVolume bounds = cell.getBoundingVolume();
+         final FrustumResult result = BoundsUtils.testFrustum(frustum, bounds);
+         
+         if(result == FrustumResult.OUT) {
+            this.deleteCachedData(gl, scene, cell);
+            return;
+         }
+         
+         shouldIgnoreFrustum = result == FrustumResult.IN;
+      }
+      
+      if(cell.isComplete()) {
+         if(cell.getSegmentPoolIndex() == -1) {
+            this.pending.add(cell);
+         } else {
+            final boolean[] renderAndSplit = this.checkLevelOfDetail(gl, scene, cell);
+            
+            if(renderAndSplit[0]) {
                this.segments.add(cell);
-               
-               if(cell.path.length() < 10) {
-                  for(final String child : cell.getChildList()) {
-                     final TreeCell childCell = this.tree.getCell(child);
-                     this.connection.request(childCell);
-                     this.pending.add(childCell);
-                  }
+            }
+            
+            if(renderAndSplit[1]) {
+               for(final String childPath : cell.getChildList()) {
+                  final TreeCell childCell = this.tree.getCell(childPath);
+                  
+                  this.frustumCulling(gl, scene, shouldIgnoreFrustum, childCell);
                }
             }
-         } else {
-            this.pending.add(cell);
+         }
+      } else if(cell.isEmpty()) {
+         this.connection.request(cell);
+      }
+   }
+   
+   private boolean[] checkLevelOfDetail(final GL2 gl, final Scene scene, final TreeCell cell) {
+      final BoundingVolume bounds = cell.getBoundingVolume();
+      final Tuple3d boundsCenter = bounds.getCenter();
+      final Vector3d viewVector = scene.getViewVector();
+      final Vector3d rightVector = scene.getRightVector();
+      final double boundsHalfSpan = bounds.getSpannedDistance(rightVector) / 2.0;
+      rightVector.scale(boundsHalfSpan);
+      rightVector.add(boundsCenter);
+      
+      final double distanceToCamera = scene.getCameraPosition().distance(boundsCenter);
+      final double boundsViewSpan = bounds.getSpannedDistance(viewVector);
+
+      final Tuple3d cellCenterScreen = CameraUtils.gluProject(scene, boundsCenter);
+      final Tuple3d cellRightScreen = CameraUtils.gluProject(scene, rightVector);
+      final double radius = cellCenterScreen.distance(cellRightScreen);
+      final double screenArea = Math.PI * radius * radius;
+      
+      final boolean render = distanceToCamera <= boundsViewSpan || screenArea >= MIN_SCREEN_RENDER_AREA;
+      final boolean split = cell.hasChildren() || screenArea >= MIN_SCREEN_SPLIT_AREA;
+      
+      if(cell.path.length() > 2) {
+         System.out.println("'" + cell.path + "': " + screenArea + " >=? " + MIN_SCREEN_RENDER_AREA);
+      }
+      
+      return new boolean[] { render, split };
+   }
+   
+   /**
+    * Checks any segments added to render list and requests any that haven't been loaded into memory.
+    * 
+    * @param gl
+    * @param scene
+    */
+   private void uploadPending(final GL2 gl, final Scene scene) {
+      final long startTime = System.nanoTime();
+      
+      while(!this.pending.isEmpty() && System.nanoTime() - startTime < TEN_MILLISECONDS_IN_NANOSECONDS) {
+         final TreeCell pendingCell = this.pending.remove();
+         
+         if(pendingCell.isComplete() && pendingCell.getSegmentPoolIndex() == -1 && pendingCell.getPointCount() > 0) {
+            System.out.println("uploading: '" + pendingCell.path + "'");
+            this.vboPool.setSegmentObject(gl, pendingCell);
+            this.segments.add(pendingCell);
          }
       }
+   }
+   
+   /**
+    * Deletes all cached data and clears buffer pool location for the given tree cell and any children.
+    * 
+    * @param gl
+    * @param scene
+    * @param cell
+    */
+   private void deleteCachedData(final GL2 gl, final Scene scene, final TreeCell cell) {
+      this.vboPool.clearSegmentObject(gl, cell);
+      
+      for(final String childPath : cell.getChildList()) {
+         final TreeCell childCell = this.tree.containsCell(childPath);
+         
+         if(childCell != null) {
+            this.deleteCachedData(gl, scene, childCell);
+         }
+      }
+      
+      cell.clearData();
    }
 
    @Override

@@ -2,7 +2,6 @@ package com.stephenwranger.thesis.data;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -116,6 +115,12 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.status = Status.COMPLETE;
    }
    
+   public void clearData() {
+      this.pointBuffer = null;
+      this.children = null;
+      this.status = Status.EMPTY;
+   }
+   
    public void setPending() {
       this.status = Status.PENDING;
    }
@@ -215,6 +220,10 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       } else {
          return this.children.clone();
       }
+   }
+   
+   public boolean hasChildren() {
+      return this.children != null && this.children.length > 0;
    }
 
    public String getPath() {

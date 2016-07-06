@@ -86,7 +86,8 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
    }
    
    /**
-    * Returns the {@link TreeCell} defined by the given child path. Note: this should only be called with a child string returned from a parent tree cell.
+    * Returns the {@link TreeCell} defined by the given child path; if it has not been created it will be initialized 
+    * before being returned. Note: this should only be called with a child string returned from a parent tree cell.
     * 
     * @param childPath
     * @return
@@ -97,6 +98,23 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
       if(cell == null) {
          cell = this.createTreeCell(this, childPath);
          this.treeCells.put(cell.getPath(), cell);
+      }
+      
+      return cell;
+   }
+   
+   /**
+    * Returns the {@link TreeCell} defined by the given child path if exists; if it has not been created, null will be 
+    * returned.
+    * 
+    * @param path
+    * @return
+    */
+   public TreeCell containsCell(final String path) {
+      TreeCell cell = null;
+      
+      if(this.treeCells.containsKey(path)) {
+         cell = this.treeCells.get(path);
       }
       
       return cell;
