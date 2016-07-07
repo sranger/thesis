@@ -79,7 +79,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       }
    }
    
-   protected Point getPoint(final int index) {
+   public Point getPoint(final int index) {
       if(this.pointBuffer == null) {
          return this.points.get(index);
       } else {

@@ -29,7 +29,7 @@ public class ThesisVisualization extends JFrame {
 //      this.scene.setViewingVolume(new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS / 2.0));
       
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
-      navigator.moveTo(-120.87, 35.37, 0, 0, 0, 200);
+      navigator.moveTo(-120.8687371531015, 35.368949194257716, 81.32168056350201, 0, 0, 200);
       this.scene.addPreRenderable(navigator);
       
 //      final List<Attribute> attributes = new ArrayList<>();
