@@ -32,7 +32,7 @@ public class Point {
       outValue.y = tree.yAttribute.getValue(this.rawData, 0, stride).doubleValue();
       outValue.z = tree.zAttribute.getValue(this.rawData, 0, stride).doubleValue();
       
-      return output;
+      return outValue;
    }
    
    @Override

@@ -17,14 +17,16 @@ import com.stephenwranger.graphics.utils.textures.Texture2d;
 
 /**
  * {@link Earth} is a {@link Renderable} that creates an {@link EllipticalGeometry} based on the {@link WGS84} surface 
- * projection. All images taken from The Celestial Motherlode (http://www.celestiamotherlode.net/catalog/earth.php)
+ * projection. All images taken from The Celestial Motherlode (http://www.celestiamotherlode.net/catalog/earth.php) or
+ * Visible Earth (http://visibleearth.nasa.gov/view.php?id=73580)
  * 
  * @author rangers
  *
  */
 public class Earth extends Renderable {
    private static final BoundingSphere BOUNDS = new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS);
-   private static final Texture2d EARTH_1K = Texture2d.getTexture(Earth.class.getResourceAsStream("Earth.png"), GL2.GL_RGBA);
+//   private static final Texture2d EARTH_TEXTURE = Texture2d.getTexture(Earth.class.getResourceAsStream("Earth.png"), GL2.GL_RGBA);
+   private static final Texture2d EARTH_TEXTURE = Texture2d.getTexture(Earth.class.getResourceAsStream("world.topo.bathy.200401.3x5400x2700.png"), GL2.GL_RGBA);
    
    private EllipticalGeometry geometry = null;
    private boolean isWireframe = false;
@@ -36,8 +38,8 @@ public class Earth extends Renderable {
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
       if(this.geometry == null) {
-         this.geometry = new EllipticalGeometry(gl, WGS84.EQUATORIAL_RADIUS, 2, this::getAltitude);
-         this.geometry.setTexture(EARTH_1K);
+         this.geometry = new EllipticalGeometry(gl, WGS84.EQUATORIAL_RADIUS, 3, this::getAltitude);
+         this.geometry.setTexture(EARTH_TEXTURE);
       }
       
       gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, (isWireframe) ? GL2.GL_LINE : GL2.GL_FILL);
@@ -58,12 +60,22 @@ public class Earth extends Renderable {
    
    @Override
    public double[] getNearFar(final Scene scene) {
-      final Tuple3d cameraPosition = scene.getCameraPosition();
+      final double fovy = scene.getFOV();
+      final double aspect = scene.getSurfaceWidth() / scene.getSurfaceHeight();
+      final double fovx = fovy * aspect;
       
+      final double sin = Math.sin(Math.min(fovx, fovy) * 0.5);
+      final double closeDistance = (WGS84.EQUATORIAL_RADIUS / sin);
+      
+      final Tuple3d cameraPosition = scene.getCameraPosition();
       final Vector3d camVector = new Vector3d(cameraPosition);
       final double distance = camVector.length();
-
-      return new double[] { distance / 3000.0, distance };
+      
+      if(distance <= closeDistance) {
+         return new double[] { 0.1, distance };
+      } else {
+         return new double[] { distance / 3000.0, distance };
+      }
    }
    
    @Override

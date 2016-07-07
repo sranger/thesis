@@ -66,6 +66,15 @@ public class TreeRenderable extends Renderable {
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
       final TreeCell root = this.tree.getCell(null, 0);
+      
+//      if(root.isComplete()) {
+//         final Point point = root.getPoint(0);
+//         System.out.println("point: " + point);
+//         final Tuple3d xyz = point.getXYZ(this.tree, null);
+//         System.out.println("xyz: " + xyz);
+//         final Tuple3d lonLatAlt = WGS84.cartesianToGeodesic(xyz);
+//         System.out.println("root lonLatAlt: " + lonLatAlt);
+//      }
 
       this.segments.clear();
       this.pending.clear();
@@ -99,6 +108,7 @@ public class TreeRenderable extends Renderable {
          final FrustumResult result = BoundsUtils.testFrustum(frustum, bounds);
          
          if(result == FrustumResult.OUT) {
+            System.out.println(cell.path + " out");
             this.deleteCachedData(gl, scene, cell);
             return;
          }
@@ -111,7 +121,7 @@ public class TreeRenderable extends Renderable {
             this.pending.add(cell);
          } else {
             final boolean[] renderAndSplit = this.checkLevelOfDetail(gl, scene, cell);
-            
+            System.out.println("render '" + cell.path + "': " + renderAndSplit[0] + ", " + renderAndSplit[1]);
             if(renderAndSplit[0]) {
                this.segments.add(cell);
             }
