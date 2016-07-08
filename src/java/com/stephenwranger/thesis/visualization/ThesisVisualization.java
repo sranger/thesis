@@ -1,18 +1,11 @@
 package com.stephenwranger.thesis.visualization;
 
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Point;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.GLAutoDrawable;
-import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
-import com.stephenwranger.graphics.renderables.TextRenderable;
-import com.stephenwranger.graphics.utils.Timings;
 import com.stephenwranger.thesis.data.TreeServerProcessor.ConnectionType;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
@@ -29,7 +22,7 @@ public class ThesisVisualization extends JFrame {
       super("Thesis Visualization");
       
       this.earth = new Earth();
-      this.earth.setWireframe(false);
+      this.earth.setWireframe(true);
       
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);

@@ -161,15 +161,20 @@ public class TreeRenderable extends Renderable {
 
       final Tuple3d cellCenterScreen = CameraUtils.gluProject(scene, boundsCenter);
       final Tuple3d cellRightScreen = CameraUtils.gluProject(scene, rightVector);
-      final double radius = cellCenterScreen.distance(cellRightScreen);
-      final double screenArea = Math.PI * radius * radius;
+      boolean render = false;
+      boolean split = false;
       
-      final boolean render = distanceToCamera <= boundsViewSpan || screenArea >= MIN_SCREEN_RENDER_AREA;
-      final boolean split = cell.hasChildren() || screenArea >= MIN_SCREEN_SPLIT_AREA;
-      
-//      if(cell.path.length() > 2) {
-//         System.out.println("'" + cell.path + "': " + screenArea + " >=? " + MIN_SCREEN_RENDER_AREA);
-//      }
+      if(cellCenterScreen != null && cellRightScreen != null) {
+         final double radius = cellCenterScreen.distance(cellRightScreen);
+         final double screenArea = Math.PI * radius * radius;
+         
+         render = distanceToCamera <= boundsViewSpan || screenArea >= MIN_SCREEN_RENDER_AREA;
+         split = cell.hasChildren() || screenArea >= MIN_SCREEN_SPLIT_AREA;
+         
+   //      if(cell.path.length() > 2) {
+   //         System.out.println("'" + cell.path + "': " + screenArea + " >=? " + MIN_SCREEN_RENDER_AREA);
+   //      }
+      }
       
       return new boolean[] { render, split };
    }

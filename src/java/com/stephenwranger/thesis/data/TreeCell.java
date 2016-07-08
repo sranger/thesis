@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.utils.buffers.BufferUtils;
 import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 
 public abstract class TreeCell implements Iterable<Point>, SegmentObject {
@@ -36,7 +37,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    
    // used only when reading tree from filesystem or http
    private byte[] pointBuffer = null;
-   private byte[] gpuBuffer = null;
+   private ByteBuffer gpuBuffer = null;
    private String[] children = null;
    private Status status = Status.EMPTY;
    
@@ -114,15 +115,15 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.points.clear();
       this.pointsByChild.clear();
 
-      this.gpuBuffer = new byte[32 * this.getPointCount()];
+      this.gpuBuffer = BufferUtils.newByteBuffer(32 * this.getPointCount());
       final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
-      final ByteBuffer gpuBuffer = ByteBuffer.wrap(this.gpuBuffer);
       final int pointCount = this.getPointCount();
       
       for(int i = 0; i < pointCount; i++) {
-         this.attributes.loadBuffer(gpuBuffer, temp, i);
+         this.attributes.loadBuffer(this.gpuBuffer, temp, i);
       }
       
+      this.gpuBuffer.rewind();
       this.status = Status.COMPLETE;
    }
    
@@ -156,6 +157,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    @Override
    public void loadBuffer(final ByteBuffer buffer) {
       buffer.put(this.gpuBuffer);
+      this.gpuBuffer.rewind();
    }
    
    protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {

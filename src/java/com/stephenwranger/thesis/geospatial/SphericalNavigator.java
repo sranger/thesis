@@ -165,7 +165,10 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
             }
             
             final RotationTransformation transformation = WGS84.getRotationTransformation(from, to);
-            transformation.apply(this.anchor);
+            
+            if(transformation != null) {
+               transformation.apply(this.anchor);
+            }
          }
       }
    }
