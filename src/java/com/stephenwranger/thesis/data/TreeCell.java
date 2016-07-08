@@ -36,6 +36,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    
    // used only when reading tree from filesystem or http
    private byte[] pointBuffer = null;
+   private byte[] gpuBuffer = null;
    private String[] children = null;
    private Status status = Status.EMPTY;
    
@@ -112,6 +113,16 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.children = children;
       this.points.clear();
       this.pointsByChild.clear();
+
+      this.gpuBuffer = new byte[32 * this.getPointCount()];
+      final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
+      final ByteBuffer gpuBuffer = ByteBuffer.wrap(this.gpuBuffer);
+      final int pointCount = this.getPointCount();
+      
+      for(int i = 0; i < pointCount; i++) {
+         this.attributes.loadBuffer(gpuBuffer, temp, i);
+      }
+      
       this.status = Status.COMPLETE;
    }
    
@@ -144,12 +155,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
     */
    @Override
    public void loadBuffer(final ByteBuffer buffer) {
-      final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
-      final int pointCount = this.getPointCount();
-      
-      for(int i = 0; i < pointCount; i++) {
-         this.attributes.loadBuffer(buffer, temp, i);
-      }
+      buffer.put(this.gpuBuffer);
    }
    
    protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {
