@@ -68,11 +68,10 @@ public class Earth extends Renderable {
       final double closeDistance = (WGS84.EQUATORIAL_RADIUS / sin);
       
       final Tuple3d cameraPosition = scene.getCameraPosition();
-      final Vector3d camVector = new Vector3d(cameraPosition);
-      final double distance = camVector.length();
+      final double distance = scene.getLookAt().distance(cameraPosition);
       
       if(distance <= closeDistance) {
-         return new double[] { 0.1, distance };
+         return new double[] { distance / 3000.0, distance };
       } else {
          return new double[] { distance / 3000.0, distance };
       }
