@@ -1,11 +1,18 @@
 package com.stephenwranger.thesis.visualization;
 
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
+import com.stephenwranger.graphics.renderables.TextRenderable;
+import com.stephenwranger.graphics.utils.Timings;
 import com.stephenwranger.thesis.data.TreeServerProcessor.ConnectionType;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
@@ -54,6 +61,28 @@ public class ThesisVisualization extends JFrame {
       
       final TreeRenderable renderer = new TreeRenderable(basePath, connectionType);
       this.scene.addRenderable(renderer);
+
+      
+//      final TextRenderable timingRenderable = new TextRenderable(new Font("Monospaced", Font.PLAIN, 14)) {
+//
+//         @Override
+//         public synchronized void render(GL2 gl, GLU glu, GLAutoDrawable glDrawable, Scene scene) {
+//            final Timings timings = renderer.getTimings();
+//            final String[] text = timings.toString().split("\n");
+//            
+//            this.clearText();
+//            int y = scene.getHeight() - 10;
+//            for(final String t : text) {
+//               this.addText(t, new Point(10, y));
+//               y -= 15;
+//            }
+//            
+//            super.render(gl, glu, glDrawable, scene);
+//         }
+//         
+//      };
+//      this.scene.addRenderableOrthographic(timingRenderable);
+      
       
       this.getContentPane().add(this.scene);
       
