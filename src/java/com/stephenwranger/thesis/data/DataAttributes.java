@@ -9,6 +9,7 @@ import java.util.List;
 import com.stephenwranger.graphics.math.Tuple3d;
 
 public class DataAttributes implements Iterable<Attribute> {
+   private static final int BYTES_PER_POINT = 32;
    private static final String X_ATTRIBUTE_NAME = "X";
    private static final String Y_ATTRIBUTE_NAME = "Y";
    private static final String Z_ATTRIBUTE_NAME = "Z";
@@ -45,6 +46,10 @@ public class DataAttributes implements Iterable<Attribute> {
          // sets to null if unavailable
          usedAttributes[i] = this.getAttribute(USED_ATTRIBUTE_NAMES[i]);
       }
+   }
+   
+   public int getGpuSize() {
+      return BYTES_PER_POINT;
    }
    
    public Attribute getAttribute(final String name) {
@@ -93,7 +98,7 @@ public class DataAttributes implements Iterable<Attribute> {
          if(attribute == null) {
             buffer.putFloat(0f);
          } else {
-            float value = attribute.getValue(pointData, pointIndex, this.stride).floatValue();
+            double value = attribute.getValue(pointData, pointIndex, this.stride).doubleValue();
             
             if(i == 0) {
                value -= origin.x;
@@ -107,7 +112,7 @@ public class DataAttributes implements Iterable<Attribute> {
                value /= Math.pow(2, attribute.size * 8); // 2^numBits
             }
 
-            buffer.putFloat(value);
+            buffer.putFloat((float) value);
          }
       }
    }

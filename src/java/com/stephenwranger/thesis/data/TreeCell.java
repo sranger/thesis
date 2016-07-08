@@ -14,7 +14,7 @@ import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.utils.buffers.BufferUtils;
 import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 
-public abstract class TreeCell implements Iterable<Point>, SegmentObject {
+public abstract class TreeCell implements Iterable<Point>, SegmentObject {   
    public enum Status {
       EMPTY, PENDING, COMPLETE
    }
@@ -145,8 +145,8 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    private void loadGpuBuffer(final Tuple3d origin) {
       final int pointCount = this.getPointCount();
       
-      if(this.gpuBuffer == null || this.gpuBuffer.capacity() != 32 * pointCount) {
-         this.gpuBuffer = BufferUtils.newByteBuffer(32 * pointCount);
+      if(this.gpuBuffer == null || this.gpuBuffer.capacity() != this.attributes.getGpuSize() * pointCount) {
+         this.gpuBuffer = BufferUtils.newByteBuffer(this.attributes.getGpuSize() * pointCount);
       }
       
       final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
@@ -319,7 +319,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
    @Override
    public String toString() {
-      return "[TreeCell: " + this.path + ", point count: " + this.getPointCount() + "]";
+      return "[TreeCell: " + this.path + ", point count: " + this.getPointCount() + ", status: " + this.status + "]";
    }
 
    /**

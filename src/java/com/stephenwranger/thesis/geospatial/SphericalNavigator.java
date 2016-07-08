@@ -136,6 +136,8 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
          orientation.mult(up);
          
          if(MathUtils.isFinite(cameraPosition) && MathUtils.isFinite(this.anchor) && MathUtils.isFinite(up)) {
+//            System.out.println("cam to origin:    " + cameraPosition.distance(scene.getOrigin()) + ", " + cameraPosition);
+//            System.out.println("anchor to origin: " + this.anchor.distance(scene.getOrigin()) + ", " + this.anchor);
             this.scene.setCameraPosition(cameraPosition, this.anchor, up);
          } else {
             System.err.println("scene position not updating; invalid");
@@ -195,6 +197,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       if(currentVector != null) {
          final Tuple3d cameraScreen = new Tuple3d(scene.getWidth() / 2.0, scene.getHeight() / 2.0, 0.0);
          final Tuple3d cameraWorld = CameraUtils.gluUnProject(scene, cameraScreen);
+         cameraWorld.add(scene.getOrigin());
          
          return WGS84.getNearIntersection(new PickingRay(cameraWorld, currentVector), 0, true);
       }
