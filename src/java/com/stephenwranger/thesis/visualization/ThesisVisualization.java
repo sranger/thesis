@@ -22,11 +22,11 @@ public class ThesisVisualization extends JFrame {
       super("Thesis Visualization");
       
       this.earth = new Earth();
-      this.earth.setWireframe(false);
+      this.earth.setWireframe(true);
       
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);
-      this.scene.setOriginEnabled(false);
+      this.scene.setOriginEnabled(true);
 //      this.scene.setViewingVolume(new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS / 2.0));
       
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);

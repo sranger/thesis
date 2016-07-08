@@ -3,10 +3,10 @@ package com.stephenwranger.thesis.renderables;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.TreeSet;
 
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
@@ -22,6 +22,7 @@ import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Plane;
 import com.stephenwranger.graphics.renderables.Renderable;
 import com.stephenwranger.graphics.utils.Timings;
+import com.stephenwranger.graphics.utils.TupleMath;
 import com.stephenwranger.graphics.utils.buffers.AttributeRegion;
 import com.stephenwranger.graphics.utils.buffers.BufferRegion;
 import com.stephenwranger.graphics.utils.buffers.ColorRegion;
@@ -48,11 +49,18 @@ public class TreeRenderable extends Renderable {
    private static final String PENDING_UPLOADS = "Pending Upload";
    private static final String RENDERING = "Rendering";
    
+   private static final Comparator<TreeCell> DEPTH_COMPARATOR = new Comparator<TreeCell>() {
+      @Override
+      public int compare(final TreeCell o1, final TreeCell o2) {
+         return Integer.compare(o1.path.length(), o2.path.length());
+      }
+   };
+   
    private final TreeStructure tree;
    private final TreeServerConnection connection;
    private final SegmentedVertexBufferPool vboPool;
    private final Set<SegmentObject> segments = new HashSet<>();
-   private final Queue<TreeCell> pending = new LinkedBlockingQueue<>();
+   private final Set<TreeCell> pending = new TreeSet<>(DEPTH_COMPARATOR);
    private final Timings timings = new Timings(100);
    
    private final Tuple3d currentOrigin = new Tuple3d(0,0,0);
@@ -81,6 +89,8 @@ public class TreeRenderable extends Renderable {
             // TODO: add shader + temp origin offset
             cell.clearData();
          }
+         
+         this.currentOrigin.set(origin);
       }
       
       final TreeCell root = this.tree.getCell(null, 0);
@@ -89,15 +99,16 @@ public class TreeRenderable extends Renderable {
       this.pending.clear();
       
       this.timings.start(FRUSTUM_CULLING);
-      this.frustumCulling(gl, scene, false, root);
+      this.frustumCulling(gl, scene, true, root);
       this.timings.end(FRUSTUM_CULLING);
       this.timings.start(UPLOAD_CELLS);
       this.uploadPending(gl, scene);
       this.timings.end(UPLOAD_CELLS);
 
       gl.glPushAttrib(GL2.GL_LIGHTING_BIT);
+      
       gl.glDisable(GL2.GL_LIGHTING);
-      gl.glPointSize(4f);
+      gl.glPointSize(1f);
 
       this.timings.start(RENDERING);
       this.vboPool.render(gl, segments);
@@ -118,12 +129,13 @@ public class TreeRenderable extends Renderable {
     * @param ignoreFrustum
     */
    private void frustumCulling(final GL2 gl, final Scene scene, final boolean ignoreFrustum, final TreeCell cell) {
+//      System.out.println(cell);
       boolean shouldIgnoreFrustum = ignoreFrustum;
       
       if(!ignoreFrustum) {
          final Plane[] frustum = scene.getFrustumPlanes();
          
-         final BoundingVolume bounds = cell.getBoundingVolume();
+         final BoundingVolume bounds = cell.getBoundingVolume().offset(scene.getOrigin());
          final FrustumResult result = BoundsUtils.testFrustum(frustum, bounds);
          
          if(result == FrustumResult.OUT) {
@@ -154,13 +166,14 @@ public class TreeRenderable extends Renderable {
             }
          }
       } else if(cell.isEmpty()) {
+//         System.out.println("requesting: " + cell);
          this.connection.request(cell);
       }
    }
    
    private boolean[] checkLevelOfDetail(final GL2 gl, final Scene scene, final TreeCell cell) {
       final BoundingVolume bounds = cell.getBoundingVolume();
-      final Tuple3d boundsCenter = bounds.getCenter();
+      final Tuple3d boundsCenter = TupleMath.sub(bounds.getCenter(), scene.getOrigin());
       final Vector3d viewVector = scene.getViewVector();
       final Vector3d rightVector = scene.getRightVector();
       final double boundsHalfSpan = bounds.getSpannedDistance(rightVector) / 2.0;
@@ -199,8 +212,10 @@ public class TreeRenderable extends Renderable {
    private void uploadPending(final GL2 gl, final Scene scene) {
       final long startTime = System.nanoTime();
       
-      while(!this.pending.isEmpty() && System.nanoTime() - startTime < TEN_MILLISECONDS_IN_NANOSECONDS) {
-         final TreeCell pendingCell = this.pending.remove();
+      for(final TreeCell pendingCell : this.pending) {
+         if(System.nanoTime() - startTime >= TEN_MILLISECONDS_IN_NANOSECONDS) {
+            break;
+         }
          
          if(pendingCell.isComplete() && pendingCell.getSegmentPoolIndex() == -1 && pendingCell.getPointCount() > 0) {
             this.timings.start(PENDING_UPLOADS);
