@@ -10,7 +10,6 @@ import com.stephenwranger.graphics.math.PickingHit;
 import com.stephenwranger.graphics.math.PickingRay;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
-import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.renderables.EllipticalGeometry;
 import com.stephenwranger.graphics.renderables.Renderable;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
