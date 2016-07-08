@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.stephenwranger.graphics.math.Tuple3d;
-import com.stephenwranger.thesis.geospatial.WGS84;
 
 public class DataAttributes implements Iterable<Attribute> {
    private static final String X_ATTRIBUTE_NAME = "X";
@@ -84,7 +83,7 @@ public class DataAttributes implements Iterable<Attribute> {
     * @param buffer
     * @param pointIndex
     */
-   public void loadBuffer(final ByteBuffer buffer, final ByteBuffer pointData, final int pointIndex) {
+   public void loadBuffer(final Tuple3d origin, final ByteBuffer buffer, final ByteBuffer pointData, final int pointIndex) {
 //      double x = 0, y = 0, z = 0;
       
       for(int i = 0; i < this.usedAttributes.length; i++) {
@@ -96,14 +95,13 @@ public class DataAttributes implements Iterable<Attribute> {
          } else {
             float value = attribute.getValue(pointData, pointIndex, this.stride).floatValue();
             
-//            if(i == 0) {
-//               x = (double) value;
-//            } else if(i == 1) {
-//               y = (double) value;
-//            } else if(i == 2) {
-//               z = (double) value;
-//               System.out.println("lon/lat/alt: " + WGS84.cartesianToGeodesic(new Tuple3d(x,y,z)));
-//            }
+            if(i == 0) {
+               value -= origin.x;
+            } else if(i == 1) {
+               value -= origin.y;
+            } else if(i == 2) {
+               value -= origin.z;
+            }
             
             if(normalize) {
                value /= Math.pow(2, attribute.size * 8); // 2^numBits

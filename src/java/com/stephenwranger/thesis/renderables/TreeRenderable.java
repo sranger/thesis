@@ -54,6 +54,8 @@ public class TreeRenderable extends Renderable {
    private final Set<SegmentObject> segments = new HashSet<>();
    private final Queue<TreeCell> pending = new LinkedBlockingQueue<>();
    private final Timings timings = new Timings(100);
+   
+   private final Tuple3d currentOrigin = new Tuple3d(0,0,0);
 
    public TreeRenderable(final String basePath, final ConnectionType connectionType) {
       super(new Tuple3d(), new Quat4d());
@@ -72,6 +74,15 @@ public class TreeRenderable extends Renderable {
 
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
+      final Tuple3d origin = scene.getOrigin();
+      
+      if(origin.distance(this.currentOrigin) > 1) {
+         for(final TreeCell cell : this.tree) {
+            // TODO: add shader + temp origin offset
+            cell.clearData();
+         }
+      }
+      
       final TreeCell root = this.tree.getCell(null, 0);
       
       this.segments.clear();
@@ -194,7 +205,8 @@ public class TreeRenderable extends Renderable {
          if(pendingCell.isComplete() && pendingCell.getSegmentPoolIndex() == -1 && pendingCell.getPointCount() > 0) {
             this.timings.start(PENDING_UPLOADS);
 //            System.out.println("uploading: '" + pendingCell.path + "'");
-            this.vboPool.setSegmentObject(gl, pendingCell);
+            
+            this.vboPool.setSegmentObject(gl, this.currentOrigin, pendingCell);
             this.timings.end(PENDING_UPLOADS);
             this.segments.add(pendingCell);
          }

@@ -114,16 +114,9 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.children = children;
       this.points.clear();
       this.pointsByChild.clear();
-
-      this.gpuBuffer = BufferUtils.newByteBuffer(32 * this.getPointCount());
-      final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
-      final int pointCount = this.getPointCount();
       
-      for(int i = 0; i < pointCount; i++) {
-         this.attributes.loadBuffer(this.gpuBuffer, temp, i);
-      }
+      this.loadGpuBuffer(new Tuple3d(0,0,0));
       
-      this.gpuBuffer.rewind();
       this.status = Status.COMPLETE;
    }
    
@@ -149,13 +142,30 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       return this.status;
    }
    
+   private void loadGpuBuffer(final Tuple3d origin) {
+      final int pointCount = this.getPointCount();
+      
+      if(this.gpuBuffer == null || this.gpuBuffer.capacity() != 32 * pointCount) {
+         this.gpuBuffer = BufferUtils.newByteBuffer(32 * pointCount);
+      }
+      
+      final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
+      
+      for(int i = 0; i < pointCount; i++) {
+         this.attributes.loadBuffer(origin, this.gpuBuffer, temp, i);
+      }
+      
+      this.gpuBuffer.rewind();
+   }
+   
    /**
     * Will load into buffer X,Y,Z,R,G,B,Altitude,Intensity as float values.
     * 
     * @param buffer
     */
    @Override
-   public void loadBuffer(final ByteBuffer buffer) {
+   public void loadBuffer(final Tuple3d origin, final ByteBuffer buffer) {
+      this.loadGpuBuffer(origin);
       buffer.put(this.gpuBuffer);
       this.gpuBuffer.rewind();
    }
