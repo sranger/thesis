@@ -42,7 +42,7 @@ import com.stephenwranger.thesis.octree.Octree;
 public class TreeRenderable extends Renderable {
    private static final long TEN_MILLISECONDS_IN_NANOSECONDS = 10L * 1000L * 1000L;
    private static final double MIN_SCREEN_RENDER_AREA = Math.PI * 100.0 * 100.0; // 100 px radius circle
-   private static final double MIN_SCREEN_SPLIT_AREA = Math.PI * 400.0 * 400.0; // 100 px radius circle
+   private static final double MIN_SCREEN_SPLIT_AREA = Math.PI * 400.0 * 400.0; // 400 px radius circle
 
    private static final String FRUSTUM_CULLING = "Frustum Culling";
    private static final String UPLOAD_CELLS = "Upload Cells";

@@ -3,6 +3,8 @@ package com.stephenwranger.thesis.visualization;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +18,7 @@ import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.color.Color4f;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
+import com.stephenwranger.graphics.renderables.FrustumRenderable;
 import com.stephenwranger.graphics.renderables.TextRenderable;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.graphics.utils.Timings;
@@ -30,11 +33,11 @@ import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
 
 public class ThesisVisualization extends JFrame {
-   private static final long serialVersionUID = 545923577250987084L;
-   private static final String USAGE = "java ThesisVisualization <tree_path> <FILESYSTEM|HTTP>";
+   private static final long   serialVersionUID = 545923577250987084L;
+   private static final String USAGE            = "java ThesisVisualization <tree_path> <FILESYSTEM|HTTP>";
 
-   private final Earth earth;
-   private final Scene scene;
+   private final Earth         earth;
+   private final Scene         scene;
 
    public ThesisVisualization(final String basePath, final ConnectionType connectionType) {
       super("Thesis Visualization");
@@ -45,6 +48,8 @@ public class ThesisVisualization extends JFrame {
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
+
+      //      this.addFrustumRenderable();
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8687371531015, 35.368949194257716, 81.32168056350201, 0, 0, 200000);
@@ -60,11 +65,25 @@ public class ThesisVisualization extends JFrame {
       this.getContentPane().add(this.scene);
 
       SwingUtilities.invokeLater(() -> {
-         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-         setLocation(2000, 100);
-         pack();
-         scene.start();
-         setVisible(true);
+         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         this.setLocation(2000, 100);
+         this.pack();
+         this.scene.start();
+         this.setVisible(true);
+      });
+   }
+
+   public void addFrustumRenderable() {
+      final FrustumRenderable frustum = new FrustumRenderable();
+      this.scene.addRenderable(frustum);
+
+      this.scene.addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyPressed(final KeyEvent event) {
+            if (event.getKeyCode() == KeyEvent.VK_F) {
+               frustum.setPaused(!frustum.isPaused());
+            }
+         }
       });
    }
 
@@ -72,7 +91,7 @@ public class ThesisVisualization extends JFrame {
       final TextRenderable timingRenderable = new TextRenderable(new Font("Monospaced", Font.PLAIN, 14)) {
 
          @Override
-         public synchronized void render(GL2 gl, GLU glu, GLAutoDrawable glDrawable, Scene scene) {
+         public synchronized void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
             final Timings timings = renderer.getTimings();
             final String[] text = timings.toString().split("\n");
 
@@ -151,7 +170,7 @@ public class ThesisVisualization extends JFrame {
 
          new ThesisVisualization(basePath, connectionType);
       } catch (final Exception e) {
-         System.err.println(USAGE);
+         System.err.println(ThesisVisualization.USAGE);
          e.printStackTrace();
       }
    }
