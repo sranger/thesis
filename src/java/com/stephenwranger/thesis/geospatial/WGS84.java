@@ -86,7 +86,7 @@ public class WGS84 {
     * @param latDeg
     * @return
     */
-   public static double getAltitude(final double lonDeg, final double latDeg) {
+   public static double getEllipsoidHeight(final double lonDeg, final double latDeg) {
       // TODO: add DTED
       final double a = EQUATORIAL_RADIUS;
       final double c = SEMI_MINOR_RADIUS;
