@@ -68,7 +68,7 @@ public class Earth extends Renderable {
       final double fovx = fovy * aspect;
       
       final double sin = Math.sin(Math.min(fovx, fovy));
-      final double closeDistance = (WGS84.EQUATORIAL_RADIUS / sin) + WGS84.EQUATORIAL_RADIUS;
+      final double closeDistance = (WGS84.EQUATORIAL_RADIUS / sin);
       
       final Tuple3d cameraPosition = scene.getCameraPosition();
       // distance from camera to center of earth
@@ -103,7 +103,8 @@ public class Earth extends Renderable {
             
             if(intersectTL != null && intersectTR != null && intersectBL != null) {
                final Plane farPlane = new Plane(intersectTL, intersectTR, intersectBL);
-               far = Math.min(cameraPosition.distance(scene.getLookAt()) * 2.0, farPlane.distanceToPoint(cameraPosition));
+//               far = Math.min(cameraPosition.distance(scene.getLookAt()) * 2.0, farPlane.distanceToPoint(cameraPosition));
+               far = farPlane.distanceToPoint(cameraPosition);
                near = far / 3000.0;
             }
          }
