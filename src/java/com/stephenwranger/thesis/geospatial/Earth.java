@@ -18,7 +18,6 @@ import com.stephenwranger.graphics.math.intersection.Plane;
 import com.stephenwranger.graphics.renderables.EllipticalGeometry;
 import com.stephenwranger.graphics.renderables.Renderable;
 import com.stephenwranger.graphics.utils.TupleMath;
-import com.stephenwranger.graphics.utils.textures.Texture2d;
 
 /**
  * {@link Earth} is a {@link Renderable} that creates an {@link EllipticalGeometry} based on the {@link WGS84} surface
@@ -29,13 +28,12 @@ import com.stephenwranger.graphics.utils.textures.Texture2d;
  *
  */
 public class Earth extends Renderable {
-   private static final BoundingSphere BOUNDS        = new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS);
-   // TODO: open street map or some type of tiled imagery?
-   //   private static final Texture2d EARTH_TEXTURE = Texture2d.getTexture(Earth.class.getResourceAsStream("Earth.png"), GL2.GL_RGBA);
-   private static final Texture2d      EARTH_TEXTURE = Texture2d.getTexture(Earth.class.getResourceAsStream("world.topo.bathy.200401.3x5400x2700.png"), GL2.GL_RGBA);
+   private static final BoundingSphere BOUNDS            = new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS);
 
-   private EllipticalGeometry          geometry      = null;
-   private boolean                     isWireframe   = false;
+   private EllipticalGeometry          geometry          = null;
+   private boolean                     isWireframe       = false;
+   private boolean                     isLightingEnabled = false;
+   private double                      loadFactor        = 0.75;
 
    public Earth() {
       super(new Tuple3d(), new Quat4d());
@@ -49,6 +47,10 @@ public class Earth extends Renderable {
    @Override
    public PickingHit getIntersection(final PickingRay ray) {
       return (this.geometry == null) ? PickingRay.NO_HIT : this.geometry.getIntersection(ray);
+   }
+
+   public double getLoadFactor() {
+      return this.loadFactor;
    }
 
    @Override
@@ -103,6 +105,10 @@ public class Earth extends Renderable {
       return new double[] { near, far };
    }
 
+   public boolean isLightingEnabled() {
+      return this.isLightingEnabled;
+   }
+
    public boolean isWireframe() {
       return this.isWireframe;
    }
@@ -110,12 +116,29 @@ public class Earth extends Renderable {
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
       if (this.geometry == null) {
-         this.geometry = new EllipticalGeometry(gl, WGS84.EQUATORIAL_RADIUS, 2, this::getAltitude);
-         this.geometry.setTexture(Earth.EARTH_TEXTURE);
+         this.geometry = new EllipticalGeometry(gl, WGS84.EQUATORIAL_RADIUS, 2, this::getAltitude, EarthImagery::setImagery);
+         this.geometry.setLightingEnabled(this.isLightingEnabled);
+         this.geometry.setLoadFactor(this.loadFactor);
       }
 
       gl.glPolygonMode(GL.GL_FRONT_AND_BACK, (this.isWireframe) ? GL2GL3.GL_LINE : GL2GL3.GL_FILL);
       this.geometry.render(gl, glu, glDrawable, scene);
+   }
+
+   public void setLightingEnabled(final boolean isLightingEnabled) {
+      this.isLightingEnabled = isLightingEnabled;
+
+      if (this.geometry != null) {
+         this.geometry.setLightingEnabled(this.isLightingEnabled);
+      }
+   }
+
+   public void setLoadFactor(final double loadFactor) {
+      this.loadFactor = loadFactor;
+
+      if (this.geometry != null) {
+         this.geometry.setLoadFactor(this.loadFactor);
+      }
    }
 
    public void setWireframe(final boolean isWireframe) {
