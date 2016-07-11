@@ -208,6 +208,7 @@ public class WGS84 {
       final Vector3d axis = new Vector3d();
       axis.cross(xyz2, xyz1);
       axis.normalize();
+      
       return new RotationTransformation(axis, angle);
    }
 }

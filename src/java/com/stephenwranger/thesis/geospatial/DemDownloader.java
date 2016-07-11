@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -34,6 +37,7 @@ public class DemDownloader extends Thread {
    private static final String   OVERWRITE     = "Overwrite";
    private static final String   SKIP          = "Skip";
    private static final String[] OPTIONS       = new String[] { DemDownloader.OVERWRITE, DemDownloader.SKIP };
+   private static final String 	 ZIP_EXTENSION = ".ZIP";
 
    private final File            outputFolder;
 
@@ -195,6 +199,33 @@ public class DemDownloader extends Thread {
             os.write(temp, 0, bytesRead);
             progressBar.setValue(buffer.position());
          }
+      }
+      
+      if(outputFile.getAbsolutePath().toUpperCase().endsWith(ZIP_EXTENSION)) {
+    	  try (final ZipInputStream zis = new ZipInputStream(new FileInputStream(outputFile))) {
+    		  final byte[] temp = new byte[2000];
+    		  ZipEntry entry = null;
+    		  
+    		  while((entry = zis.getNextEntry()) != null) {
+    			  final String name = entry.getName();
+    			  final File path = new File(outputFile.getParentFile() + File.separator + name);
+    			  
+    			  if(entry.isDirectory()) {
+    				  path.mkdirs();
+    			  } else {
+    			     if(!path.getParentFile().exists()) {
+    			        path.getParentFile().mkdirs();
+    			     }
+    			     
+					  try(final FileOutputStream fout = new FileOutputStream(path)) {
+						  int length = -1;
+						  while((length = zis.read(temp)) != -1) {
+							  fout.write(temp, 0, length);
+						  }
+					  }
+    			  }
+    		  }
+    	  }
       }
    }
 }
