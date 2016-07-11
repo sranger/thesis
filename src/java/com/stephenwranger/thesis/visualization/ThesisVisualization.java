@@ -70,6 +70,7 @@ public class ThesisVisualization extends JFrame {
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8687371531015, 35.368949194257716, 81.32168056350201, 0, 0, 200000);
+      navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
       // this.loadIcosatreeBounds("");
