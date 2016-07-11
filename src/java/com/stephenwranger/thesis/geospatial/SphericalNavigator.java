@@ -17,6 +17,7 @@ import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.math.CameraUtils;
+import com.stephenwranger.graphics.math.PickingHit;
 import com.stephenwranger.graphics.math.PickingRay;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.SphericalCoordinate;
@@ -46,6 +47,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    private Point                     currentEvent     = null;
    private EventType                 eventType        = null;
    private boolean                   update           = true;
+   private Earth                     earth            = null;
 
    public SphericalNavigator(final Scene scene) {
       this.scene = scene;
@@ -213,6 +215,10 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       this.scene.removeMouseWheelListener(this);
    }
 
+   public void setEarth(final Earth earth) {
+      this.earth = earth;
+   }
+
    public synchronized void setViewingVolume(final BoundingVolume boundingVolume) {
       final Tuple3d center = boundingVolume.getCenter();
       final Tuple3d centerLonLatAlt = WGS84.cartesianToGeodesic(center);
@@ -225,7 +231,10 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    private void click(final GL2 gl, final Scene scene) {
       if (this.currentEvent != null) {
          final Tuple3d lonLatAlt = this.getIntersection(this.currentEvent);
-         this.anchor.set(WGS84.geodesicToCartesian(lonLatAlt));
+
+         if (lonLatAlt != null) {
+            this.anchor.set(WGS84.geodesicToCartesian(lonLatAlt));
+         }
       }
    }
 
@@ -272,7 +281,17 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
          final Tuple3d cameraWorld = CameraUtils.gluUnProject(this.scene, cameraScreen);
          cameraWorld.add(this.scene.getOrigin());
 
-         return WGS84.getNearIntersection(new PickingRay(cameraWorld, currentVector), 0, true);
+         final PickingRay ray = new PickingRay(cameraWorld, currentVector);
+
+         if (this.earth == null) {
+            return WGS84.getNearIntersection(ray, 0, true);
+         } else {
+            final PickingHit hit = this.earth.getIntersection(ray);
+
+            if (hit != null) {
+               return WGS84.cartesianToGeodesic(hit.getHitLocation());
+            }
+         }
       }
 
       return null;
@@ -288,22 +307,6 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       if (mouseWorld != null) {
          vector.subtract(mouseWorld, cameraWorld);
          vector.normalize();
-
-         //         final Vector3d view = new Vector3d();
-         //         view.subtract(this.anchor, scene.getCameraPosition());
-         //         view.normalize();
-         //         
-         //         if(view.angleDegrees(vector) > 90) {
-         //            System.err.println("camera: " + cameraWorld);
-         //            System.err.println("mouse:  " + mouseWorld);
-         //            System.err.println("view:   " + view);
-         //            System.err.println("vector: " + vector);
-         //         } else {
-         //            System.out.println("camera: " + cameraWorld);
-         //            System.out.println("mouse:  " + mouseWorld);
-         //            System.out.println("view:   " + view);
-         //            System.out.println("vector: " + vector);
-         //         }
 
          return vector;
       } else {
