@@ -207,7 +207,7 @@ public class Earth extends Renderable {
        * An upper limit for the far clipping plane, the distance to the closest point on the surface (from the camera)
        * plus the maximum possible distance before the surface is occluded by itself (e.g. due to curvature)
        */
-      final double maxFar = surface.getMaximumVisibleDistance(position.x, position.y, position.z);
+      final double maxFar = WGS84.getMaximumVisibleDistance(position.x, position.y, position.z);
 
       /*
        * Upper-Right frustum corner ray...
