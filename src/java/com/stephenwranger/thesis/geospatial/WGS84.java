@@ -22,14 +22,14 @@ import com.stephenwranger.graphics.utils.MathUtils;
 public class WGS84 {
    public static final double     EQUATORIAL_RADIUS           = 6378137.0;
    public static final double     FLATTENING                  = 1.0 / 298.257223563;
-   public static final double     SEMI_MINOR_RADIUS           = WGS84.EQUATORIAL_RADIUS * (1.0 - WGS84.FLATTENING);                                                                                                                                                                                     // a(1 − f), 6356752.3142
-   public static final double     MASS                        = 5.97219e24;                                                                                                                                                                                                                                                                     // kg
+   public static final double     SEMI_MINOR_RADIUS           = WGS84.EQUATORIAL_RADIUS * (1.0 - WGS84.FLATTENING); // a(1 − f), 6356752.3142
+   public static final double     MASS                        = 5.97219e24; // kg
    public static final double     ANGULAR_ECCENTRICITY        = Math.acos((WGS84.SEMI_MINOR_RADIUS / WGS84.EQUATORIAL_RADIUS));
-   public static final double     FIRST_ECCENTRICITY_SQUARED  = (2.0 * WGS84.FLATTENING) - (WGS84.FLATTENING - WGS84.FLATTENING);                                                                                                                                                         // 2f − f^2
-   public static final double     SECOND_ECCENTRICITY_SQUARED = (WGS84.FLATTENING * (2.0 - WGS84.FLATTENING)) / ((1.0 - WGS84.FLATTENING) * (1.0 - WGS84.FLATTENING));                                                                               //f(2 − f)/(1 − f)^2;
+   public static final double     FIRST_ECCENTRICITY_SQUARED  = (2.0 * WGS84.FLATTENING) - (WGS84.FLATTENING * WGS84.FLATTENING); // 2f − f^2
+   public static final double     SECOND_ECCENTRICITY_SQUARED = (WGS84.FLATTENING * (2.0 - WGS84.FLATTENING)) / ((1.0 - WGS84.FLATTENING) * (1.0 - WGS84.FLATTENING)); //f(2 − f)/(1 − f)^2;
    public static final double     REDUCED_LATITUDE            = Math.sqrt(1.0 - (WGS84.FIRST_ECCENTRICITY_SQUARED * WGS84.FIRST_ECCENTRICITY_SQUARED));
 
-   private static final Ellipsoid ELLIPSOID                   = new Ellipsoid(new Tuple3d(), WGS84.EQUATORIAL_RADIUS, WGS84.FLATTENING, WGS84.FIRST_ECCENTRICITY_SQUARED, WGS84.SECOND_ECCENTRICITY_SQUARED);
+   public static final Ellipsoid ELLIPSOID                    = new Ellipsoid(new Tuple3d(), WGS84.EQUATORIAL_RADIUS, WGS84.FLATTENING, WGS84.FIRST_ECCENTRICITY_SQUARED, WGS84.SECOND_ECCENTRICITY_SQUARED);
 
    /**
     * Return the geodesic coordinates (in degrees and meters) for the given longitude, latitude and altitude (in degrees
