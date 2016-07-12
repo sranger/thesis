@@ -137,35 +137,52 @@ public class DemDownloader extends Thread {
    }
 
    private static ByteBuffer readURL(final URL url, final JLabel messageLabel, final JProgressBar progressBar, final long existingLength) throws IOException {
-      messageLabel.setText("Reading: " + url);
-      final URLConnection connection = url.openConnection();
-      final int length = Integer.parseInt(connection.getHeaderField("content-length"));
-
-      if (existingLength != length) {
-         progressBar.setValue(0);
-         progressBar.setMaximum(length);
-         final ByteBuffer buffer = ByteBuffer.allocate(length);
-         final byte[] temp = new byte[2000];
-
-         try (final InputStream is = connection.getInputStream()) {
-            int bytesRead = -1;
-
-            while ((bytesRead = is.read(temp)) != -1) {
-               buffer.put(temp, 0, bytesRead);
-               progressBar.setValue(buffer.position());
+      ByteBuffer buffer = null;
+      int error = 0;
+      
+      while(error < 5) {
+         try {
+            messageLabel.setText("Reading: " + url);
+            final URLConnection connection = url.openConnection();
+            final int length = Integer.parseInt(connection.getHeaderField("content-length"));
+      
+            if (existingLength != length) {
+               progressBar.setValue(0);
+               progressBar.setMaximum(length);
+               buffer = ByteBuffer.allocate(length);
+               final byte[] temp = new byte[2000];
+      
+               try (final InputStream is = connection.getInputStream()) {
+                  int bytesRead = -1;
+      
+                  while ((bytesRead = is.read(temp)) != -1) {
+                     buffer.put(temp, 0, bytesRead);
+                     progressBar.setValue(buffer.position());
+                  }
+               }
+      
+               if (buffer.remaining() != 0) {
+                  System.err.println("Buffer not filled: received = " + buffer.position() + ", expected = " + length);
+                  error++;
+               } else {
+                  buffer.flip();
+                  break;
+               }
+            } else {
+               buffer = null;
+               break;
             }
+         } catch(final Exception e) {
+            error++;
          }
-
-         if (buffer.remaining() != 0) {
-            System.err.println("Buffer not filled: received = " + buffer.position() + ", expected = " + length);
-         }
-
-         buffer.flip();
-
-         return buffer;
-      } else {
-         return null;
       }
+      
+      if(error == 5) {
+         System.out.println("Error downloading " + url + "; exiting");
+         System.exit(1);
+      }
+      
+      return buffer;
    }
 
    private static void writeFile(final File outputFile, final ByteBuffer buffer, final JLabel messageLabel, final JProgressBar progressBar) throws FileNotFoundException, IOException {
