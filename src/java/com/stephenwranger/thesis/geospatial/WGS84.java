@@ -211,4 +211,8 @@ public class WGS84 {
       
       return new RotationTransformation(axis, angle);
    }
+
+   public static double getMaximumVisibleDistance(double x, double y, double z) {
+      return Math.sqrt(x * x + y * y + z * z);
+   }
 }
