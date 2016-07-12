@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -65,7 +66,7 @@ public class EarthImagery {
       final double lon = MathUtils.sum(lla0.x, lla1.x, lla2.x);
       final double lat = MathUtils.sum(lla0.y, lla1.y, lla2.y);
       
-      return getTileNumbers(lon, lat, segment.getDepth());
+      return tileXYZ(lon, lat, segment.getDepth());
             
             
 //      final Vertex[] vertices = segment.getVertices();
@@ -91,43 +92,97 @@ public class EarthImagery {
 //      return new int[] { 0, 0, 0 };
    }
    
-   /**
-    * Computes x/y tile coordinate given specified location and zoom level.
-    * 
-    * <pre>
-    * http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-    *    n = 2 ^ zoom
-    *    xtile = n * ((lon_deg + 180) / 360)
-    *    ytile = n * (1 - (log(tan(lat_rad) + sec(lat_rad)) / π)) / 2
-    * </pre>
-    * 
-    * @param lonDegrees
-    * @param latDegrees
-    * @param zoom
-    * @return
-    */
-   public static int[] getTileNumbers(final double lonDegrees, final double latDegrees, final int zoom) {
-      int xtile = (int) Math.floor((lonDegrees + 180) / 360 * (1 << zoom));
-      int ytile = (int) Math.floor((1 - Math.log(Math.tan(Math.toRadians(latDegrees)) + 1 / Math.cos(Math.toRadians(latDegrees))) / Math.PI) / 2 * (1 << zoom));
-      if (xtile < 0)
-         xtile = 0;
-      if (xtile >= (1 << zoom))
-         xtile = ((1 << zoom) - 1);
-      if (ytile < 0)
-         ytile = 0;
-      if (ytile >= (1 << zoom))
-         ytile = ((1 << zoom) - 1);
-      return new int[] { zoom, xtile, ytile };
+   public static int numTiles(final int zoom) {
+      return (int) Math.pow(2, zoom);
    }
    
-   public static double tile2lon(final int x, final int z) {
-      return x / Math.pow(2.0, z) * 360.0 - 180;
+   public static double[] lonlat2relativeXY(final double lon, final double lat) {
+      final double x = (lon + 180) / 360;
+      final double y = (1 - Math.log(Math.tan(Math.toRadians(lat)) + MathUtils.sec(Math.toRadians(lat))) / Math.PI) / 2;
+      
+      return new double[] { x, y };
    }
 
-   public static double tile2lat(final int y, final int z) {
-     double n = Math.PI - (2.0 * Math.PI * y) / Math.pow(2.0, z);
-     return Math.toDegrees(Math.atan(Math.sinh(n)));
+   public static double[] lonlat2xy(final double lon, final double lat, final int z) {
+      final double n = numTiles(z);
+      final double[] xy = lonlat2relativeXY(lon, lat);
+      xy[0] *= n;
+      xy[1] *= n;
+      
+      return xy;
    }
+      
+   public static int[] tileXYZ(final double lon, final double lat, final int z) {
+      final double[] xy = lonlat2xy(lon,lat,z);
+      return new int[] { (int) xy[0] , (int) xy[1], z };
+   }
+
+   public static double[] xy2lonlat(final int x, final int y, final int z) {
+      final double n = numTiles(z);
+      final double relY = y / n;
+      final double lat = mercatorToLat(Math.PI * (1 - 2 * relY));
+      final double lon = -180.0 + 360.0 * x / n;
+      return new double[] { lon, lat };
+   }
+
+   public static double mercatorToLat(final double mercatorY) {
+      return Math.toDegrees(Math.atan(Math.sinh(mercatorY)));
+   }
+      
+   public static double[] latEdges(final int y, final int z) {
+      final double n = numTiles(z);
+      final double unit = 1 / n;
+      final double relY1 = y * unit;
+      final double relY2 = relY1 + unit;
+      final double lat1 = mercatorToLat(Math.PI * (1 - 2 * relY1));
+      final double lat2 = mercatorToLat(Math.PI * (1 - 2 * relY2));
+      return new double[] { lat1,lat2 };
+   }
+
+   public static double[] lonEdges(final int x, final int z) {
+      final double n = numTiles(z);
+      final double unit = 360 / n;
+      final double lon1 = -180 + x * unit;
+      final double lon2 = lon1 + unit;
+      return new double[] { lon1, lon2 };
+   }
+      
+   public static double[] tileEdges(final int x, final int y, final int z) {
+      final double[] lats = latEdges(y,z);
+      final double[] lons = lonEdges(x,z);
+      return new double[] { lats[1], lons[0], lats[0], lons[1] }; // S,W,N,E
+   }
+
+   
+//   /**
+//    * Computes x/y tile coordinate given specified location and zoom level.
+//    * 
+//    * <pre>
+//    * http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+//    *    n = 2 ^ zoom
+//    *    xtile = n * ((lon_deg + 180) / 360)
+//    *    ytile = n * (1 - (log(tan(lat_rad) + sec(lat_rad)) / π)) / 2
+//    * </pre>
+//    * 
+//    * @param lonDegrees
+//    * @param latDegrees
+//    * @param zoom
+//    * @return
+//    */
+//   public static int[] getTileNumbers(final double lonDegrees, final double latDegrees, final int zoom) {
+//      final int xtile = (int) Math.floor(((lonDegrees + 180) / 360) * Math.pow(2, zoom));
+//      final int ytile = (int) Math.floor((1 - Math.log(Math.tan(Math.toRadians(latDegrees)) + 1 / Math.cos(Math.toRadians(latDegrees))) / Math.PI) /2 * Math.pow(2, zoom));
+//      
+//      return new int[] { zoom, xtile, ytile };
+//   }
+//   
+//   public static double tile2lon(final int xtile, final int zoom) {
+//      return xtile / Math.pow(2.0, zoom) * 360.0 - 180;
+//   }
+//
+//   public static double tile2lat(final int ytile, final int zoom) {
+//      return Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * ytile / Math.pow(2, zoom)))));
+//   }
 
    private static Texture2d getBaseTexture() {
       return Texture2d.getTexture(Earth.class.getResourceAsStream("world.topo.bathy.200401.3x5400x2700.png"), GL.GL_RGBA);
@@ -281,14 +336,12 @@ public class EarthImagery {
                      
                      for(int i = 0; i < vertices.length; i++) {
                         final Tuple3d lonLatAlt = WGS84.cartesianToGeodesic(vertices[i].getVertex());
-                        final double tileMinLon = tile2lon(zoomXY[1], zoomXY[0]);      // west
-                        final double tileMaxLon = tile2lon(zoomXY[1] + 1, zoomXY[0]);  // east
-                        final double tileMaxLat = tile2lat(zoomXY[2], zoomXY[0]);      // north
-                        final double tileMinLat = tile2lat(zoomXY[2] + 1, zoomXY[0]);  // south
+                        final double[] minLonLat = xy2lonlat(zoomXY[0], zoomXY[1] + 1, zoomXY[2]);
+                        final double[] maxLonLat = xy2lonlat(zoomXY[0] + 1, zoomXY[1], zoomXY[2]);
                         
                         final Tuple2d texCoord = new Tuple2d();
-                        texCoord.x = (lonLatAlt.x - tileMinLon) / (tileMaxLon - tileMinLon);
-                        texCoord.y = (lonLatAlt.y - tileMinLat) / (tileMaxLat - tileMinLat);
+                        texCoord.x = (lonLatAlt.x - minLonLat[0]) / (maxLonLat[0] - minLonLat[0]);
+                        texCoord.y = (lonLatAlt.y - minLonLat[1]) / (maxLonLat[1] - minLonLat[1]);
 //                        System.out.println("location: " + lonLatAlt);
 //                        System.out.println("zoom: " + zoomXY[0]);
 //                        System.out.println("tile: " + zoomXY[1] + ", " + zoomXY[2]);
@@ -301,6 +354,21 @@ public class EarthImagery {
                      
                      segment.setTexture(texture, texCoords);
                   }
+               }
+            }
+         }
+      }
+   }
+   
+   public static void main(final String[] args) {
+      for(int z = 0; z < 4; z++) {
+         for(int x = 0; x < Math.pow(2, z); x++) {
+            for(int y = 0; y < Math.pow(2, z); y++) {
+               final double[] lonLat = xy2lonlat(x, y, z);
+               final int[] tile = tileXYZ(lonLat[0], lonLat[1], z);
+               
+               if(!Arrays.equals(tile, new int[] { x, y, z })) {
+                  System.err.println("not equal: " + x + ", " + y + ", " + z + " -> " + lonLat[0] + ", " + lonLat[1] + " -> " + Arrays.toString(tile));
                }
             }
          }
