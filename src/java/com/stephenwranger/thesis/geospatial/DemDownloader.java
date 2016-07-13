@@ -117,6 +117,7 @@ public class DemDownloader extends Thread {
       }
 
       final File file = new File(args[0]);
+      System.setProperty("dem3.directory", file.getAbsolutePath());
 
       if (Boolean.valueOf(args[1])) {
          final DemDownloader downloader = new DemDownloader(file);
