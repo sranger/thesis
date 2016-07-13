@@ -122,7 +122,7 @@ public class WGS84 {
     * @return
     */
    public static Tuple3d getNearIntersection(final PickingRay ray, final double altitude, final boolean isGeodetic) {
-      final Ellipsoid ellipsoid = (altitude == 0) ? WGS84.ELLIPSOID : new Ellipsoid(new Tuple3d(), altitude, WGS84.FLATTENING, WGS84.FIRST_ECCENTRICITY_SQUARED, WGS84.SECOND_ECCENTRICITY_SQUARED);
+      final Ellipsoid ellipsoid = (altitude == 0) ? WGS84.ELLIPSOID : new Ellipsoid(new Tuple3d(), WGS84.EQUATORIAL_RADIUS + altitude, WGS84.FLATTENING, WGS84.FIRST_ECCENTRICITY_SQUARED, WGS84.SECOND_ECCENTRICITY_SQUARED);
       final double[] intersections = ellipsoid.getIntersection(ray);
       Tuple3d solution = null;
 

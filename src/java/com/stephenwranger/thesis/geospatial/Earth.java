@@ -1,7 +1,5 @@
 package com.stephenwranger.thesis.geospatial;
 
-import java.awt.Point;
-
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2GL3;
@@ -16,6 +14,7 @@ import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Ellipsoid;
+import com.stephenwranger.graphics.math.intersection.IntersectionUtils;
 import com.stephenwranger.graphics.math.intersection.Plane;
 import com.stephenwranger.graphics.renderables.EllipticalGeometry;
 import com.stephenwranger.graphics.renderables.Renderable;
@@ -30,7 +29,8 @@ import com.stephenwranger.graphics.renderables.Renderable;
  */
 public class Earth extends Renderable {
    private static final BoundingSphere BOUNDS            = new BoundingSphere(new Tuple3d(), WGS84.EQUATORIAL_RADIUS);
-   private static final double coronaHeight = 8000.0;
+   private static final double CORONA_HEIGHT = 8000.0;
+   private static final double MINIMUM_ALTITUDE = -400.0;
 
    private final Ellipsoid ellipsoid = WGS84.ELLIPSOID;
    private EllipticalGeometry          geometry          = null;
@@ -118,10 +118,8 @@ public class Earth extends Renderable {
       final Vector3d up = scene.getUpVector();
       final Tuple3d position = scene.getCameraPosition();
 
-      final boolean useAltitude = false;
-      final float altScale = 1.0f;
+      final double coronaHeight = Earth.CORONA_HEIGHT;
 
-      final double coronaHeight = ((useAltitude && altScale > 1) ? altScale : 1) * this.coronaHeight;
       /*
        * Calculate the distance to a corner of the near plane (from the camera), and use ratio: (nearCorner /
        * distToSurface) = (distToNear / desiredNearPlane)
@@ -130,6 +128,14 @@ public class Earth extends Renderable {
       final double halfNearPlaneHeight = ((frustum[3] - frustum[2]) / 2.);
       final double halfNearPlaneWidth = -((frustum[1] - frustum[0]) / 2.);
       final double distToNear = frustum[4];
+//      System.out.println("l: " + frustum[CameraUtils.LEFT_PLANE]);
+//      System.out.println("r: " + frustum[CameraUtils.RIGHT_PLANE]);
+//      System.out.println("b: " + frustum[CameraUtils.BOTTOM_PLANE]);
+//      System.out.println("t: " + frustum[CameraUtils.TOP_PLANE]);
+//      System.out.println("n: " + frustum[CameraUtils.NEAR_PLANE]);
+//      System.out.println("f: " + frustum[CameraUtils.FAR_PLANE]);
+//      System.out.println("half near dim: " + halfNearPlaneWidth + ", " + halfNearPlaneHeight);
+//      System.out.println("dist to near: " + distToNear);
 
       /*
        * The vector component of each of the frustum rays will be calculated by summing the scaled camera.view vector
@@ -161,7 +167,7 @@ public class Earth extends Renderable {
        * Find the cartesian location of the nearest point on the surface to the camera (camera geodetic location with
        * altitude of 0)
        */
-      final Tuple3d surfacePt = WGS84.geodesicToCartesian(new Tuple3d(cameraGeodesic.x, cameraGeodesic.y, coronaHeight));
+      Tuple3d surfacePt = WGS84.geodesicToCartesian(new Tuple3d(cameraGeodesic.x, cameraGeodesic.y, coronaHeight));
 
       /*
        * Vector components used for calculation of various lengths throughout this method
@@ -193,6 +199,8 @@ public class Earth extends Renderable {
        * the tangent plane, and finding the distance from each intersection with the camera.viewing plane.
        */
       double nearPlane = Double.MAX_VALUE;
+      System.out.println("\n");
+      System.out.println("1. nearPlane: " + nearPlane);
 
       /*
        * The far clipping plane is bounded (maximally) by the greatest distance to the intersection of each of the 4
@@ -202,6 +210,7 @@ public class Earth extends Renderable {
        * possible distance (calculated above)
        */
       double farPlane = 0;
+      System.out.println("1. farPlane: " + farPlane);
 
       /*
        * An upper limit for the far clipping plane, the distance to the closest point on the surface (from the camera)
@@ -217,94 +226,110 @@ public class Earth extends Renderable {
       targetv.y = scaledViewY + scaledUpY - scaledLeftY;
       targetv.z = scaledViewZ + scaledUpZ - scaledLeftZ;
 
-      Point point;
+      Tuple3d point;
       /*
        * Near Calculation
        */
-      if (cameraGeodetic[2] > coronaHeight) {
-         plane.intersects(target, answer);
-         point = answer.getPointIntersection();
+      if (cameraGeodesic.z > coronaHeight) {
+         point = IntersectionUtils.rayPlaneIntersection(plane, targetp, targetv);
+
          if (point != null) {
             /*
              * Ensure that the intersection is in front of the camera
              */
             if ((point.x - position.x) * view.x + (point.y - position.y) * view.y + (point.z - position.z) * view.z >= 0) {
                final double dist = Plane.distanceToPlane(view, position, point.x, point.y, point.z);
-               if (dist < nearPlane)
+               
+               if (dist < nearPlane) {
                   nearPlane = dist;
+                  System.out.println("2. nearPlane: " + nearPlane);
+               }
             }
          }
       }
       /*
        * Far Calculation
        */
-      double[] intersect = surface.getNearIntersection(target, minAlt);
+      Tuple3d intersect = WGS84.getNearIntersection(new PickingRay(targetp, targetv), MINIMUM_ALTITUDE, true);
       if (intersect == null) {
          farPlane = maxFar;
+         System.out.println("2a. farPlane: " + farPlane);
       } else {
          /*
           * If there was an intersection, find the distance between the camera and the intersection point.
           */
-         surface.lonLatToXYZ(surfacePt, intersect[0], intersect[1], minAlt);
+         surfacePt = WGS84.geodesicToCartesian(new Tuple3d(intersect.x, intersect.y, MINIMUM_ALTITUDE));
          farPlane = Plane.distanceToPlane(view, position, surfacePt.x, surfacePt.y, surfacePt.z);
+         System.out.println("2b. farPlane: " + farPlane);
       }
 
       /*
        * Upper-Left frustum corner ray...
        */
-      target.v.x = scaledViewX + scaledUpX + scaledLeftX;
-      target.v.y = scaledViewY + scaledUpY + scaledLeftY;
-      target.v.z = scaledViewZ + scaledUpZ + scaledLeftZ;
+      targetv.x = scaledViewX + scaledUpX + scaledLeftX;
+      targetv.y = scaledViewY + scaledUpY + scaledLeftY;
+      targetv.z = scaledViewZ + scaledUpZ + scaledLeftZ;
 
       /*
        * Near Calculation
        */
-      if (cameraGeodetic[2] > coronaHeight) {
-         plane.intersects(target, answer);
-         point = answer.getPointIntersection();
+      if (cameraGeodesic.z > coronaHeight) {
+         point = IntersectionUtils.rayPlaneIntersection(plane, targetp, targetv);
+         
          if (point != null) {
             /*
              * Ensure that the intersection is in front of the camera
              */
             if ((point.x - position.x) * view.x + (point.y - position.y) * view.y + (point.z - position.z) * view.z >= 0) {
                final double dist = Plane.distanceToPlane(view, position, point.x, point.y, point.z);
-               if (dist < nearPlane)
+               
+               if (dist < nearPlane) {
                   nearPlane = dist;
+                  System.out.println("3. nearPlane: " + nearPlane);
+               }
             }
          }
       }
       /*
        * Far Calculation
        */
-      if (farPlane < maxFar && (intersect = surface.getNearIntersection(target, minAlt)) != null) {
-         surface.lonLatToXYZ(surfacePt, intersect[0], intersect[1], minAlt);
+      if (farPlane < maxFar && (intersect = WGS84.getNearIntersection(new PickingRay(targetp, targetv), MINIMUM_ALTITUDE, true)) != null) {
+         surfacePt = WGS84.geodesicToCartesian(new Tuple3d(intersect.x, intersect.y, MINIMUM_ALTITUDE));
          final double newFar = Plane.distanceToPlane(view, position, surfacePt.x, surfacePt.y, surfacePt.z);
-         if (newFar > farPlane)
+         
+         if (newFar > farPlane) {
             farPlane = newFar;
-      } else
+            System.out.println("3a. farPlane: " + farPlane);
+         }
+      } else {
          farPlane = maxFar;
+         System.out.println("3b. farPlane: " + farPlane);
+      }
 
       /*
        * Lower-Left frustum corner ray...
        */
-      target.v.x = scaledViewX - scaledUpX + scaledLeftX;
-      target.v.y = scaledViewY - scaledUpY + scaledLeftY;
-      target.v.z = scaledViewZ - scaledUpZ + scaledLeftZ;
+      targetv.x = scaledViewX - scaledUpX + scaledLeftX;
+      targetv.y = scaledViewY - scaledUpY + scaledLeftY;
+      targetv.z = scaledViewZ - scaledUpZ + scaledLeftZ;
 
       /*
        * Near Calculation
        */
-      if (cameraGeodetic[2] > coronaHeight) {
-         plane.intersects(target, answer);
-         point = answer.getPointIntersection();
+      if (cameraGeodesic.z > coronaHeight) {
+         point = IntersectionUtils.rayPlaneIntersection(plane, targetp, targetv);
+         
          if (point != null) {
             /*
              * Ensure that the intersection is in front of the camera
              */
             if ((point.x - position.x) * view.x + (point.y - position.y) * view.y + (point.z - position.z) * view.z >= 0) {
                final double dist = Plane.distanceToPlane(view, position, point.x, point.y, point.z);
-               if (dist < nearPlane)
+               
+               if (dist < nearPlane) {
                   nearPlane = dist;
+                  System.out.println("4. nearPlane: " + nearPlane);
+               }
             }
          }
       }
@@ -312,35 +337,43 @@ public class Earth extends Renderable {
       /*
        * Far calculation
        */
-      if (farPlane < maxFar && (intersect = surface.getNearIntersection(target, minAlt)) != null) {
-         surface.lonLatToXYZ(surfacePt, intersect[0], intersect[1], minAlt);
+      if (farPlane < maxFar && (intersect = WGS84.getNearIntersection(new PickingRay(targetp, targetv), MINIMUM_ALTITUDE, true)) != null) {
+         surfacePt = WGS84.geodesicToCartesian(new Tuple3d(intersect.x, intersect.y, MINIMUM_ALTITUDE));
          final double newFar = Plane.distanceToPlane(view, position, surfacePt.x, surfacePt.y, surfacePt.z);
-         if (newFar > farPlane)
+         
+         if (newFar > farPlane) {
             farPlane = newFar;
-      } else
+            System.out.println("4a. farPlane: " + farPlane);
+         }
+      } else {
          farPlane = maxFar;
+         System.out.println("4b. farPlane: " + farPlane);
+      }
 
       /*
        * Lower-Right frustum corner ray...
        */
-      target.v.x = scaledViewX - scaledUpX - scaledLeftX;
-      target.v.y = scaledViewY - scaledUpY - scaledLeftY;
-      target.v.z = scaledViewZ - scaledUpZ - scaledLeftZ;
+      targetv.x = scaledViewX - scaledUpX - scaledLeftX;
+      targetv.y = scaledViewY - scaledUpY - scaledLeftY;
+      targetv.z = scaledViewZ - scaledUpZ - scaledLeftZ;
 
       /*
        * Near Calculation
        */
-      if (cameraGeodetic[2] > coronaHeight) {
-         plane.intersects(target, answer);
-         point = answer.getPointIntersection();
+      if (cameraGeodesic.z > coronaHeight) {
+         point = IntersectionUtils.rayPlaneIntersection(plane, targetp, targetv);
+         
          if (point != null) {
             /*
              * Ensure that the intersection is in front of the camera
              */
             if ((point.x - position.x) * view.x + (point.y - position.y) * view.y + (point.z - position.z) * view.z >= 0) {
                final double dist = Plane.distanceToPlane(view, position, point.x, point.y, point.z);
-               if (dist < nearPlane)
+               
+               if (dist < nearPlane) {
                   nearPlane = dist;
+                  System.out.println("5. nearPlane: " + nearPlane);
+               }
             }
          }
       }
@@ -348,26 +381,29 @@ public class Earth extends Renderable {
       /*
        * Far Calculation
        */
-      if (farPlane < maxFar && (intersect = surface.getNearIntersection(target, minAlt)) != null) {
-         surface.lonLatToXYZ(surfacePt, intersect[0], intersect[1], minAlt);
+      if (farPlane < maxFar && (intersect = WGS84.getNearIntersection(new PickingRay(targetp, targetv), MINIMUM_ALTITUDE, true)) != null) {
+         surfacePt = WGS84.geodesicToCartesian(new Tuple3d(intersect.x, intersect.y, MINIMUM_ALTITUDE));
          final double newFar = Plane.distanceToPlane(view, position, surfacePt.x, surfacePt.y, surfacePt.z);
-         if (newFar > farPlane)
+         
+         if (newFar > farPlane) {
             farPlane = newFar;
-      } else
+            System.out.println("5a. farPlane: " + farPlane);
+         }
+      } else {
          farPlane = maxFar;
+         System.out.println("5b. farPlane: " + farPlane);
+      }
 
       /*
        * Camera is inside corona?
        */
-      if (cameraGeodetic[2] < coronaHeight) {
+      if (cameraGeodesic.z < coronaHeight) {
          /* Clamp near plane to a minimum distance */
-         // depthQuery.setMaxNear(3);
-         // depthQuery.setMinNear(3);
-         nearPlane = 0;// depthQuery.getMinNear();
+         nearPlane = 0.01;
+         System.out.println("6. nearPlane: " + nearPlane);
       }
 
       if (farPlane < maxFar) {
-
          /*
           * When the world is at a very coarse node resolution, it is possible that the entire geometry that is in the
           * FOV is below the elliposid. If the far plane is not far enough to include the geometry, the world will never
@@ -375,55 +411,32 @@ public class Earth extends Renderable {
           * on the world geometry along the camera.view vector, and make sure that the far plane is at least as large as
           * the distance between the camera and this intersection.
           */
-         target.v.x = scaledViewX;
-         target.v.y = scaledViewY;
-         target.v.z = scaledViewZ;
+         targetv.x = scaledViewX;
+         targetv.y = scaledViewY;
+         targetv.z = scaledViewZ;
+         
          try {
-            final double[] latLonAlt = world.getLatLonAlt(target);
-            if (latLonAlt == null) {
+            final double[] intersection = WGS84.ELLIPSOID.getIntersection(new PickingRay(targetp, targetv));
+            if (intersection == null) {
                farPlane = maxFar;
-            } else {
-               /*
-                * Nothing will be visible beyond the world terrain, so we clamp the far clip distance
-                */
-               depthQuery.setMinFar(farPlane);
-               depthQuery.setMaxFar(farPlane);
-               depthQuery.setFarDistance(farPlane);
-
-               depthQuery.setNearDistance(nearPlane);
-               if (cameraGeodetic[2] <= coronaHeight) {
-                  /*
-                   * Clamp the near clipping plane to avoid 'bouncing' issues that arise with the
-                   * TerrainCameraPositionConstraint
-                   * when the near plane changes dramatically between successive frames.
-                   */
-                  depthQuery.setMinNear(coronaHeight / DepthRangeQuery.CLIP_RATIO_MAX);
-                  depthQuery.setMaxNear(Math.max(nearPlane, coronaHeight / DepthRangeQuery.CLIP_RATIO_MAX));
-               }
-
-               return;
+               System.out.println("6. farPlane: " + farPlane);
             }
          } catch (final IllegalStateException ise) {
             farPlane = maxFar;
+            System.out.println("6ex. farPlane: " + farPlane);
          }
+      } else if (nearPlane < farPlane) {
+         nearPlane = Math.max(nearPlane, coronaHeight / 3000.0);
+         System.out.println("7. nearPlane: " + nearPlane);
+      }
+      
+      if(nearPlane > farPlane / 3000.0) {
+         nearPlane = farPlane / 3000.0;
+         System.out.println("8. nearPlane: " + nearPlane);
       }
 
-      if (nearPlane < farPlane) {
-         // depthQuery.setNearDistance(nearPlane);
-         depthQuery.setFarDistance(farPlane);
-         depthQuery.setMinFar(farPlane);
-         if (cameraGeodetic[2] <= coronaHeight) {
-            /*
-             * Clamp the near clipping plane to avoid 'bouncing' issues that arise with the
-             * TerrainCameraPositionConstraint
-             * when the near plane changes dramatically between successive frames.
-             */
-            depthQuery.setMinNear(coronaHeight / DepthRangeQuery.CLIP_RATIO_MAX);
-            depthQuery.setMaxNear(Math.max(nearPlane, coronaHeight / DepthRangeQuery.CLIP_RATIO_MAX));
-         } else {
-            depthQuery.setNearDistance(nearPlane);
-         }
-      }
+      System.out.println("final: " + nearPlane + ", " + farPlane);
+      return new double[] { nearPlane, farPlane };
    }
 
    public boolean isLightingEnabled() {
