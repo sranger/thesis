@@ -10,8 +10,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +22,12 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -27,6 +35,7 @@ import javax.swing.SwingUtilities;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
+import com.stephenwranger.graphics.collections.Pair;
 import com.stephenwranger.graphics.math.Tuple2d;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.renderables.EllipticalSegment;
@@ -35,19 +44,84 @@ import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.graphics.utils.buffers.Vertex;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
 
-public class EarthImagery {
+public class EarthImagery {   
    private static final Map<String, Texture2d> CACHED_TEXTURES = createLeastRecentlyUsedMap(10000);
+   private static String          IMAGE_CACHE_PROPERTY = "image.cache";
+   
+   // OpenStreetMap Map Tiles
    private static String          OPEN_STREET_MAP_PROPERTY = "osm.server";
-   private static String          OPEN_STREET_MAP_CACHE_PROPERTY = "osm.cache";
    private static String[]        OPEN_STREET_MAP_URL = getOpenStreetMapServers();
    private static final File      OPEN_STREET_MAP_CACHE_DIRECTORY = getOpenStreetMapCacheDirectory();
+
+   // Stamen Terrain Tiles
+   private static String          STAMEN_PROPERTY = "stamen.server";
+   private static String[]        STAMEN_URL = getStamenServers();
+   private static final File      STAMEN_CACHE_DIRECTORY = getStamenCacheDirectory();
+   
+   
    private static final Texture2d BASE_EARTH_TEXTURE = EarthImagery.getBaseTexture();
    private static final TextureServer TEXTURE_SERVER = new TextureServer();
+
+   private static int OPEN_STREET_MAP_URL_INDEX = 0;
+   private static int STAMEN_URL_INDEX = 0;
    
-   private static int URL_INDEX = 0;
+   public enum ImageryType {
+      OPEN_STREET_MAP, STAMEN_TERRAIN;
+      
+      public String getUrl(final int[] tileXyz) {
+         switch(this) {
+            default:
+            case OPEN_STREET_MAP:
+               return EarthImagery.getOpenStreetMapUrl(tileXyz);
+            case STAMEN_TERRAIN:
+               return EarthImagery.getStamenUrl(tileXyz);
+         }
+      }
+      
+      public File getCacheDirectory() {
+         switch(this) {
+            default:
+            case OPEN_STREET_MAP:
+               return OPEN_STREET_MAP_CACHE_DIRECTORY;
+            case STAMEN_TERRAIN:
+               return STAMEN_CACHE_DIRECTORY;
+         }
+      }
+   }
+   
+   static {
+      EarthImagery.disableSslValidation();
+   }
 
    private EarthImagery() {
       //statics only
+   }
+   
+   public static void disableSslValidation() {
+      try {
+         // Create a trust manager that does not validate certificate chains
+         final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+             @Override
+             public void checkClientTrusted( final X509Certificate[] chain, final String authType ) {
+             }
+             @Override
+             public void checkServerTrusted( final X509Certificate[] chain, final String authType ) {
+             }
+             @Override
+             public X509Certificate[] getAcceptedIssuers() {
+                 return null;
+             }
+         } };
+         
+         SSLContext sc = SSLContext.getInstance("TLS");
+         sc.init(null, trustAllCerts, new java.security.SecureRandom());
+         HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+         HttpsURLConnection.setDefaultHostnameVerifier( new HostnameVerifier(){
+             public boolean verify(String string,SSLSession ssls) {
+                 return true;
+             }
+         });
+      } catch(final Exception e) {}
    }
 
    /**
@@ -58,13 +132,13 @@ public class EarthImagery {
     * 
     * @param segment
     */
-   public static void setImagery(final EllipticalSegment segment) {
+   public static void setImagery(final EllipticalSegment segment, final ImageryType imageryType) {
       // set base texture until server can get around to handling this
       segment.setTexture(new Texture2d[] { EarthImagery.BASE_EARTH_TEXTURE }, null);
       
       // TODO: need to support multiple textures; they're never at the same depth
       if (EarthImagery.OPEN_STREET_MAP_URL != null) {
-         TEXTURE_SERVER.addPending(segment);
+         TEXTURE_SERVER.addPending(segment, imageryType);
       }
    }
    
@@ -100,7 +174,7 @@ public class EarthImagery {
       return tiles.toArray(new int[tiles.size()][]);
    }
    
-   public static int numTiles(final int zoom) {
+   private static int numTiles(final int zoom) {
       return (int) Math.pow(2, zoom);
    }
    
@@ -134,11 +208,11 @@ public class EarthImagery {
 //      return new double[] { lon, lat };
 //   }
 
-   public static double mercatorToLat(final double mercatorY) {
+   private static double mercatorToLat(final double mercatorY) {
       return Math.toDegrees(Math.atan(Math.sinh(mercatorY)));
    }
       
-   public static double[] latEdges(final int y, final int z) {
+   private static double[] latEdges(final int y, final int z) {
       final double n = numTiles(z);
       final double unit = 1 / n;
       final double relY1 = y * unit;
@@ -148,7 +222,7 @@ public class EarthImagery {
       return new double[] { lat1,lat2 };
    }
 
-   public static double[] lonEdges(final int x, final int z) {
+   private static double[] lonEdges(final int x, final int z) {
       final double n = numTiles(z);
       final double unit = 360 / n;
       final double lon1 = -180 + x * unit;
@@ -163,7 +237,7 @@ public class EarthImagery {
     * @param z
     * @return
     */
-   public static double[] tileEdges(final int x, final int y, final int z) {
+   private static double[] tileEdges(final int x, final int y, final int z) {
       final double[] lats = latEdges(y,z);
       final double[] lons = lonEdges(x,z);
       return new double[] { lats[1], lons[0], lats[0], lons[1] }; // S,W,N,E
@@ -185,14 +259,14 @@ public class EarthImagery {
     * @param zoom
     * @return
     */
-   public static int[] tileXYZ(final double lonDegrees, final double latDegrees, final int zoom) {
+   private static int[] tileXYZ(final double lonDegrees, final double latDegrees, final int zoom) {
       final double[] xy = tileXYZDouble(lonDegrees, latDegrees, zoom);
       final double x = xy[0];
       final double y = xy[1];
       return new int[] { (int) Math.floor(x), (int) Math.floor(y), zoom };
    }
    
-   public static double[] tileXYZDouble(final double lonDegrees, final double latDegrees, final int zoom) {
+   private static double[] tileXYZDouble(final double lonDegrees, final double latDegrees, final int zoom) {
       final double latRadians = Math.toRadians(latDegrees);
       final double n = numTiles(zoom);
       final double x = (lonDegrees + 180.0) / 360.0;
@@ -201,7 +275,7 @@ public class EarthImagery {
       return new double[] { x * n, y * n };
    }
    
-   public static double[] xy2lonlat(final int x, final int y, final int z) {
+   private static double[] xy2lonlat(final int x, final int y, final int z) {
       final double n = numTiles(z);
       final double lon_deg = x / n * 360.0 - 180.0;
       final double lat_rad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n)));
@@ -235,7 +309,7 @@ public class EarthImagery {
       if(OPEN_STREET_MAP_URL != null && OPEN_STREET_MAP_URL.length > 0) {
          final String serverProperty = System.getProperty(OPEN_STREET_MAP_PROPERTY);
          final String suffix = serverProperty.substring(serverProperty.indexOf("}") + 2);
-         final String property = System.getProperty(OPEN_STREET_MAP_CACHE_PROPERTY) + File.separator + suffix;
+         final String property = System.getProperty(IMAGE_CACHE_PROPERTY) + File.separator + suffix;
          
          if(property != null && !property.isEmpty()) {
             final File directory = new File(property);
@@ -253,22 +327,73 @@ public class EarthImagery {
       return null;
    }
    
-   private static synchronized String getNextServerUrl() {
-      final String url = OPEN_STREET_MAP_URL[URL_INDEX];
-      URL_INDEX = (URL_INDEX + 1) % OPEN_STREET_MAP_URL.length;
+   private static String[] getStamenServers() {
+      final String property = System.getProperty(STAMEN_PROPERTY);
+      String[] urls = null;
+      
+      if(property != null && !property.isEmpty()) {
+         final String prefix = property.substring(0, property.indexOf("{"));
+         final String[] servers = property.substring(property.indexOf("{") + 1, property.indexOf("}")).split(",");
+         final String suffix = property.substring(property.indexOf("}") + 1);
+         urls = new String[servers.length];
+         
+         for(int i = 0; i < servers.length; i++) {
+            urls[i] = prefix + servers[i] + suffix;
+         }
+      }
+      
+      return urls;
+   }
+   
+   private static File getStamenCacheDirectory() {
+      if(STAMEN_URL != null && STAMEN_URL.length > 0) {
+         final String serverProperty = System.getProperty(STAMEN_PROPERTY);
+         final String suffix = serverProperty.substring(serverProperty.indexOf("}") + 2);
+         final String property = System.getProperty(IMAGE_CACHE_PROPERTY) + File.separator + suffix;
+         
+         if(property != null && !property.isEmpty()) {
+            final File directory = new File(property);
+            
+            if(!directory.exists()) {
+               directory.mkdirs();
+            }
+            
+            if(directory.isDirectory()) {
+               return directory;
+            }
+         }
+      }
+      
+      return null;
+   }
+   
+   private static synchronized String getNextOpenStreetMapServerUrl() {
+      final String url = OPEN_STREET_MAP_URL[OPEN_STREET_MAP_URL_INDEX];
+      OPEN_STREET_MAP_URL_INDEX = (OPEN_STREET_MAP_URL_INDEX + 1) % OPEN_STREET_MAP_URL.length;
+      
+      return url;
+   }
+   
+   private static synchronized String getNextStamenServerUrl() {
+      final String url = STAMEN_URL[STAMEN_URL_INDEX];
+      STAMEN_URL_INDEX = (STAMEN_URL_INDEX + 1) % STAMEN_URL.length;
       
       return url;
    }
    
    private static String getOpenStreetMapUrl(final int[] tileXyz) {
-      return getNextServerUrl() + "/" + tileXyz[2] + "/" + tileXyz[0] + "/" + tileXyz[1] + ".png";
+      return getNextOpenStreetMapServerUrl() + "/" + tileXyz[2] + "/" + tileXyz[0] + "/" + tileXyz[1] + ".png";
    }
    
-   private static Texture2d getOpenStreetMapTexture(final String urlString) {
+   private static String getStamenUrl(final int[] tileXyz) {
+      return getNextStamenServerUrl() + "/" + tileXyz[2] + "/" + tileXyz[0] + "/" + tileXyz[1] + ".png";
+   }
+   
+   private static Texture2d getTexture(final String urlString, final ImageryType imageryType, final int[] tileXyz) {
       Texture2d texture = CACHED_TEXTURES.get(urlString);
       
       if(texture == null) {
-         final File cachedFile = new File(OPEN_STREET_MAP_CACHE_DIRECTORY, urlString.substring(urlString.indexOf(".org/") + 5));
+         final File cachedFile = new File(imageryType.getCacheDirectory(), tileXyz[2] + File.separator + tileXyz[0] + File.separator + tileXyz[1] + ".png");
          
          if(cachedFile.exists()) {
             try {
@@ -281,8 +406,21 @@ public class EarthImagery {
          // if cache didn't exist or reading image failed
          if(texture == null) {
             try {
+               System.out.println(urlString);
                final URL url = new URL(urlString);
                final URLConnection connection = url.openConnection();
+               
+               if(connection instanceof HttpURLConnection) {
+                  ((HttpURLConnection) connection).setInstanceFollowRedirects(true);
+                  final int status = ((HttpURLConnection) connection).getResponseCode();
+                  
+                  // if the URL is redirecting traffic; return the new url's value
+                  if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM) {
+                     ((HttpURLConnection) connection).disconnect();
+                     return getTexture(connection.getHeaderField("Location"), imageryType, tileXyz);
+                  }
+               }
+               
                
                try (final InputStream is = connection.getInputStream()) {
                   texture = Texture2d.getTexture(is, GL2.GL_RGBA);
@@ -318,14 +456,14 @@ public class EarthImagery {
    }
 
    static class TextureServer extends Thread {
-      private final Queue<EllipticalSegment> pending = new LinkedBlockingQueue<>();
+      private final Queue<Pair<EllipticalSegment, ImageryType>> pending = new LinkedBlockingQueue<>();
       
       public TextureServer() {
          this.start();
       }
       
-      public synchronized void addPending(final EllipticalSegment segment) {
-         pending.add(segment);
+      public synchronized void addPending(final EllipticalSegment segment, final ImageryType imageryType) {
+         pending.add(Pair.getInstance(segment, imageryType));
          this.notify();
       }
       
@@ -344,10 +482,13 @@ public class EarthImagery {
                   }
                
                EllipticalSegment segment = null;
+               ImageryType imageryType = null;
                
-               for(final EllipticalSegment es : this.pending) {
+               for(final Pair<EllipticalSegment, ImageryType> pair : this.pending) {
+                  final EllipticalSegment es = pair.left;
                   if(segment == null || segment.getDepth() > es.getDepth()) {
                      segment = es;
+                     imageryType = pair.right;
                   }
                }
                
@@ -362,8 +503,8 @@ public class EarthImagery {
                   for(int i = 0; i < tiles.length; i++) {
                      final int[] tile = tiles[i];
                      
-                     final String urlString = getOpenStreetMapUrl(tile);
-                     final Texture2d texture = getOpenStreetMapTexture(urlString);
+                     final String urlString = imageryType.getUrl(tile);
+                     final Texture2d texture = getTexture(urlString, imageryType, tile);
                         
                      if(texture == null) {
                         textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
@@ -405,8 +546,8 @@ public class EarthImagery {
       for(int i = 0; i < tiles.length; i++) {
          final int[] tile = tiles[i];
          
-         final String urlString = getNextServerUrl() + "/" + tile[2] + "/" + tile[0] + "/" + tile[1] + ".png";
-         final Texture2d texture = getOpenStreetMapTexture(urlString);
+         final String urlString = getNextOpenStreetMapServerUrl() + "/" + tile[2] + "/" + tile[0] + "/" + tile[1] + ".png";
+         final Texture2d texture = getTexture(urlString, ImageryType.OPEN_STREET_MAP, tile);
             
          if(texture == null) {
             textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
