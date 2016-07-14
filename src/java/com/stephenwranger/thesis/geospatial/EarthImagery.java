@@ -360,7 +360,6 @@ public class EarthImagery {
                         
                         for(int j = 0; j < vertices.length; j++) {
                            final Tuple3d lonLatAlt = vertices[j].getGeodesicVertex();
-                           System.out.println(lonLatAlt);
                            final double[] tileDouble = tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
                            
                            final Tuple2d texCoord = new Tuple2d();
