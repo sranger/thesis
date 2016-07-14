@@ -1,5 +1,9 @@
 package com.stephenwranger.thesis.geospatial;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,7 +13,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +20,10 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
@@ -66,18 +73,22 @@ public class EarthImagery {
       final Tuple3d lla0 = WGS84.cartesianToGeodesic(vertices[0].getVertex());
       final Tuple3d lla1 = WGS84.cartesianToGeodesic(vertices[1].getVertex());
       final Tuple3d lla2 = WGS84.cartesianToGeodesic(vertices[2].getVertex());
-      final int depth = Math.min(15, segment.getDepth());
-
+      
+      return computeZoomTile(lla0, lla1, lla2, Math.min(15, segment.getDepth()));
+   }
+   
+   private static int[][] computeZoomTile(final Tuple3d lla0, final Tuple3d lla1, final Tuple3d lla2, final int depth) {
       final int[] tile0 = tileXYZ(lla0.x, lla0.y, depth);
       final int[] tile1 = tileXYZ(lla1.x, lla1.y, depth);
       final int[] tile2 = tileXYZ(lla2.x, lla2.y, depth);
 
       final int minX = MathUtils.getMin(tile0[0], tile1[0], tile2[0]);
       final int maxX = MathUtils.getMax(tile0[0], tile1[0], tile2[0]);
+      
       final int minY = MathUtils.getMin(tile0[1], tile1[1], tile2[1]);
       final int maxY = MathUtils.getMax(tile0[1], tile1[1], tile2[1]);
-      final List<int[]> tiles = new ArrayList<>();
       
+      final List<int[]> tiles = new ArrayList<>();
       final int n = (int) Math.pow(2, depth);
       
       for(int x = (int) MathUtils.clamp(0, n-1, minX); x <= (int) MathUtils.clamp(0, n-1, maxX); x++) {
@@ -249,6 +260,10 @@ public class EarthImagery {
       return url;
    }
    
+   private static String getOpenStreetMapUrl(final int[] tileXyz) {
+      return getNextServerUrl() + "/" + tileXyz[2] + "/" + tileXyz[0] + "/" + tileXyz[1] + ".png";
+   }
+   
    private static Texture2d getOpenStreetMapTexture(final String urlString) {
       Texture2d texture = CACHED_TEXTURES.get(urlString);
       
@@ -347,7 +362,7 @@ public class EarthImagery {
                   for(int i = 0; i < tiles.length; i++) {
                      final int[] tile = tiles[i];
                      
-                     final String urlString = getNextServerUrl() + "/" + tile[2] + "/" + tile[0] + "/" + tile[1] + ".png";
+                     final String urlString = getOpenStreetMapUrl(tile);
                      final Texture2d texture = getOpenStreetMapTexture(urlString);
                         
                      if(texture == null) {
@@ -363,8 +378,8 @@ public class EarthImagery {
                            final double[] tileDouble = tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
                            
                            final Tuple2d texCoord = new Tuple2d();
-                           texCoord.x = tileDouble[0] - Math.floor(tileDouble[0]);
-                           texCoord.y = 1.0 - (tileDouble[1] - Math.floor(tileDouble[1]));
+                           texCoord.x = tileDouble[0] - tile[0];
+                           texCoord.y = 1.0 - (tileDouble[1] - tile[1]);
                            
                            texCoords[i][j] = texCoord;
                         }
@@ -379,25 +394,90 @@ public class EarthImagery {
    }
    
    public static void main(final String[] args) {
-      System.out.println(Arrays.toString(EarthImagery.xy2lonlat(0, 0, 0)));
-      for(int z = 0; z < 6; z++) {
-         System.out.println("zoom: " + z);
-         for(int x = 0; x < Math.pow(2, z); x++) {
-            for(int y = 0; y < Math.pow(2, z); y++) {
-               final double[] lonLat = xy2lonlat(x, y, z);
-               final int[] tile = tileXYZ(lonLat[0], lonLat[1], z);
-
-//               final double[] lonLat = new double[] { tile2lon(x, z), tile2lat(y, z) };
-//               final int[] tile = getTileNumbers(lonLat[0], lonLat[1], z);
+      final Tuple3d lla0 = new Tuple3d(-120.0, 30.0, 0.0);
+      final Tuple3d lla1 = new Tuple3d(-115.0, 40.0, 0.0);
+      final Tuple3d lla2 = new Tuple3d(-110.0, 30.0, 0.0);
+      final int depth = 5;
+      final int[][] tiles = computeZoomTile(lla0, lla1, lla2, depth);
+      final Texture2d[] textures = new Texture2d[tiles.length];
+      final Tuple2d[][] texCoords = new Tuple2d[tiles.length][];
+      
+      for(int i = 0; i < tiles.length; i++) {
+         final int[] tile = tiles[i];
+         
+         final String urlString = getNextServerUrl() + "/" + tile[2] + "/" + tile[0] + "/" + tile[1] + ".png";
+         final Texture2d texture = getOpenStreetMapTexture(urlString);
+            
+         if(texture == null) {
+            textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
+            texCoords[i] = null;
+         } else {
+            final Tuple3d[] vertices = new Tuple3d[] { lla0, lla1, lla2 };
+            textures[i] = texture;
+            texCoords[i] = new Tuple2d[vertices.length];
+            
+            for(int j = 0; j < vertices.length; j++) {
+               final Tuple3d lonLatAlt = vertices[j];
+               final double[] tileDouble = tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
                
-               if(!Arrays.equals(tile, new int[] { x, y, z })) {
-                  System.err.println("not equal: " + x + ", " + y + ", " + z + " -> " + lonLat[0] + ", " + lonLat[1] + " -> " + Arrays.toString(tile));
-               }
+               final Tuple2d texCoord = new Tuple2d();
+               texCoord.x = tileDouble[0] - tile[0];
+               texCoord.y = tileDouble[1] - tile[1];
+               
+               texCoords[i][j] = texCoord;
             }
          }
       }
       
-      System.out.println("done!");
-      System.exit(0);
+      final JFrame frame = new JFrame("Texture Test");
+      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      frame.setLocation(100, 100);
+      
+      final JTabbedPane tabPane = new JTabbedPane();
+      
+      for(int i = 0; i < textures.length; i++) {
+         final BufferedImage image = textures[i].getImage();
+         final Tuple2d[] tex = texCoords[i];
+         
+         final JPanel panel = new JPanel() {
+            private static final long serialVersionUID = 2576079064574101275L;
+            private final Color[] colors = new Color[] { Color.RED, Color.GREEN, Color.BLUE };
+            
+            @Override
+            public void paintComponent(final Graphics g) {
+               super.paintComponent(g);
+               
+               final Graphics2D g2 = (Graphics2D) g;
+               final int width = image.getWidth();
+               final int height = image.getHeight();
+               final int[] x = new int[tex.length];
+               final int[] y = new int[tex.length];
+               
+               g2.drawImage(image, 0, 0, null);
+               g.setColor(Color.black);
+               
+               for(int j = 0; j < x.length; j++) {
+                  x[j] = (int) (width * tex[j].x);
+                  y[j] = (int) (height * tex[j].y);
+               }
+               
+               g.drawPolygon(x, y, x.length);
+               
+               for(int j = 0; j < x.length; j++) {
+                  g.setColor(colors[j]);
+                  g.fillOval(x[j] - 5, y[j] - 5, 10, 10);
+               }
+            }
+         };
+         
+         panel.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+         tabPane.insertTab("Texture " + i, null, panel, "", i);  
+      }
+      
+      SwingUtilities.invokeLater(() -> {
+         frame.getContentPane().add(tabPane);
+         frame.pack();
+         frame.setVisible(true);
+      });
    }
 }
