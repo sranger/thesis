@@ -19,11 +19,13 @@ import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Ellipsoid;
 import com.stephenwranger.graphics.renderables.EllipticalGeometry;
+import com.stephenwranger.graphics.renderables.EllipticalSegment;
 import com.stephenwranger.graphics.renderables.Renderable;
 import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.graphics.utils.shader.ShaderKernel;
 import com.stephenwranger.graphics.utils.shader.ShaderProgram;
 import com.stephenwranger.graphics.utils.shader.ShaderStage;
+import com.stephenwranger.thesis.geospatial.EarthImagery.ImageryType;
 
 /**
  * {@link Earth} is a {@link Renderable} that creates an {@link EllipticalGeometry} based on the {@link WGS84} surface
@@ -39,13 +41,17 @@ public class Earth extends Renderable {
 
    private final ShaderProgram         shader;
    private final Ellipsoid             ellipsoid         = WGS84.ELLIPSOID;
+   private final ImageryType           imageryType;
+   
    private EllipticalGeometry          geometry          = null;
    private boolean                     isWireframe       = false;
    private boolean                     isLightingEnabled = false;
    private double                      loadFactor        = 0.75;
 
-   public Earth() {
+   public Earth(final ImageryType imageryType) {
       super(new Tuple3d(), new Quat4d());
+      
+      this.imageryType = imageryType;
       
       final Map<String, Integer> requestedAttributeLocations = new HashMap<>();
       final ShaderKernel vert = new ShaderKernel("earth.vert", Earth.class.getResourceAsStream("earth.vert"), ShaderStage.VERTEX);
@@ -159,11 +165,15 @@ public class Earth extends Renderable {
    public boolean isWireframe() {
       return this.isWireframe;
    }
+   
+   private void setImagery(final EllipticalSegment segment) {
+      EarthImagery.setImagery(segment, this.imageryType);
+   }
 
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
       if (this.geometry == null) {
-         this.geometry = new EllipticalGeometry(gl, this.ellipsoid, WGS84.EQUATORIAL_RADIUS, 2, this::getAltitude, EarthImagery::setImagery);
+         this.geometry = new EllipticalGeometry(gl, this.ellipsoid, WGS84.EQUATORIAL_RADIUS, 2, this::getAltitude, this::setImagery);
          this.geometry.setLightingEnabled(this.isLightingEnabled);
          this.geometry.setLoadFactor(this.loadFactor);
       }

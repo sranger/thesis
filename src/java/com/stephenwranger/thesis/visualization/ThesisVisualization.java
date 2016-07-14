@@ -29,6 +29,7 @@ import com.stephenwranger.thesis.data.TreeServerProcessor.ConnectionType;
 import com.stephenwranger.thesis.data.TreeStructure;
 import com.stephenwranger.thesis.geospatial.Earth;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
+import com.stephenwranger.thesis.geospatial.EarthImagery.ImageryType;
 import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
 
@@ -42,7 +43,7 @@ public class ThesisVisualization extends JFrame {
    public ThesisVisualization(final String basePath, final ConnectionType connectionType) {
       super("Thesis Visualization");
 
-      this.earth = new Earth();
+      this.earth = new Earth(ImageryType.OPEN_STREET_MAP);
       this.earth.setWireframe(false);
       this.earth.setLightingEnabled(false);
       this.earth.setLoadFactor(0.75);
