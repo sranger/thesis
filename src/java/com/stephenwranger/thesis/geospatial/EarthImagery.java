@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.HostnameVerifier;
@@ -35,7 +35,6 @@ import javax.swing.SwingUtilities;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
-import com.stephenwranger.graphics.collections.Pair;
 import com.stephenwranger.graphics.math.Tuple2d;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.renderables.EllipticalSegment;
@@ -87,6 +86,16 @@ public class EarthImagery {
                return STAMEN_CACHE_DIRECTORY;
          }
       }
+      
+      public boolean isValid() {
+         switch(this) {
+            default:
+            case OPEN_STREET_MAP:
+               return OPEN_STREET_MAP_URL != null;
+            case STAMEN_TERRAIN:
+               return STAMEN_URL != null;
+         }
+      }
    }
    
    static {
@@ -134,10 +143,10 @@ public class EarthImagery {
     */
    public static void setImagery(final EllipticalSegment segment, final ImageryType imageryType) {
       // set base texture until server can get around to handling this
-      segment.setTexture(new Texture2d[] { EarthImagery.BASE_EARTH_TEXTURE }, null);
+      segment.setTexture(null, null);//new Texture2d[] { EarthImagery.BASE_EARTH_TEXTURE }, null);
       
       // TODO: need to support multiple textures; they're never at the same depth
-      if (EarthImagery.OPEN_STREET_MAP_URL != null) {
+      if (imageryType != null && imageryType.isValid()) {
          TEXTURE_SERVER.addPending(segment, imageryType);
       }
    }
@@ -332,13 +341,17 @@ public class EarthImagery {
       String[] urls = null;
       
       if(property != null && !property.isEmpty()) {
-         final String prefix = property.substring(0, property.indexOf("{"));
-         final String[] servers = property.substring(property.indexOf("{") + 1, property.indexOf("}")).split(",");
-         final String suffix = property.substring(property.indexOf("}") + 1);
-         urls = new String[servers.length];
-         
-         for(int i = 0; i < servers.length; i++) {
-            urls[i] = prefix + servers[i] + suffix;
+         if(property.contains("{")) {
+            final String prefix = property.substring(0, property.indexOf("{"));
+            final String[] servers = property.substring(property.indexOf("{") + 1, property.indexOf("}")).split(",");
+            final String suffix = property.substring(property.indexOf("}") + 1);
+            urls = new String[servers.length];
+            
+            for(int i = 0; i < servers.length; i++) {
+               urls[i] = prefix + servers[i] + suffix;
+            }
+         } else {
+            urls = new String[] { property };
          }
       }
       
@@ -348,7 +361,11 @@ public class EarthImagery {
    private static File getStamenCacheDirectory() {
       if(STAMEN_URL != null && STAMEN_URL.length > 0) {
          final String serverProperty = System.getProperty(STAMEN_PROPERTY);
-         final String suffix = serverProperty.substring(serverProperty.indexOf("}") + 2);
+         String suffix = serverProperty.substring(serverProperty.indexOf("//") + 2);
+         
+         if(suffix.contains("}.")) {
+            suffix = serverProperty.substring(serverProperty.indexOf("}") + 2);
+         }
          final String property = System.getProperty(IMAGE_CACHE_PROPERTY) + File.separator + suffix;
          
          if(property != null && !property.isEmpty()) {
@@ -386,10 +403,14 @@ public class EarthImagery {
    }
    
    private static String getStamenUrl(final int[] tileXyz) {
-      return getNextStamenServerUrl() + "/" + tileXyz[2] + "/" + tileXyz[0] + "/" + tileXyz[1] + ".png";
+      return getNextStamenServerUrl() + "/" + tileXyz[2] + "/" + tileXyz[0] + "/" + tileXyz[1] + ".jpg";
+   }
+
+   private static Texture2d getTexture(final String urlString, final ImageryType imageryType, final int[] tileXyz) {
+      return getTexture(urlString, imageryType, tileXyz, 0);
    }
    
-   private static Texture2d getTexture(final String urlString, final ImageryType imageryType, final int[] tileXyz) {
+   private static Texture2d getTexture(final String urlString, final ImageryType imageryType, final int[] tileXyz, final int redirectCount) {
       Texture2d texture = CACHED_TEXTURES.get(urlString);
       
       if(texture == null) {
@@ -406,21 +427,18 @@ public class EarthImagery {
          // if cache didn't exist or reading image failed
          if(texture == null) {
             try {
-               System.out.println(urlString);
                final URL url = new URL(urlString);
                final URLConnection connection = url.openConnection();
                
-               if(connection instanceof HttpURLConnection) {
-                  ((HttpURLConnection) connection).setInstanceFollowRedirects(true);
+               if(connection instanceof HttpURLConnection && redirectCount < 5) {
                   final int status = ((HttpURLConnection) connection).getResponseCode();
                   
                   // if the URL is redirecting traffic; return the new url's value
                   if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM) {
                      ((HttpURLConnection) connection).disconnect();
-                     return getTexture(connection.getHeaderField("Location"), imageryType, tileXyz);
+                     return getTexture(connection.getHeaderField("Location"), imageryType, tileXyz, redirectCount+1);
                   }
                }
-               
                
                try (final InputStream is = connection.getInputStream()) {
                   texture = Texture2d.getTexture(is, GL2.GL_RGBA);
@@ -429,15 +447,15 @@ public class EarthImagery {
                   if(image != null && !cachedFile.exists()) {
                      cachedFile.mkdirs();
                      ImageIO.write(image, "png", cachedFile);
+                     
+                     if(texture != null) {
+                        CACHED_TEXTURES.put(urlString, texture);
+                     }
                   }
                }
             } catch(final IOException e) {
                e.printStackTrace();
             }
-         }
-         
-         if(texture != null) {
-            CACHED_TEXTURES.put(urlString, texture);
          }
       }
       
@@ -456,78 +474,85 @@ public class EarthImagery {
    }
 
    static class TextureServer extends Thread {
-      private final Queue<Pair<EllipticalSegment, ImageryType>> pending = new LinkedBlockingQueue<>();
+      private final Map<EllipticalSegment, ImageryType> pending = new ConcurrentHashMap<>();
       
       public TextureServer() {
          this.start();
       }
       
       public synchronized void addPending(final EllipticalSegment segment, final ImageryType imageryType) {
-         pending.add(Pair.getInstance(segment, imageryType));
+         pending.put(segment, imageryType);
          this.notify();
       }
       
       @Override
       public void run() {
+         EllipticalSegment segment = null;
+         ImageryType imageryType = null;
+         
          while(true) {
+            segment = null;
+            imageryType = null;
             synchronized(this) {
-                  try {
-                     if(this.pending.isEmpty()) {
-                        this.wait();
-                     } else {
-                        Thread.sleep(1);
-                     }
-                  } catch (final InterruptedException e) {
-                     e.printStackTrace();
+               try {
+                  if(this.pending.isEmpty()) {
+                     this.wait();
+                  } else {
+                     Thread.sleep(1);
                   }
+               } catch (final InterruptedException e) {
+                  e.printStackTrace();
+               }
                
-               EllipticalSegment segment = null;
-               ImageryType imageryType = null;
-               
-               for(final Pair<EllipticalSegment, ImageryType> pair : this.pending) {
-                  final EllipticalSegment es = pair.left;
+               for(final Entry<EllipticalSegment, ImageryType> pair : this.pending.entrySet()) {
+                  final EllipticalSegment es = pair.getKey();
                   if(segment == null || segment.getDepth() > es.getDepth()) {
                      segment = es;
-                     imageryType = pair.right;
+                     imageryType = pair.getValue();
+                  }
+               }
+            }
+            
+            if(segment != null) {
+               // TODO: pull from open street map (no free high res satellite imagery i can find, unfortunately)
+               // maybe this? http://mike.teczno.com/notes/osm-us-terrain-layer/background.html
+               final int[][] tiles = computeZoomTile(segment);
+               final Texture2d[] textures = new Texture2d[tiles.length];
+               final Tuple2d[][] texCoords = new Tuple2d[tiles.length][];
+               
+               for(int i = 0; i < tiles.length; i++) {
+                  final int[] tile = tiles[i];
+                  
+                  final String urlString = imageryType.getUrl(tile);
+                  final Texture2d texture = getTexture(urlString, imageryType, tile);
+                     
+                  if(texture == null) {
+                     textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
+                     texCoords[i] = null;
+                  } else {
+                     final GeodesicVertex[] vertices = segment.getVertices();
+                     textures[i] = texture;
+                     texCoords[i] = new Tuple2d[vertices.length];
+                     
+                     for(int j = 0; j < vertices.length; j++) {
+                        final Tuple3d lonLatAlt = vertices[j].getGeodesicVertex();
+                        final double[] tileDouble = tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
+                        
+                        final Tuple2d texCoord = new Tuple2d();
+                        texCoord.x = tileDouble[0] - tile[0];
+                        texCoord.y = 1.0 - (tileDouble[1] - tile[1]);
+                        
+                        texCoords[i][j] = texCoord;
+                     }
                   }
                }
                
-               if(segment != null) {
-                  this.pending.remove(segment);
-                  // TODO: pull from open street map (no free high res satellite imagery i can find, unfortunately)
-                  // maybe this? http://mike.teczno.com/notes/osm-us-terrain-layer/background.html
-                  final int[][] tiles = computeZoomTile(segment);
-                  final Texture2d[] textures = new Texture2d[tiles.length];
-                  final Tuple2d[][] texCoords = new Tuple2d[tiles.length][];
-                  
-                  for(int i = 0; i < tiles.length; i++) {
-                     final int[] tile = tiles[i];
-                     
-                     final String urlString = imageryType.getUrl(tile);
-                     final Texture2d texture = getTexture(urlString, imageryType, tile);
-                        
-                     if(texture == null) {
-                        textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
-                        texCoords[i] = null;
-                     } else {
-                        final GeodesicVertex[] vertices = segment.getVertices();
-                        textures[i] = texture;
-                        texCoords[i] = new Tuple2d[vertices.length];
-                        
-                        for(int j = 0; j < vertices.length; j++) {
-                           final Tuple3d lonLatAlt = vertices[j].getGeodesicVertex();
-                           final double[] tileDouble = tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
-                           
-                           final Tuple2d texCoord = new Tuple2d();
-                           texCoord.x = tileDouble[0] - tile[0];
-                           texCoord.y = 1.0 - (tileDouble[1] - tile[1]);
-                           
-                           texCoords[i][j] = texCoord;
-                        }
-                     }
+               segment.setTexture(textures, texCoords);
+               
+               synchronized(this) {
+                  if(segment != null) {
+                     this.pending.remove(segment);
                   }
-                  
-                  segment.setTexture(textures, texCoords);
                }
             }
          }
