@@ -43,7 +43,7 @@ public class ThesisVisualization extends JFrame {
    public ThesisVisualization(final String basePath, final ConnectionType connectionType) {
       super("Thesis Visualization");
 
-      this.earth = new Earth(ImageryType.OPEN_STREET_MAP);
+      this.earth = new Earth(ImageryType.STAMEN_TERRAIN);
       this.earth.setWireframe(false);
       this.earth.setLightingEnabled(false);
       this.earth.setLoadFactor(0.75);
