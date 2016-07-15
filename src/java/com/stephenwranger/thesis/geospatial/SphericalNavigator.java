@@ -251,6 +251,13 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
          if (lonLatAlt != null) {
             this.anchor.set(WGS84.geodesicToCartesian(lonLatAlt));
+            
+            if(earth != null) {
+               final Tuple3d lla = WGS84.cartesianToGeodesic(this.anchor);
+               final double elevation = DigitalElevationUtils.getElevation(lla.x, lla.y);
+               lla.z = elevation;
+               this.anchor.set(WGS84.geodesicToCartesian(lla));
+            }
          }
       }
    }
@@ -269,6 +276,13 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
             if (transformation != null) {
                transformation.apply(this.anchor);
+               
+               if(earth != null) {
+                  final Tuple3d lla = WGS84.cartesianToGeodesic(this.anchor);
+                  final double elevation = DigitalElevationUtils.getElevation(lla.x, lla.y);
+                  lla.z = elevation;
+                  this.anchor.set(WGS84.geodesicToCartesian(lla));
+               }
             }
          }
       }

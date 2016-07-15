@@ -104,7 +104,7 @@ public class DigitalElevationUtils {
 
       // TODO: get weighted value using neighbors
       if (filePath != null) {
-         elevation = DigitalElevationUtils.getFileValue(filePath, byteOffset);
+         elevation = DigitalElevationUtils.getDigitalElevationModelValue(filePath, byteOffset);
       }
 
       return (Double.isNaN(elevation)) ? 0 : elevation;
@@ -157,7 +157,7 @@ public class DigitalElevationUtils {
       return files;
    }
 
-   private static double getFileValue(final String path, final int byteOffset) {
+   private static double getDigitalElevationModelValue(final String path, final int byteOffset) {
       double value = 0;
 
       if (path.toUpperCase().endsWith(DigitalElevationUtils.DEM3_EXTENSION)) {
