@@ -106,10 +106,10 @@ public class Earth extends Renderable {
       final double w = scene.getWidth();
       final double h = scene.getHeight();
       final Tuple3d[] screenCorners = new Tuple3d[] {
-            new Tuple3d(0, 0, 0.25),
-            new Tuple3d(w, 0, 0.25),
-            new Tuple3d(w, h, 0.25),
-            new Tuple3d(0, h, 0.25)
+            new Tuple3d(0, 0, 1.0),
+            new Tuple3d(w, 0, 1.0),
+            new Tuple3d(w, h, 1.0),
+            new Tuple3d(0, h, 1.0)
       };
       
       double far = cameraOrigin.distance(scene.getLookAt()) * 1.618;
@@ -119,6 +119,7 @@ public class Earth extends Renderable {
          final Tuple3d worldXyz = CameraUtils.gluUnProject(scene, screenCorner);
          
          if(worldXyz != null) {
+            worldXyz.add(scene.getOrigin());
             final Vector3d worldVector = new Vector3d(worldXyz);
             worldVector.subtract(cameraOrigin);
             worldVector.normalize();
@@ -145,7 +146,7 @@ public class Earth extends Renderable {
             }
    
             if(Double.isFinite(distance)) {
-               near = Math.max(0.01, Math.min(near, distance - MAX_DEPTH_RATIO));
+               near = Math.max(1.0, Math.min(near, distance - MAX_DEPTH_RATIO));
                far = Math.max(far, distance + MAX_DEPTH_RATIO);
             }
          }
