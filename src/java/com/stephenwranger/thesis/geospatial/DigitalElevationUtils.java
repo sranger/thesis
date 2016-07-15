@@ -79,6 +79,9 @@ public class DigitalElevationUtils {
     *    HGT Format
     *       - files 1deg x 1deg tiles
     *       - south/west to north/east
+    *       - NW = index 0
+    *       - NE = index 1200
+    *       - SE = index 1201 * 1201
     *       - west-east columns then south-north (ie. cell = latIndex * 1201 + lonIndex)
     *       - 16 bit short per cell
     *       - 1201 x 1201 cells per tile
@@ -95,7 +98,7 @@ public class DigitalElevationUtils {
       final int latBase = (int) Math.floor(latitudeDegrees);
       final int lonIndex = (int) Math.abs(Math.floor((longitudeDegrees - lonBase) / DigitalElevationUtils.CELL_SIZE));
       final int latIndex = (int) Math.abs(Math.floor((latitudeDegrees - latBase) / DigitalElevationUtils.CELL_SIZE));
-      final int cellIndex = (latIndex * DigitalElevationUtils.CELL_DIMENSIONS) + lonIndex;
+      final int cellIndex = ((1200 - latIndex) * DigitalElevationUtils.CELL_DIMENSIONS) + lonIndex;
       final int byteOffset = cellIndex * DigitalElevationUtils.SIZEOF_VALUE_BYTES;
 
       final String filePath = DigitalElevationUtils.CATALOG_MAP.get(Pair.getInstance(lonBase, latBase));
@@ -135,6 +138,25 @@ public class DigitalElevationUtils {
       return catalog;
    }
 
+   private static double getDigitalElevationModelValue(final String path, final int byteOffset) {
+      double value = 0;
+
+      if (path.toUpperCase().endsWith(DigitalElevationUtils.DEM3_EXTENSION)) {
+         final File file = new File(path);
+
+         try (final RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            final MappedByteBuffer mappedFile = raf.getChannel().map(MapMode.READ_ONLY, 0, file.length());
+            value = mappedFile.getShort(byteOffset);
+         } catch (final Exception e) {
+            System.err.println("path.length = " + path.length());
+            System.err.println("byte offset = " + byteOffset);
+            e.printStackTrace();
+         }
+      }
+
+      return value;
+   }
+
    private static Map<Pair<Integer, Integer>, String> getFileBounds(final File basePath) {
       final Map<Pair<Integer, Integer>, String> files = new HashMap<>();
 
@@ -155,25 +177,6 @@ public class DigitalElevationUtils {
       }
 
       return files;
-   }
-
-   private static double getDigitalElevationModelValue(final String path, final int byteOffset) {
-      double value = 0;
-
-      if (path.toUpperCase().endsWith(DigitalElevationUtils.DEM3_EXTENSION)) {
-         final File file = new File(path);
-
-         try (final RandomAccessFile raf = new RandomAccessFile(file, "r")) {
-            final MappedByteBuffer mappedFile = raf.getChannel().map(MapMode.READ_ONLY, 0, file.length());
-            value = mappedFile.getShort(byteOffset);
-         } catch (final Exception e) {
-            System.err.println("path.length = " + path.length());
-            System.err.println("byte offset = " + byteOffset);
-            e.printStackTrace();
-         }
-      }
-
-      return value;
    }
 
    private static Pair<Integer, Integer> getIndex(final String filename) {
