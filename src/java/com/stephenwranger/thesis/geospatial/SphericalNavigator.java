@@ -194,23 +194,23 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
          final Vector3d up = new Vector3d(SphericalNavigator.UP_VECTOR);
          sphericalRotation.mult(up);
          orientation.mult(up);
-         
-         // make sure the camera doesn't go below the earth
-         if(this.earth != null) {
-            final PickingHit toEarth = this.earth.getIntersection(new PickingRay(cameraPosition, new Vector3d(-up.x, -up.y, -up.z)));
-            
-            if(toEarth != null) {
-               final Tuple3d intersection = toEarth.getHitLocation();
-               final Tuple3d cameraGeodesic = WGS84.cartesianToGeodesic(cameraPosition);
-               final Tuple3d intersectionGeodesic = WGS84.cartesianToGeodesic(intersection);
-               
-               if(cameraGeodesic.z < intersectionGeodesic.z) {
-                  cameraGeodesic.z = intersectionGeodesic.z + 5;
-                  
-                  cameraPosition.set(WGS84.geodesicToCartesian(cameraGeodesic));
-               }
-            }
-         }
+
+         //         // make sure the camera doesn't go below the earth
+         //         if(this.earth != null) {
+         //            final PickingHit toEarth = this.earth.getIntersection(new PickingRay(cameraPosition, new Vector3d(-up.x, -up.y, -up.z)));
+         //
+         //            if(toEarth != null) {
+         //               final Tuple3d intersection = toEarth.getHitLocation();
+         //               final Tuple3d cameraGeodesic = WGS84.cartesianToGeodesic(cameraPosition);
+         //               final Tuple3d intersectionGeodesic = WGS84.cartesianToGeodesic(intersection);
+         //
+         //               if(cameraGeodesic.z < intersectionGeodesic.z) {
+         //                  cameraGeodesic.z = intersectionGeodesic.z + 5;
+         //
+         //                  cameraPosition.set(WGS84.geodesicToCartesian(cameraGeodesic));
+         //               }
+         //            }
+         //         }
 
          if (MathUtils.isFinite(cameraPosition) && MathUtils.isFinite(this.anchor) && MathUtils.isFinite(up)) {
             //            System.out.println("cam to origin:    " + cameraPosition.distance(scene.getOrigin()) + ", " + cameraPosition);
@@ -251,8 +251,8 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
          if (lonLatAlt != null) {
             this.anchor.set(WGS84.geodesicToCartesian(lonLatAlt));
-            
-            if(earth != null) {
+
+            if (this.earth != null) {
                final Tuple3d lla = WGS84.cartesianToGeodesic(this.anchor);
                final double elevation = DigitalElevationUtils.getElevation(lla.x, lla.y);
                lla.z = elevation;
@@ -276,13 +276,13 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
             if (transformation != null) {
                transformation.apply(this.anchor);
-               
-               if(earth != null) {
-                  final Tuple3d lla = WGS84.cartesianToGeodesic(this.anchor);
-                  final double elevation = DigitalElevationUtils.getElevation(lla.x, lla.y);
-                  lla.z = elevation;
-                  this.anchor.set(WGS84.geodesicToCartesian(lla));
-               }
+
+               //               if (this.earth != null) {
+               //                  final Tuple3d lla = WGS84.cartesianToGeodesic(this.anchor);
+               //                  final double elevation = DigitalElevationUtils.getElevation(lla.x, lla.y);
+               //                  lla.z = elevation;
+               //                  this.anchor.set(WGS84.geodesicToCartesian(lla));
+               //               }
             }
          }
       }

@@ -65,6 +65,16 @@ public class EarthImagery {
          }
       }
 
+      public boolean hasCacheDirectory() {
+         switch (this) {
+            default:
+            case OPEN_STREET_MAP:
+               return EarthImagery.OPEN_STREET_MAP_CACHE_DIRECTORY.exists();
+            case STAMEN_TERRAIN:
+               return EarthImagery.STAMEN_CACHE_DIRECTORY.exists();
+         }
+      }
+
       public boolean isValid() {
          switch (this) {
             default:
@@ -333,7 +343,7 @@ public class EarthImagery {
       final Tuple3d lla1 = WGS84.cartesianToGeodesic(vertices[1].getVertex());
       final Tuple3d lla2 = WGS84.cartesianToGeodesic(vertices[2].getVertex());
 
-      return EarthImagery.computeZoomTile(lla0, lla1, lla2, Math.min(15, segment.getDepth()));
+      return EarthImagery.computeZoomTile(lla0, lla1, lla2, segment.getDepth());
    }
 
    //   public static double[] lonlat2relativeXY(final double lon, final double lat) {
@@ -519,16 +529,20 @@ public class EarthImagery {
    }
 
    private static Texture2d getTexture(final String urlString, final ImageryType imageryType, final int[] tileXyz, final int redirectCount) {
-      Texture2d texture = EarthImagery.CACHED_TEXTURES.get(urlString);
+      final String tileKey = imageryType.name() + File.separator + tileXyz[2] + File.separator + tileXyz[0] + File.separator + tileXyz[1];
+      File cachedFile = null;
+      Texture2d texture = EarthImagery.CACHED_TEXTURES.get(tileKey);
 
       if (texture == null) {
-         final File cachedFile = new File(imageryType.getCacheDirectory(), tileXyz[2] + File.separator + tileXyz[0] + File.separator + tileXyz[1] + ".png");
+         if (imageryType.hasCacheDirectory()) {
+            cachedFile = new File(imageryType.getCacheDirectory(), tileXyz[2] + File.separator + tileXyz[0] + File.separator + tileXyz[1] + ".png");
 
-         if (cachedFile.exists()) {
-            try {
-               texture = Texture2d.getTexture(new FileInputStream(cachedFile), GL.GL_RGBA);
-            } catch (FileNotFoundException e) {
-               e.printStackTrace();
+            if (cachedFile.exists()) {
+               try {
+                  texture = Texture2d.getTexture(new FileInputStream(cachedFile), GL.GL_RGBA);
+               } catch (FileNotFoundException e) {
+                  e.printStackTrace();
+               }
             }
          }
 
@@ -552,12 +566,12 @@ public class EarthImagery {
                   texture = Texture2d.getTexture(is, GL.GL_RGBA);
                   final BufferedImage image = texture.getImage();
 
-                  if ((image != null) && !cachedFile.exists()) {
+                  if ((cachedFile != null) && (image != null) && !cachedFile.exists()) {
                      cachedFile.mkdirs();
                      ImageIO.write(image, "png", cachedFile);
 
                      if (texture != null) {
-                        EarthImagery.CACHED_TEXTURES.put(urlString, texture);
+                        EarthImagery.CACHED_TEXTURES.put(tileKey, texture);
                      }
                   }
                }
