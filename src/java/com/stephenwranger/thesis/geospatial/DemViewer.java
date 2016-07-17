@@ -1,19 +1,21 @@
 package com.stephenwranger.thesis.geospatial;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ShortBuffer;
-import java.nio.channels.FileChannel.MapMode;
 
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileFilter;
 
 public class DemViewer extends JPanel {
    private final BufferedImage image   = new BufferedImage(1201, 1201, BufferedImage.TYPE_INT_ARGB);
@@ -36,55 +38,50 @@ public class DemViewer extends JPanel {
       this.demfile = demfile;
 
       if (this.demfile != null) {
-         final short[][] values = new short[1201][1201];
-         short max = Short.MIN_VALUE;
-
-         try (final RandomAccessFile raf = new RandomAccessFile(this.demfile, "r")) {
-            final ShortBuffer buffer = raf.getChannel().map(MapMode.READ_ONLY, 0, this.demfile.length()).asShortBuffer();
-
-            for (int x = 0; x < 1201; x++) {
-               for (int y = 0; y < 1201; y++) {
-                  values[x][y] = buffer.get((y * 1201) + x);
-                  max = max < values[x][y] ? values[x][y] : max;
-               }
-            }
-         } catch (final IOException e) {
-            e.printStackTrace();
-         }
-
-         for (int x = 0; x < 1201; x++) {
-            for (int y = 0; y < 1201; y++) {
-               final float value = values[x][y] / (float) max;
-               this.image.setRGB(x, y, new Color((y <= 10) ? 0f : value, value, (y <= 10) ? 0f : value, 1f).getRGB());
-            }
-         }
+         DigitalElevationUtils.toImage(demfile, this.image);
       }
 
       this.repaint();
    }
 
    public static void main(final String[] args) {
-      if (args.length != 1) {
-         System.err.println("USAGE: java DemViewer <input file>");
-         System.exit(1);
-      } else {
-         final File file = new File(args[0]);
+      final DemViewer viewer = new DemViewer();
 
-         final DemViewer viewer = new DemViewer();
-
-         if (file.exists()) {
-            viewer.setDemFile(file);
+      final JFileChooser chooser = new JFileChooser(DigitalElevationUtils.DEM3_DIRECTORY);
+      chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+      chooser.setFileFilter(new FileFilter() {
+         @Override
+         public boolean accept(final File f) {
+            return f.isDirectory() || f.getAbsolutePath().toLowerCase().endsWith(".hgt");
          }
 
-         final JFrame frame = new JFrame("DEM Viewer");
+         @Override
+         public String getDescription() {
+            return "*.hgt files";
+         }
+      });
 
-         SwingUtilities.invokeLater(() -> {
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setLocation(100, 100);
-            frame.getContentPane().add(viewer);
-            frame.pack();
-            frame.setVisible(true);
-         });
-      }
+      final JButton button = new JButton("Select HGT File...");
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            final int choice = chooser.showOpenDialog(viewer);
+
+            if (choice == JFileChooser.APPROVE_OPTION) {
+               viewer.setDemFile(chooser.getSelectedFile());
+            }
+         }
+      });
+      final JFrame frame = new JFrame("DEM Viewer");
+
+      SwingUtilities.invokeLater(() -> {
+         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         frame.setLocation(100, 100);
+         frame.getContentPane().setLayout(new BorderLayout());
+         frame.getContentPane().add(viewer, BorderLayout.CENTER);
+         frame.getContentPane().add(button, BorderLayout.SOUTH);
+         frame.pack();
+         frame.setVisible(true);
+      });
    }
 }
