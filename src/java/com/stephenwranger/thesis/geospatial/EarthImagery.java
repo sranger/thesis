@@ -38,7 +38,7 @@ import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.renderables.EllipticalSegment;
 import com.stephenwranger.graphics.renderables.GeodesicVertex;
 import com.stephenwranger.graphics.utils.MathUtils;
-import com.stephenwranger.graphics.utils.buffers.Vertex;
+import com.stephenwranger.graphics.utils.TupleMath;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
 
 public class EarthImagery {
@@ -110,8 +110,6 @@ public class EarthImagery {
                try {
                   if (this.pending.isEmpty()) {
                      this.wait();
-                  } else {
-                     Thread.sleep(1);
                   }
                } catch (final InterruptedException e) {
                   e.printStackTrace();
@@ -232,11 +230,10 @@ public class EarthImagery {
    }
 
    public static void main(final String[] args) {
-      final Tuple3d lla0 = new Tuple3d(-120.0, 30.0, 0.0);
-      final Tuple3d lla1 = new Tuple3d(-115.0, 40.0, 0.0);
-      final Tuple3d lla2 = new Tuple3d(-110.0, 30.0, 0.0);
+      final Tuple3d minLonLatAlt = new Tuple3d(-120.0, 30.0, 0.0);
+      final Tuple3d maxLonLatAlt = new Tuple3d(-115.0, 40.0, 0.0);
       final int depth = 5;
-      final int[][] tiles = EarthImagery.computeZoomTile(lla0, lla1, lla2, depth);
+      final int[][] tiles = EarthImagery.computeZoomTile(minLonLatAlt, maxLonLatAlt, depth);
       final Texture2d[] textures = new Texture2d[tiles.length];
       final Tuple2d[][] texCoords = new Tuple2d[tiles.length][];
 
@@ -250,7 +247,7 @@ public class EarthImagery {
             textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
             texCoords[i] = null;
          } else {
-            final Tuple3d[] vertices = new Tuple3d[] { lla0, lla1, lla2 };
+            final Tuple3d[] vertices = new Tuple3d[] { minLonLatAlt, maxLonLatAlt };
             textures[i] = texture;
             texCoords[i] = new Tuple2d[vertices.length];
 
@@ -338,12 +335,11 @@ public class EarthImagery {
    }
 
    private static int[][] computeZoomTile(final EllipticalSegment segment) {
-      final Vertex[] vertices = segment.getVertices();
-      final Tuple3d lla0 = WGS84.cartesianToGeodesic(vertices[0].getVertex());
-      final Tuple3d lla1 = WGS84.cartesianToGeodesic(vertices[1].getVertex());
-      final Tuple3d lla2 = WGS84.cartesianToGeodesic(vertices[2].getVertex());
+      final Tuple3d[] vertices = segment.getGeodesicVertices();
+      final Tuple3d minLonLatAlt = TupleMath.getMin(vertices);
+      final Tuple3d maxLonLatAlt = TupleMath.getMax(vertices);
 
-      return EarthImagery.computeZoomTile(lla0, lla1, lla2, segment.getDepth());
+      return EarthImagery.computeZoomTile(minLonLatAlt, maxLonLatAlt, segment.getDepth() + 2);
    }
 
    //   public static double[] lonlat2relativeXY(final double lon, final double lat) {
@@ -376,16 +372,14 @@ public class EarthImagery {
    //      return new double[] { lon, lat };
    //   }
 
-   private static int[][] computeZoomTile(final Tuple3d lla0, final Tuple3d lla1, final Tuple3d lla2, final int depth) {
-      final int[] tile0 = EarthImagery.tileXYZ(lla0.x, lla0.y, depth);
-      final int[] tile1 = EarthImagery.tileXYZ(lla1.x, lla1.y, depth);
-      final int[] tile2 = EarthImagery.tileXYZ(lla2.x, lla2.y, depth);
+   private static int[][] computeZoomTile(final Tuple3d minLonLatAlt, final Tuple3d maxLonLatAlt, final int depth) {
+      final int[] minTile = EarthImagery.tileXYZ(minLonLatAlt.x, minLonLatAlt.y, depth);
+      final int[] maxTile = EarthImagery.tileXYZ(maxLonLatAlt.x, maxLonLatAlt.y, depth);
 
-      final int minX = MathUtils.getMin(tile0[0], tile1[0], tile2[0]);
-      final int maxX = MathUtils.getMax(tile0[0], tile1[0], tile2[0]);
-
-      final int minY = MathUtils.getMin(tile0[1], tile1[1], tile2[1]);
-      final int maxY = MathUtils.getMax(tile0[1], tile1[1], tile2[1]);
+      final int minX = Math.min(minTile[0], maxTile[0]);
+      final int maxX = Math.max(minTile[0], maxTile[0]);
+      final int minY = Math.min(minTile[1], maxTile[1]);
+      final int maxY = Math.max(minTile[1], maxTile[1]);
 
       final List<int[]> tiles = new ArrayList<>();
       final int n = (int) Math.pow(2, depth);
