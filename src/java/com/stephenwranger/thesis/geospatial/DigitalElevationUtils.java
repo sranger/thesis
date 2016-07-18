@@ -99,8 +99,8 @@ public class DigitalElevationUtils {
    public static double getElevation(final double longitudeDegrees, final double latitudeDegrees) {
       final int lonBase = (int) Math.floor(longitudeDegrees);
       final int latBase = (int) Math.floor(latitudeDegrees);
-      final int lonIndex = (int) Math.abs(Math.floor((longitudeDegrees - lonBase) / DigitalElevationUtils.CELL_SIZE));
-      final int latIndex = (int) Math.abs(Math.floor((latitudeDegrees - latBase) / DigitalElevationUtils.CELL_SIZE));
+      final int lonIndex = (int) Math.floor((longitudeDegrees - lonBase) / DigitalElevationUtils.CELL_SIZE);
+      final int latIndex = (int) Math.floor((latitudeDegrees - latBase) / DigitalElevationUtils.CELL_SIZE);
       final int cellIndex = ((1200 - latIndex) * DigitalElevationUtils.CELL_DIMENSIONS) + lonIndex;
       final int byteOffset = cellIndex * DigitalElevationUtils.SIZEOF_VALUE_BYTES;
 
