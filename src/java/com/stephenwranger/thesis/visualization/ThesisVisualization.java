@@ -76,10 +76,10 @@ public class ThesisVisualization extends JFrame {
 
       // this.loadIcosatreeBounds("");
 
-      //       final TreeRenderable renderer = new TreeRenderable(basePath, connectionType);
-      //       this.scene.addRenderable(renderer);
+       final TreeRenderable renderer = new TreeRenderable(basePath, connectionType);
+       this.scene.addRenderable(renderer);
 
-      // this.addTimingDisplay(scene, renderer);
+       // this.addTimingDisplay(scene, renderer);
 
       this.getContentPane().add(this.scene);
 
