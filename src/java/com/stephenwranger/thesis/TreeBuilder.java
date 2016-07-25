@@ -154,8 +154,8 @@ public class TreeBuilder {
                final String metaName = childIndex + ".txt";
                final File dir = new File(outputDirectory, dirPath);
                dir.mkdirs();
-               datFile = new File(dir, "/" + datName);
-               metaFile = new File(dir, "/" + metaName);
+               datFile = new File(dir, datName);
+               metaFile = new File(dir, metaName);
             }
             
             try(final BufferedWriter fout = new BufferedWriter(new FileWriter(metaFile))) {
