@@ -41,8 +41,8 @@ import com.stephenwranger.thesis.octree.Octree;
 
 public class TreeRenderable extends Renderable {
    private static final long TEN_MILLISECONDS_IN_NANOSECONDS = 10L * 1000L * 1000L;
-   private static final double MIN_SCREEN_RENDER_AREA = Math.PI * 100.0 * 100.0; // 100 px radius circle
-   private static final double MIN_SCREEN_SPLIT_AREA = Math.PI * 400.0 * 400.0; // 400 px radius circle
+   private static final double MIN_SCREEN_RENDER_AREA = Math.PI * 1000.0 * 100.0; // 1000 px radius circle
+   private static final double MIN_SCREEN_SPLIT_AREA = Math.PI * 4000.0 * 4000.0; // 4000 px radius circle
 
    private static final String FRUSTUM_CULLING = "Frustum Culling";
    private static final String UPLOAD_CELLS = "Upload Cells";
@@ -129,7 +129,6 @@ public class TreeRenderable extends Renderable {
     * @param ignoreFrustum
     */
    private void frustumCulling(final GL2 gl, final Scene scene, final boolean ignoreFrustum, final TreeCell cell) {
-//      System.out.println(cell);
       boolean shouldIgnoreFrustum = ignoreFrustum;
       
       if(!ignoreFrustum) {
@@ -139,7 +138,6 @@ public class TreeRenderable extends Renderable {
          final FrustumResult result = BoundsUtils.testFrustum(frustum, bounds);
          
          if(result == FrustumResult.OUT) {
-//            System.out.println(cell.path + " out");
             this.deleteCachedData(gl, scene, cell);
             return;
          }
@@ -152,7 +150,6 @@ public class TreeRenderable extends Renderable {
             this.pending.add(cell);
          } else {
             final boolean[] renderAndSplit = this.checkLevelOfDetail(gl, scene, cell);
-//            System.out.println("render '" + cell.path + "': " + renderAndSplit[0] + ", " + renderAndSplit[1]);
             if(renderAndSplit[0]) {
                this.segments.add(cell);
             }
@@ -166,12 +163,15 @@ public class TreeRenderable extends Renderable {
             }
          }
       } else if(cell.isEmpty()) {
-//         System.out.println("requesting: " + cell);
          this.connection.request(cell);
       }
    }
    
    private boolean[] checkLevelOfDetail(final GL2 gl, final Scene scene, final TreeCell cell) {
+      if(!cell.isComplete()) {
+         return new boolean[] { false, false };
+      }
+      
       final BoundingVolume bounds = cell.getBoundingVolume();
       final Tuple3d boundsCenter = TupleMath.sub(bounds.getCenter(), scene.getOrigin());
       final Vector3d viewVector = scene.getViewVector();
@@ -194,10 +194,6 @@ public class TreeRenderable extends Renderable {
          
          render = distanceToCamera <= boundsViewSpan || screenArea >= MIN_SCREEN_RENDER_AREA;
          split = cell.hasChildren() || screenArea >= MIN_SCREEN_SPLIT_AREA;
-         
-   //      if(cell.path.length() > 2) {
-   //         System.out.println("'" + cell.path + "': " + screenArea + " >=? " + MIN_SCREEN_RENDER_AREA);
-   //      }
       }
       
       return new boolean[] { render, split };
@@ -219,11 +215,9 @@ public class TreeRenderable extends Renderable {
          
          if(pendingCell.isComplete() && pendingCell.getSegmentPoolIndex() == -1 && pendingCell.getPointCount() > 0) {
             this.timings.start(PENDING_UPLOADS);
-//            System.out.println("uploading: '" + pendingCell.path + "'");
             
             this.vboPool.setSegmentObject(gl, this.currentOrigin, pendingCell);
             this.timings.end(PENDING_UPLOADS);
-            this.segments.add(pendingCell);
          }
       }
    }
