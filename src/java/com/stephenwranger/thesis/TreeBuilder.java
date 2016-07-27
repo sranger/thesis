@@ -112,17 +112,23 @@ public class TreeBuilder {
       } else {
          final long startTime = System.nanoTime();
          int count = 0;
+         double currentPrintPercentage = 0;
          System.out.println("building tree...");
+         
          for(final Point point : this.points) {
             this.tree.addPoint(point);
-            count++;
+            double percentage = (count / (double) points.size());
+            percentage *= 10000.0;
+            percentage = ((int) percentage) / 100.0;
             
-            if(count % 1000000 == 0) {
-               double percentage = (count / (double) points.size());
-               percentage *= 10000.0;
-               percentage = ((int) percentage) / 100.0;
-               System.out.println("completed " + count + " of " + points.size() + " (" + percentage + " %)");
+            if(percentage >= currentPrintPercentage + 0.1) {
+               final long elapsed = (System.nanoTime() - startTime);
+               final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
+               System.out.println("[" + percentage + "%]: " + count + " of " + points.size() + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
+               currentPrintPercentage += 0.1;
             }
+            
+            count++;
          }
          
          System.out.println("tree built: " + this.tree.getCellCount());
@@ -136,6 +142,10 @@ public class TreeBuilder {
          throw new RuntimeException("Cannot build tree before initialization is complete");
       } else {
          final long startTime = System.nanoTime();
+         final int cellCount = this.tree.getCellCount();
+         double currentPrintPercentage = 0;
+         int count = 0;
+         
          System.out.println("exporting tree to " + outputDirectory);
          
          for(final TreeCell treeCell : this.tree) {
@@ -176,6 +186,19 @@ public class TreeBuilder {
             } catch(final IOException e) {
                throw new RuntimeException("Could not write tree cell point data: " + datFile.getAbsolutePath(), e);
             }
+            
+            count++;
+            
+            double percentage = (count / (double) cellCount);
+            percentage *= 10000.0;
+            percentage = ((int) percentage) / 100.0;
+            
+            if(percentage >= currentPrintPercentage + 0.1) {
+               final long elapsed = (System.nanoTime() - startTime);
+               final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
+               System.out.println("[" + percentage + "%]: " + count + " of " + cellCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
+               currentPrintPercentage += 0.1;
+            }
          }
          
          final long endTime = System.nanoTime();
@@ -185,7 +208,11 @@ public class TreeBuilder {
    
    public void exportFlat(final File outputDirectory) {
       final long startTime = System.nanoTime();
+      double currentPrintPercentage = 0;
+      int count = 0;
+      
       System.out.println("exporting flat file points to " + outputDirectory + " at attributes.csv and points.data");
+      
       final StringBuilder sb = new StringBuilder();
       sb.append(Attribute.HEADER);
       
@@ -203,6 +230,19 @@ public class TreeBuilder {
       try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(new File(outputDirectory, "points.dat")))) {
          for(final Point p : this.points) {
             fout.write(p.getRawData().array());
+            
+            double percentage = (count / (double) points.size());
+            percentage *= 10000.0;
+            percentage = ((int) percentage) / 100.0;
+            
+            if(percentage >= currentPrintPercentage + 0.1) {
+               final long elapsed = (System.nanoTime() - startTime);
+               final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
+               System.out.println("[" + percentage + "%]: " + count + " of " + points.size() + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
+               currentPrintPercentage += 0.1;
+            }
+            
+            count++;
          }
       } catch(final IOException e) {
          throw new RuntimeException("Could not export points.dat", e);

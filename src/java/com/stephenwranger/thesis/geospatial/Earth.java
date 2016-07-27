@@ -47,6 +47,7 @@ public class Earth extends Renderable {
    private boolean                     isWireframe       = false;
    private boolean                     isLightingEnabled = false;
    private double                      loadFactor        = 0.75;
+   private double                      altitudeOffset    = 0;
 
    public Earth(final ImageryType imageryType) {
       super(new Tuple3d(), new Quat4d());
@@ -144,9 +145,17 @@ public class Earth extends Renderable {
    public void setWireframe(final boolean isWireframe) {
       this.isWireframe = isWireframe;
    }
+   
+   public void setAltitudeOffset(final double altitudeOffset) {
+      this.altitudeOffset = altitudeOffset;
+   }
+   
+   public double getAltitudeOffset() {
+      return this.altitudeOffset;
+   }
 
    private double getAltitude(final double longitudeDegrees, final double latitudeDegrees) {
-      return DigitalElevationUtils.getElevation(longitudeDegrees, latitudeDegrees);
+      return DigitalElevationUtils.getElevation(longitudeDegrees, latitudeDegrees) + this.altitudeOffset;
    }
 
    private double[] getNearFarDistances(final Scene scene) {
