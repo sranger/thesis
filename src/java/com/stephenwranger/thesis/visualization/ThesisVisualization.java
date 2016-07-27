@@ -47,6 +47,7 @@ public class ThesisVisualization extends JFrame {
       this.earth.setWireframe(false);
       this.earth.setLightingEnabled(false);
       this.earth.setLoadFactor(0.75);
+      this.earth.setAltitudeOffset(-60);
 
       this.scene = new Scene(new Dimension(1600, 1000));
       this.scene.addRenderable(this.earth);
@@ -57,6 +58,12 @@ public class ThesisVisualization extends JFrame {
          public void keyPressed(final KeyEvent event) {
             if (event.getKeyCode() == KeyEvent.VK_W) {
                ThesisVisualization.this.earth.setWireframe(!ThesisVisualization.this.earth.isWireframe());
+            } else if (event.getKeyCode() == KeyEvent.VK_E) {
+               if(earth.inScene()) {
+                  earth.remove();
+               } else {
+                  scene.addRenderable(earth);
+               }
             } else if (event.getKeyCode() == KeyEvent.VK_L) {
                ThesisVisualization.this.earth.setLightingEnabled(!ThesisVisualization.this.earth.isLightingEnabled());
             } else if (event.getKeyCode() == KeyEvent.VK_LEFT) {

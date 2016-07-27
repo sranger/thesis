@@ -10,7 +10,6 @@ public class Icosatet extends TreeCell {
    private static final int MAX_CHILDREN_ROOT = 20;
    private static final int MAX_CHILDREN_OTHER = 8;
    
-   private final Tuple3d previous = new Tuple3d();
    private final Tuple3d current = new Tuple3d();
 
    protected Icosatet(final TreeStructure tree, final String path) {
