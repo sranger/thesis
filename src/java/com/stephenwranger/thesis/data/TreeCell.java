@@ -289,38 +289,56 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       }
 
       if (child == null) {
-         final StringBuilder sb = new StringBuilder();
-
-         if (this.bounds instanceof TrianglePrismVolume) {
-            final TrianglePrismVolume tpv = (TrianglePrismVolume) this.bounds;
-            final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
-            final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
-
-            for (final Tuple3d corner : topCorners) {
-               sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",-1");
-            }
-
-            for (final Tuple3d corner : botCorners) {
-               sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",-1");
+         double distance = Double.MAX_VALUE;
+         
+         // TODO: this doesn't seem like the issue
+         // most likely the point is on the edge of a cell and is "just" outside it
+         // choose the cell that the point is closest to its center
+         for (final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
+            final int childIndex = entry.getKey();
+            final BoundingVolume childBounds = entry.getValue();
+            final double temp = point.distance(childBounds.getCenter());
+            
+            if (temp < distance) {
+               child = tree.getCell(this.path, childIndex);
+               distance = temp;
             }
          }
-
-         for (final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
-            if (entry.getValue() instanceof TrianglePrismVolume) {
-               final TrianglePrismVolume tpv = (TrianglePrismVolume) entry.getValue();
+         
+         if(child == null) {
+            final StringBuilder sb = new StringBuilder();
+   
+            if (this.bounds instanceof TrianglePrismVolume) {
+               final TrianglePrismVolume tpv = (TrianglePrismVolume) this.bounds;
                final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
                final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
-
+   
                for (final Tuple3d corner : topCorners) {
-                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append(entry.getKey());
+                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",this.bounds.top");
                }
-
+   
                for (final Tuple3d corner : botCorners) {
-                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append(entry.getKey());
+                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",this.bounds.bottom");
                }
             }
+   
+            for (final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
+               if (entry.getValue() instanceof TrianglePrismVolume) {
+                  final TrianglePrismVolume tpv = (TrianglePrismVolume) entry.getValue();
+                  final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
+                  final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
+   
+                  for (final Tuple3d corner : topCorners) {
+                     sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append("child #" + entry.getKey() + " top");
+                  }
+   
+                  for (final Tuple3d corner : botCorners) {
+                     sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append("child #" + entry.getKey() + " bottom");
+                  }
+               }
+            }
+            throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",the point" + sb.toString());
          }
-         throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",8" + sb.toString());
       }
 
       return child;

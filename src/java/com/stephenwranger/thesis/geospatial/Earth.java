@@ -54,10 +54,9 @@ public class Earth extends Renderable {
 
       this.imageryType = imageryType;
 
-      final Map<String, Integer> requestedAttributeLocations = new HashMap<>();
       final ShaderKernel vert = new ShaderKernel("earth.vert", Earth.class.getResourceAsStream("earth.vert"), ShaderStage.VERTEX);
       final ShaderKernel frag = new ShaderKernel("earth.frag", Earth.class.getResourceAsStream("earth.frag"), ShaderStage.FRAGMENT);
-      this.shader = new ShaderProgram("Earth Texture Shader", requestedAttributeLocations, vert, frag);
+      this.shader = new ShaderProgram("Earth Texture Shader", null, vert, frag);
    }
 
    @Override
