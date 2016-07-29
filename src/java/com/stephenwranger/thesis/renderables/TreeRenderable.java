@@ -16,6 +16,7 @@ import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.BoundsUtils;
 import com.stephenwranger.graphics.bounds.BoundsUtils.FrustumResult;
 import com.stephenwranger.graphics.math.CameraUtils;
+import com.stephenwranger.graphics.math.Matrix4d;
 import com.stephenwranger.graphics.math.Quat4d;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
@@ -30,6 +31,11 @@ import com.stephenwranger.graphics.utils.buffers.DataType;
 import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 import com.stephenwranger.graphics.utils.buffers.SegmentedVertexBufferPool;
 import com.stephenwranger.graphics.utils.buffers.VertexRegion;
+import com.stephenwranger.graphics.utils.shader.FloatMatrixUniform;
+import com.stephenwranger.graphics.utils.shader.FloatUniform;
+import com.stephenwranger.graphics.utils.shader.ShaderKernel;
+import com.stephenwranger.graphics.utils.shader.ShaderProgram;
+import com.stephenwranger.graphics.utils.shader.ShaderStage;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeServerConnection;
@@ -55,7 +61,10 @@ public class TreeRenderable extends Renderable {
          return Integer.compare(o1.path.length(), o2.path.length());
       }
    };
-   
+
+   private final ShaderKernel vert = new ShaderKernel("treecell.points.vert", TreeRenderable.class.getResourceAsStream("cell.vert"), ShaderStage.VERTEX);
+   private final ShaderKernel frag = new ShaderKernel("treecell.points.frag", TreeRenderable.class.getResourceAsStream("cell.frag"), ShaderStage.FRAGMENT);
+   private final ShaderProgram shader = new ShaderProgram("treecell.points", null, vert, frag);
    private final TreeStructure tree;
    private final TreeServerConnection connection;
    private final SegmentedVertexBufferPool vboPool;
@@ -108,10 +117,29 @@ public class TreeRenderable extends Renderable {
       gl.glPushAttrib(GL2.GL_LIGHTING_BIT);
       
       gl.glDisable(GL2.GL_LIGHTING);
-      gl.glPointSize(1f);
+      gl.glPointSize(3f);
 
       this.timings.start(RENDERING);
+      this.shader.enable(gl);
+      
+      final FloatUniform originOffset = this.shader.getFloatUniform("originOffset");
+      originOffset.set(gl, 0, 0, 0); // TODO per cell
+      
+      final FloatMatrixUniform mvpUniform = this.shader.getFloatMatrixUniform("mvp");
+      final Matrix4d p = new Matrix4d(scene.getProjectionMatrix());
+      final Matrix4d mv = new Matrix4d(scene.getModelViewMatrix());
+      final Matrix4d mvp = new Matrix4d();
+      mvp.multiply(mv, p);
+      mvpUniform.set(gl, false, mvp.getFloats());
+      
+      final FloatUniform altitudeRange = this.shader.getFloatUniform("altitudeRange");
+      altitudeRange.set(gl, 0, 0); // TODO
+      
+      final FloatUniform intensityRange = this.shader.getFloatUniform("intensityRange");
+      intensityRange.set(gl, 0, 0); // TODO
+      
       this.vboPool.render(gl, segments);
+      this.shader.disable(gl);
       this.timings.end(RENDERING);
       
       gl.glPopAttrib();
