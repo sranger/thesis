@@ -7,7 +7,7 @@ JAVA_FLAGS='-Djava.net.useSystemProxies=true -Xmx256g -Dcom.sun.management.jmxre
 
 ##
 # The main class
-MAIN='com.stephenwranger.thesis.TreeBuilder'
+MAIN='com.stephenwranger.thesis.utils.TreeBuilder'
 
 EXTRA_CLASSPATH='';
 
