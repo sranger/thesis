@@ -1,4 +1,4 @@
-package com.stephenwranger.thesis;
+package com.stephenwranger.thesis.utils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -52,7 +52,7 @@ public class TreeBuilder {
       final long startTime = System.nanoTime();
       System.out.println("importing data from " + this.inputDirectory);
       System.out.println("\treading attributes...");
-      this.attributes = new DataAttributes(readAttributes(this.inputDirectory, "root.csv"));
+      this.attributes = new DataAttributes(readAttributes(this.inputDirectory, "attributes.csv"));
       
       switch(this.type) {
          case OCTREE:
@@ -116,7 +116,14 @@ public class TreeBuilder {
          System.out.println("building tree...");
          
          for(final Point point : this.points) {
-            this.tree.addPoint(point);
+            // TODO: not sure why some points don't get added correctly
+            try {
+               this.tree.addPoint(point);
+            } catch(final Exception e) {
+               System.err.println("Could not add point: " + point);
+               e.printStackTrace();
+            }
+            
             double percentage = (count / (double) points.size());
             percentage *= 10000.0;
             percentage = ((int) percentage) / 100.0;
