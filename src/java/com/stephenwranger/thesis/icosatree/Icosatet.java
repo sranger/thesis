@@ -1,8 +1,12 @@
 package com.stephenwranger.thesis.icosatree;
 
+import java.util.Map;
+
+import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple2d;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.Point;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
@@ -16,6 +20,10 @@ public class Icosatet extends TreeCell {
 
    protected Icosatet(final TreeStructure tree, final String path) {
       super(tree, path);
+   }
+   
+   protected Icosatet(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
+      super(path, bounds, attributes, cellSplit, childBounds);
    }
 
    @Override
@@ -65,5 +73,10 @@ public class Icosatet extends TreeCell {
          
          return BARYCENTER.distance(uv2) < BARYCENTER.distance(uv1);
       }
+   }
+   
+   @Override
+   protected Class<? extends TreeStructure> getTreeType() {
+      return Icosatree.class;
    }
 }
