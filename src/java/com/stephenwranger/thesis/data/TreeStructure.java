@@ -72,9 +72,7 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
       final TreeCell root = this.getCell(null, 0);
       
       try {
-         final TreeCell insertedInto = root.addPoint(this, point);
-         // this forces the updated cell to be writted to the mapDB map (as it doesn't really allow mutable objects)
-         this.treeCells.put(insertedInto.path, insertedInto);
+         root.addPoint(this, point);
       } catch(final Exception e) {
          e.printStackTrace();
          System.exit(1);
