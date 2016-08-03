@@ -34,6 +34,10 @@ public class Point {
       this.rawData.rewind();
    }
    
+   public DataAttributes getAttributes() {
+      return this.attributes;
+   }
+   
    public ByteBuffer getRawData() {
       return this.rawData;
    }

@@ -5,6 +5,6 @@
 	<classpathentry kind="src" path="src/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/com.stephenwranger.graphics"/>
-	<classpathentry kind="lib" path="lib/mapdb-3.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/mapdb-3.0.2.jar" sourcepath="lib/mapdb-3.0.2-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

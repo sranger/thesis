@@ -9,6 +9,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
+import org.mapdb.Serializer;
+
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
@@ -33,7 +38,9 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
    // used only when building tree manually
    private final int[]                        cellSplit;
-   private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
+// private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
+   private final DB                           mapDB         = DBMaker.tempFileDB().make(); // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
+   private final HTreeMap<Integer, Point>     points;
    private final Map<String, Integer>         pointsByChild = new HashMap<>();
 
    // used only when reading tree from filesystem or http
@@ -49,10 +56,12 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.bounds = tree.getBoundingVolume(this.path);
       this.attributes = tree.getAttributes();
       this.stride = this.attributes.stride;
-
-      for (int i = 0; i < this.getMaxChildren(); i++) {
+      
+      for(int i = 0; i < this.getMaxChildren(); i++) {
          this.childBounds.put(i, tree.getBoundingVolume(this.path, i));
       }
+      
+      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
    }
    
    public TreeCell(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
@@ -62,9 +71,11 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.attributes = attributes;
       this.stride = this.attributes.stride;
       this.childBounds.putAll(childBounds);
+      
+      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
    }
 
-   public void addPoint(final TreeStructure tree, final Point point) {
+   public TreeCell addPoint(final TreeStructure tree, final Point point) {
       if (this.pointBuffer != null) {
          throw new RuntimeException("Cannot add points to a TreeCell initialized via byte array");
       }
@@ -98,6 +109,8 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
          this.pointsByChild.put(insertedInto.getPath(), count);
       }
+      
+      return insertedInto;
    }
 
    public void clearData() {
@@ -202,6 +215,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       return this.status == Status.EMPTY;
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public Iterator<Point> iterator() {
       if (this.pointBuffer == null) {
@@ -361,7 +375,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
                   }
                }
             }
-            throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",the point" + sb.toString());
+            throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",the point\n" + sb.toString() + "\nthis.bounds: " + this.bounds + "\nchild bounds: " + this.childBounds.size());
          }
       }
 
