@@ -20,7 +20,6 @@ import javax.swing.JOptionPane;
 import com.stephenwranger.graphics.utils.TimeUtils;
 import com.stephenwranger.thesis.data.Attribute;
 import com.stephenwranger.thesis.data.DataAttributes;
-import com.stephenwranger.thesis.data.Point;
 
 public class TreeImporter {
    private static final String USAGE = "TreeBuilder "
