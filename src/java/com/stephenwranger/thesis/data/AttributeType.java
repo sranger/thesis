@@ -11,6 +11,43 @@ public enum AttributeType {
       this.byteSize = byteSize;
    }
    
+   public void put(final ByteBuffer buffer, final int byteIndex, final String value) {
+      switch(this) {
+         case BYTE:
+            buffer.put(byteIndex, Byte.valueOf(value));
+            break;
+         case SHORT:
+            buffer.putShort(byteIndex, Short.valueOf(value));
+            break;
+         case INT:
+            buffer.putInt(byteIndex, Integer.valueOf(value));
+            break;
+         case FLOAT:
+            buffer.putFloat(byteIndex, Float.valueOf(value));
+            break;
+         case LONG:
+            buffer.putLong(byteIndex, Long.valueOf(value));
+            break;
+         case DOUBLE:
+            buffer.putDouble(byteIndex, Double.valueOf(value));
+            break;
+         case UNSIGNED_BYTE:
+            buffer.put((byte) (Short.valueOf(value) & 0xff));
+            break;
+         case UNSIGNED_SHORT:
+            buffer.putShort((short) (Integer.valueOf(value) & 0xffff));
+            break;
+         case UNSIGNED_INT:
+            buffer.putInt((int) (Long.valueOf(value) & 0xffffffffL));
+            break;
+         case UNSIGNED_LONG:
+            buffer.putLong(Long.valueOf(value) & 0xffffffffffffffffL); // TODO: probably doesn't change the value
+            break;
+         case BYTE_ARRAY:
+            throw new UnsupportedOperationException("Use AttributeType.putBytes() for BYTE_ARRAY type");
+      }
+   }
+   
    public void put(final ByteBuffer buffer, final int byteIndex, final Number value) {
       switch(this) {
          case BYTE:

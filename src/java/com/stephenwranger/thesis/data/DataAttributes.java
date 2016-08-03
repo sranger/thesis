@@ -52,6 +52,10 @@ public class DataAttributes implements Iterable<Attribute> {
       return BYTES_PER_POINT;
    }
    
+   public int size() {
+      return attributes.size();
+   }
+   
    public Attribute getAttribute(final String name) {
       Attribute foundAttribute = null;
       for(final Attribute attribute : this.attributes) {

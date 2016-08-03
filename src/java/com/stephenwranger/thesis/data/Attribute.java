@@ -39,6 +39,17 @@ public class Attribute {
       return this.type.getBytes(buffer, index * stride + this.offset, this.size);
    }
    
+   /**
+    * Converts the given String value into the type defined by this Attribute and stores it at the current location of the given ByteBuffer.
+    * 
+    * @param buffer the buffer to write to
+    * @param byteIndex the byte index position to insert the value into the given buffer
+    * @param value the value to convert
+    */
+   public void put(final ByteBuffer buffer, final int byteIndex, final String value) {
+      this.type.put(buffer, byteIndex, value);
+   }
+   
    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder();

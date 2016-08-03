@@ -101,6 +101,10 @@ public class Icosatree extends TreeStructure {
    
    @Override
    public BoundingVolume getBoundingVolume(final String path) {
+      return Icosatree.getIcosatetBoundingVolume(path);
+   }
+   
+   public static BoundingVolume getIcosatetBoundingVolume(final String path) {
       if(path.isEmpty()) {
          return new BoundingBox(new Tuple3d(), RADIUS_MAX * 2.0, RADIUS_MAX * 2.0, RADIUS_MAX * 2.0);
       } else {
@@ -140,7 +144,7 @@ public class Icosatree extends TreeStructure {
       }
    }
    
-   private int getIndex(final String path, final int charIndex) {
+   public static int getIndex(final String path, final int charIndex) {
       final char ch = path.charAt(charIndex);
       return (charIndex == 0) ? ch - ASCII_A : Integer.parseInt(Character.toString(ch));
    }

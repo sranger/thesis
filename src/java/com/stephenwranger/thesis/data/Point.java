@@ -18,6 +18,22 @@ public class Point {
       this.rawData.rewind();
    }
    
+   public Point(final DataAttributes attributes, final String csvLine) {
+      this.attributes = attributes;
+      this.stride = this.attributes.stride;
+      this.rawData = ByteBuffer.allocate(this.attributes.stride);
+      
+      final String[] values = csvLine.split(",");
+      final String[] attributeNames = attributes.getAttributeNames().split(",");
+      
+      for(int i = 0; i < values.length; i++) {
+         final Attribute attribute = attributes.getAttribute(attributeNames[i]);
+         attribute.put(this.rawData, attribute.offset, values[i]);
+      }
+      
+      this.rawData.rewind();
+   }
+   
    public ByteBuffer getRawData() {
       return this.rawData;
    }

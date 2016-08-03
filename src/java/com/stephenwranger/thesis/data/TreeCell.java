@@ -3,6 +3,7 @@ package com.stephenwranger.thesis.data;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,7 +23,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
    public final String                        path;
 
-   private final TreeStructure                tree;
    private final BoundingVolume               bounds;
    private final DataAttributes               attributes;
    private final int                          stride;
@@ -32,7 +32,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    private int                                bufferIndex   = -1;
 
    // used only when building tree manually
-   private final int[]                        cellSplit     = new int[3];
+   private final int[]                        cellSplit;
    private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
    private final Map<String, Integer>         pointsByChild = new HashMap<>();
 
@@ -43,9 +43,8 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    private Status                             status        = Status.EMPTY;
 
    protected TreeCell(final TreeStructure tree, final String path) {
-      this.tree = tree;
       this.path = path;
-      System.arraycopy(tree.getCellSplit(), 0, this.cellSplit, 0, 3);
+      this.cellSplit = tree.getCellSplit().clone();
 
       this.bounds = tree.getBoundingVolume(this.path);
       this.attributes = tree.getAttributes();
@@ -55,20 +54,29 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
          this.childBounds.put(i, tree.getBoundingVolume(this.path, i));
       }
    }
+   
+   public TreeCell(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
+      this.path = path;
+      this.cellSplit = cellSplit.clone();
+      this.bounds = bounds;
+      this.attributes = attributes;
+      this.stride = this.attributes.stride;
+      this.childBounds.putAll(childBounds);
+   }
 
-   public void addPoint(final Point point) {
+   public void addPoint(final TreeStructure tree, final Point point) {
       if (this.pointBuffer != null) {
          throw new RuntimeException("Cannot add points to a TreeCell initialized via byte array");
       }
 
-      final int index = this.getIndex(this.tree, point);
+      final int index = this.getIndex(tree, point);
       TreeCell insertedInto = this;
 
       if (this.points.containsKey(index)) {
-         insertedInto = this.getChildCell(this.tree, point.getXYZ(this.tree, this.tempTuple));
+         insertedInto = this.getChildCell(tree, point.getXYZ(tree, this.tempTuple));
 
          final Point current = this.getPoint(index);
-         final boolean swap = this.swapPointCheck(this.tree, current, point);
+         final boolean swap = this.swapPointCheck(tree, current, point);
          Point toInsert = point;
 
          if (swap) {
@@ -76,7 +84,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
             toInsert = this.swapPoint(index, point);
          }
 
-         insertedInto.addPoint(toInsert);
+         insertedInto.addPoint(tree, toInsert);
       } else {
          this.addPoint(index, point);
       }
@@ -110,6 +118,18 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    public int[] getCellSplit() {
       return this.cellSplit;
    }
+   
+   public int getStride() {
+      return this.stride;
+   }
+   
+   public DataAttributes getDataAttributes() {
+      return this.attributes;
+   }
+   
+   public Map<Integer, Point> points() {
+      return Collections.unmodifiableMap(this.points);
+   }
 
    /**
     * Returns a list of octet paths for any child octets of this octet with point data.
@@ -122,6 +142,10 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       } else {
          return this.children.clone();
       }
+   }
+   
+   public Map<Integer, BoundingVolume> getChildBounds() {
+      return Collections.unmodifiableMap(this.childBounds);
    }
 
    /**
@@ -377,4 +401,11 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
     * @return true to swap points; false to send pending point to child node
     */
    protected abstract boolean swapPointCheck(final TreeStructure tree, final Point current, final Point pending);
+   
+   /**
+    * Returns the class type of this TreeCell's parent TreeStructure; used for serialization.
+    * 
+    * @return the parent TreeStructure class
+    */
+   protected abstract Class<? extends TreeStructure> getTreeType();
 }
