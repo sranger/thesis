@@ -35,39 +35,45 @@ public class TreeImporter {
    
    private final File inputDirectory;
    private final int maxDepth;
-   private final List<Point> points = new ArrayList<>();
    
    private DataAttributes attributes = null;
+   private int pointCount = 0;
    
    public TreeImporter(final File inputDirectory, final int maxDepth) {
       this.inputDirectory = inputDirectory;
       this.maxDepth = maxDepth;
-      
-      this.importData();
    }
    
-   private void importData() {
+   private void exportFlat(final File outputDirectory) {
       final long startTime = System.nanoTime();
       System.out.println("importing data from " + this.inputDirectory);
-      System.out.println("\treading attributes...");
+      System.out.println("reading attributes...");
       this.attributes = new DataAttributes(readAttributes(this.inputDirectory, "attributes.csv"));
       
       System.out.println("\t\tattributes read: " + attributes.getAttributeNames());
-      System.out.println("\treading data...");
-      readDirectory(this.inputDirectory, 0);
-      System.out.println("\t\tpoint data read: " + points.size());
+      System.out.println("\treading and exporting data...");
+      
+      this.exportAttributes(outputDirectory);
+
+      try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(new File(outputDirectory, "points.dat")))) {
+         readDirectory(this.inputDirectory, fout, 0);
+      } catch (final IOException e) {
+         e.printStackTrace();
+      }
+      
+      System.out.println("point data read: " + pointCount);
       final long endTime = System.nanoTime();
-      System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
+      System.out.println("final duration: " + TimeUtils.formatNanoseconds(endTime - startTime));
    }
    
-   private void readDirectory(final File directory, final int depth) {
+   private void readDirectory(final File directory, final BufferedOutputStream fout, final int depth) {
       try {
          for(final String name : directory.list()) {
             final File path = new File(directory, name);
             
             if(path.isDirectory()) {
                if(depth < this.maxDepth || this.maxDepth == -1) {
-                  readDirectory(path, depth + 1);
+                  readDirectory(path, fout, depth + 1);
                }
             } else if(name.endsWith(".dat")) {
                try(final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(path))) {
@@ -78,10 +84,11 @@ public class TreeImporter {
                   while((index = fin.read(buffer)) != -1) {
                      if(index == buffer.length) {
                         final Point point = new Point(this.attributes, buffer);
-                        points.add(point);
+                        fout.write(point.getRawData().array());
+                        pointCount++;
                         
-                        if(points.size() % 1000000 == 0) {
-                           System.out.println("completed " + (points.size() / 1000000) + " million");
+                        if(pointCount % 1000000 == 0) {
+                           System.out.println("completed " + (pointCount / 1000000) + " million");
                         }
                      } else {
                         throw new IOException("Could not read full buffer");
@@ -93,17 +100,14 @@ public class TreeImporter {
             }
          }
       } catch(final OutOfMemoryError e) {
-         System.err.println("OutOfMemory: " + this.points.size() + " completed.");
+         System.err.println("OutOfMemory: " + pointCount + " completed.");
          throw e;
       }
    }
    
-   public void exportFlat(final File outputDirectory) {
+   private void exportAttributes(final File outputDirectory) {
       final long startTime = System.nanoTime();
-      double currentPrintPercentage = 0;
-      int count = 0;
-      
-      System.out.println("exporting flat file points to " + outputDirectory + " at attributes.csv and points.data");
+      System.out.println("exporting flat file attributes to " + outputDirectory + " at attributes.csv");
       
       final StringBuilder sb = new StringBuilder();
       sb.append(Attribute.HEADER);
@@ -119,28 +123,8 @@ public class TreeImporter {
          throw new RuntimeException("Could not export attributes.csv", e);
       }
       
-      try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(new File(outputDirectory, "points.dat")))) {
-         for(final Point p : this.points) {
-            fout.write(p.getRawData().array());
-            
-            double percentage = (count / (double) points.size());
-            percentage *= 10000.0;
-            percentage = ((int) percentage) / 100.0;
-            
-            if(percentage >= currentPrintPercentage + 0.1) {
-               final long elapsed = (System.nanoTime() - startTime);
-               final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
-               System.out.println("[" + percentage + "%]: " + count + " of " + points.size() + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
-               currentPrintPercentage += 0.1;
-            }
-            
-            count++;
-         }
-      } catch(final IOException e) {
-         throw new RuntimeException("Could not export points.dat", e);
-      }
       final long endTime = System.nanoTime();
-      System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
+      System.out.println("attributes exported duration: " + TimeUtils.formatNanoseconds(endTime - startTime));
    }
    
    private static List<Attribute> readAttributes(final File directory, final String name) {
@@ -166,7 +150,7 @@ public class TreeImporter {
    }
    
    public static void main(final String[] args) throws IOException {
-      if(args.length != 7 && args.length != 9) {
+      if(args.length != 3) {
          throw new IllegalArgumentException(USAGE);
       }
       

@@ -1,9 +1,11 @@
 package com.stephenwranger.thesis.utils;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,6 +26,8 @@ import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.Point;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
+import com.stephenwranger.thesis.icosatree.Icosatree;
+import com.stephenwranger.thesis.octree.Octree;
 
 public class TreeBuilder {
    private static final String USAGE = "TreeBuilder "
@@ -46,143 +50,135 @@ public class TreeBuilder {
    }
    
    private final TreeTypes type;
-   private final File inputCsvFile;
+   private final File inputDatFile;
    private final int[] cellSplit;
    private final DataAttributes attributes;
+   private final TreeStructure tree;
    
-   private TreeStructure tree = null;
-   
-   public TreeBuilder(final String type, final File inputCsvFile, final File inputAttributesFile, final int[] cellSplit) {
+   public TreeBuilder(final String type, final File inputDatFile, final File inputAttributesFile, final int[] cellSplit) {
       final TreeTypes temp = TreeTypes.valueOf(type.toUpperCase());
       this.type = (temp == null) ? TreeTypes.OCTREE : temp;
-      this.inputCsvFile = inputCsvFile;
+      this.inputDatFile = inputDatFile;
       this.cellSplit = cellSplit;
       
       this.attributes = new DataAttributes(readAttributes(inputAttributesFile));
+      this.tree = (this.type == TreeTypes.OCTREE) ? new Octree(this.attributes, this.cellSplit) : new Icosatree(this.attributes, this.cellSplit); 
    }
    
    public void build() {
-      if(tree == null) {
-         throw new RuntimeException("Cannot build tree before initialization is complete");
-      } else {
-         final long startTime = System.nanoTime();
-         int count = 0;
-         double currentPrintPercentage = 0;
-         System.out.println("building tree...");
-         long pointCount = -1;
-         
-         final Path path = FileSystems.getDefault().getPath(this.inputCsvFile.getAbsolutePath());
-         try (final Stream<String> lines = Files.lines(path, Charset.defaultCharset())) {
-            pointCount = lines.count();
-          } catch (final IOException e1) {
-            e1.printStackTrace();
-            pointCount = this.inputCsvFile.getTotalSpace() / 100;
-         }
-         
-         try (final BufferedReader reader = new BufferedReader(new FileReader(this.inputCsvFile))) {
-            String line = null;
-            
-            while((line = reader.readLine()) != null) {
-               final Point point = new Point(this.attributes, line);
-               
-               try {
-                  // TODO: not sure why some points don't get added correctly
-                  this.tree.addPoint(point);
-               } catch(final Exception e) {
-                  System.err.println("Could not add point: " + point);
-                  e.printStackTrace();
-               }
-               
-               double percentage = (count / (double) pointCount);
-               percentage *= 10000.0;
-               percentage = ((int) percentage) / 100.0;
-               
-               if(percentage >= currentPrintPercentage + 0.1) {
-                  final long elapsed = (System.nanoTime() - startTime);
-                  final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
-                  System.out.println("[" + percentage + "%]: " + count + " of " + pointCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
-                  currentPrintPercentage += 0.1;
-               }
-               
-               count++;
-            }
-         } catch (final IOException e1) {
-            e1.printStackTrace();
-         }
-         
-         System.out.println("tree built: " + this.tree.getCellCount());
-         final long endTime = System.nanoTime();
-         System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
+      final long startTime = System.nanoTime();
+      int count = 0;
+      double currentPrintPercentage = 0;
+      System.out.println("building tree...");
+      long pointCount = -1;
+      
+      final Path path = FileSystems.getDefault().getPath(this.inputDatFile.getAbsolutePath());
+      try (final Stream<String> lines = Files.lines(path, Charset.defaultCharset())) {
+         pointCount = lines.count();
+       } catch (final IOException e1) {
+         e1.printStackTrace();
+         pointCount = this.inputDatFile.getTotalSpace() / 100;
       }
-   }
-   
-   public void export(final File outputDirectory) {
-      if(tree == null) {
-         throw new RuntimeException("Cannot build tree before initialization is complete");
-      } else {
-         final long startTime = System.nanoTime();
-         final int cellCount = this.tree.getCellCount();
-         double currentPrintPercentage = 0;
-         int count = 0;
+      
+      try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(this.inputDatFile))) {
+         final byte[] buffer = new byte[this.attributes.stride];
          
-         System.out.println("exporting tree to " + outputDirectory);
-         
-         for(final TreeCell treeCell : this.tree) {
-            final String path = treeCell.getPath();
-            File datFile = null;
-            File metaFile = null;
+         while(fin.read(buffer) > -1) {
+            final Point point = new Point(this.attributes, buffer);
             
-            if(path.isEmpty()) {
-               datFile = new File(outputDirectory, "/root.dat");
-               metaFile = new File(outputDirectory, "/root.txt");
-            } else {
-               final String[] split = treeCell.getPath().substring(0, treeCell.getPath().length()).split("");
-               final char childIndex = treeCell.getPath().charAt(treeCell.getPath().length()-1);
-               final String dirPath = String.join("/", split);
-               final String datName = childIndex + ".dat";
-               final String metaName = childIndex + ".txt";
-               final File dir = new File(outputDirectory, dirPath);
-               dir.mkdirs();
-               datFile = new File(dir, datName);
-               metaFile = new File(dir, metaName);
+            try {
+               // TODO: not sure why some points don't get added correctly
+               this.tree.addPoint(point);
+            } catch(final Exception e) {
+               System.err.println("Could not add point: " + point);
+               e.printStackTrace();
             }
             
-            try(final BufferedWriter fout = new BufferedWriter(new FileWriter(metaFile))) {
-               fout.write(String.join(",", treeCell.getChildList()));
-               
-               if(path.isEmpty()) {
-                  fout.write("\n");
-                  fout.write(Integer.toString(this.getMaxPointCount()));
-               }
-            } catch(final IOException e) {
-               throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);
-            }
-            
-            try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(datFile))) {
-               for(final Point p : treeCell) {
-                  fout.write(p.getRawData().array());
-               }
-            } catch(final IOException e) {
-               throw new RuntimeException("Could not write tree cell point data: " + datFile.getAbsolutePath(), e);
-            }
-            
-            count++;
-            
-            double percentage = (count / (double) cellCount);
+            double percentage = (count / (double) pointCount);
             percentage *= 10000.0;
             percentage = ((int) percentage) / 100.0;
             
             if(percentage >= currentPrintPercentage + 0.1) {
                final long elapsed = (System.nanoTime() - startTime);
                final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
-               System.out.println("[" + percentage + "%]: " + count + " of " + cellCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
+               System.out.println("[" + percentage + "%]: " + count + " of " + pointCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
                currentPrintPercentage += 0.1;
             }
+            
+            count++;
+         }
+      } catch (final IOException e1) {
+         e1.printStackTrace();
+      }
+      
+      System.out.println("tree built: " + this.tree.getCellCount());
+      final long endTime = System.nanoTime();
+      System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
+   }
+   
+   public void export(final File outputDirectory) {
+      final long startTime = System.nanoTime();
+      final int cellCount = this.tree.getCellCount();
+      double currentPrintPercentage = 0;
+      int count = 0;
+      
+      System.out.println("exporting tree to " + outputDirectory);
+      
+      for(final TreeCell treeCell : this.tree) {
+         final String path = treeCell.getPath();
+         File datFile = null;
+         File metaFile = null;
+         
+         if(path.isEmpty()) {
+            datFile = new File(outputDirectory, "/root.dat");
+            metaFile = new File(outputDirectory, "/root.txt");
+         } else {
+            final String[] split = treeCell.getPath().substring(0, treeCell.getPath().length()).split("");
+            final char childIndex = treeCell.getPath().charAt(treeCell.getPath().length()-1);
+            final String dirPath = String.join("/", split);
+            final String datName = childIndex + ".dat";
+            final String metaName = childIndex + ".txt";
+            final File dir = new File(outputDirectory, dirPath);
+            dir.mkdirs();
+            datFile = new File(dir, datName);
+            metaFile = new File(dir, metaName);
          }
          
-         final long endTime = System.nanoTime();
-         System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
+         try(final BufferedWriter fout = new BufferedWriter(new FileWriter(metaFile))) {
+            fout.write(String.join(",", treeCell.getChildList()));
+            
+            if(path.isEmpty()) {
+               fout.write("\n");
+               fout.write(Integer.toString(this.getMaxPointCount()));
+            }
+         } catch(final IOException e) {
+            throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);
+         }
+         
+         try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(datFile))) {
+            for(final Point p : treeCell) {
+               fout.write(p.getRawData().array());
+            }
+         } catch(final IOException e) {
+            throw new RuntimeException("Could not write tree cell point data: " + datFile.getAbsolutePath(), e);
+         }
+         
+         count++;
+         
+         double percentage = (count / (double) cellCount);
+         percentage *= 10000.0;
+         percentage = ((int) percentage) / 100.0;
+         
+         if(percentage >= currentPrintPercentage + 0.1) {
+            final long elapsed = (System.nanoTime() - startTime);
+            final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
+            System.out.println("[" + percentage + "%]: " + count + " of " + cellCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
+            currentPrintPercentage += 0.1;
+         }
       }
+      
+      final long endTime = System.nanoTime();
+      System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
    }
    
    private int getMaxPointCount() {
@@ -218,7 +214,7 @@ public class TreeBuilder {
    }
    
    public static void main(final String[] args) throws IOException {
-      if(args.length != 7 && args.length != 9) {
+      if(args.length != 5 && args.length != 7) {
          throw new IllegalArgumentException(USAGE);
       }
       

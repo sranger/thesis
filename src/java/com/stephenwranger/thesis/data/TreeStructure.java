@@ -22,7 +22,7 @@ import com.stephenwranger.graphics.bounds.BoundingVolume;
 public abstract class TreeStructure implements Iterable<TreeCell> {
    protected static final double MAX_RADIUS = 8388608.0;
    
-   private final DB mapDB = DBMaker.fileDB("cache.db").deleteFilesAfterClose().make();
+   private final DB mapDB = DBMaker.fileDB("cache.db").make(); // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
    private final DataAttributes attributes;
    private final HTreeMap<String, TreeCell> treeCells = mapDB.hashMap("map", Serializer.STRING, new TreeCellSerializer()).create();
    private final Comparator<TreeCell> pathLengthComparator = new Comparator<TreeCell>() {
@@ -60,6 +60,7 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
       iAttribute = this.attributes.getAttribute("Intensity");
    }
    
+   @SuppressWarnings("unchecked")
    @Override
    public Iterator<TreeCell> iterator() {
       final List<TreeCell> cells = new ArrayList<>();
