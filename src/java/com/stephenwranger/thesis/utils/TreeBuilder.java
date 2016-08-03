@@ -25,7 +25,24 @@ import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.octree.Octree;
 
 public class TreeBuilder {
-   private static final String USAGE = "TreeBuilder <type [octree|icosatree; default octree]> <input directory> <output directory> <cell split x> [<cell split y> <cell split z>]";
+   private static final String USAGE = "TreeBuilder "
+         + "<type [octree|icosatree; default octree]> "  // 0
+         + "<input directory> "                          // 1
+         + "<output directory> "                         // 2
+         + "<read depth> "                               // 3
+         + "<export csv [true|false]> "                  // 4
+         + "<build/export tree [true|false]> "           // 5
+         + "<cell split x> "                             // 6
+         + "[<cell split y> <cell split z>]";            // 7-8
+   private static final int TREE_TYPE_INDEX = 0;
+   private static final int INPUT_DIRECTORY_INDEX = 1;
+   private static final int OUTPUT_DIRECTORY_INDEX = 2;
+   private static final int READ_DEPTH_INDEX = 3;
+   private static final int EXPORT_CSV_INDEX = 4;
+   private static final int BUILD_EXPORT_TREE_INDEX = 5;
+   private static final int X_CELL_SPLIT_INDEX = 6;
+   private static final int Y_CELL_SPLIT_INDEX = 7;
+   private static final int Z_CELL_SPLIT_INDEX = 8;
    
    public enum TreeTypes {
       OCTREE, ICOSATREE;
@@ -33,16 +50,18 @@ public class TreeBuilder {
    
    private final TreeTypes type;
    private final File inputDirectory;
+   private final int maxDepth;
    private final int[] cellSplit;
    
    private final List<Point> points = new ArrayList<>();
    private TreeStructure tree = null;
    private DataAttributes attributes = null;
    
-   public TreeBuilder(final String type, final File inputDirectory, final int[] cellSplit) {
+   public TreeBuilder(final String type, final File inputDirectory, final int maxDepth, final int[] cellSplit) {
       final TreeTypes temp = TreeTypes.valueOf(type.toUpperCase());
       this.type = (temp == null) ? TreeTypes.OCTREE : temp;
       this.inputDirectory = inputDirectory;
+      this.maxDepth = maxDepth;
       this.cellSplit = cellSplit;
       
       this.importData();
@@ -64,19 +83,21 @@ public class TreeBuilder {
       }
       System.out.println("\t\tattributes read: " + attributes.getAttributeNames());
       System.out.println("\treading data...");
-      readDirectory(this.inputDirectory);
+      readDirectory(this.inputDirectory, 0);
       System.out.println("\t\tpoint data read: " + points.size());
       final long endTime = System.nanoTime();
       System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
    }
    
-   private void readDirectory(final File directory) {
+   private void readDirectory(final File directory, final int depth) {
       try {
          for(final String name : directory.list()) {
             final File path = new File(directory, name);
             
             if(path.isDirectory()) {
-               readDirectory(path);
+               if(depth < this.maxDepth || this.maxDepth == -1) {
+                  readDirectory(path, depth + 1);
+               }
             } else if(name.endsWith(".dat")) {
                try(final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(path))) {
                   final byte[] buffer = new byte[this.attributes.stride];
@@ -291,18 +312,19 @@ public class TreeBuilder {
    }
    
    public static void main(final String[] args) throws IOException {
-      if(args.length != 4 && args.length != 6) {
+      if(args.length != 7 && args.length != 9) {
          throw new IllegalArgumentException(USAGE);
       }
       
-      final String type = args[0];
-      final File inputDirectory = new File(args[1]);
-      final File outputDirectory = new File(args[2]);
-      final int[] cellSplit = new int[] { Integer.parseInt(args[3]), 0, 0 };
+      final String type = args[TREE_TYPE_INDEX];
+      final File inputDirectory = new File(args[INPUT_DIRECTORY_INDEX]);
+      final File outputDirectory = new File(args[OUTPUT_DIRECTORY_INDEX]);
+      final int maxDepth = Integer.parseInt(args[READ_DEPTH_INDEX]);
+      final int[] cellSplit = new int[] { Integer.parseInt(args[X_CELL_SPLIT_INDEX]), 0, 0 };
       
       if(args.length == 6) {
-         cellSplit[1] = Integer.parseInt(args[4]);
-         cellSplit[2] = Integer.parseInt(args[5]);
+         cellSplit[1] = Integer.parseInt(args[Y_CELL_SPLIT_INDEX]);
+         cellSplit[2] = Integer.parseInt(args[Z_CELL_SPLIT_INDEX]);
       } else {
          cellSplit[1] = cellSplit[0];
          cellSplit[2] = cellSplit[0];
@@ -337,10 +359,16 @@ public class TreeBuilder {
          purgeContents(outputDirectory);
       }
       
-      final TreeBuilder builder = new TreeBuilder(type, inputDirectory, cellSplit);
-      builder.build();
-      builder.export(outputDirectory);
-      builder.exportFlat(outputDirectory);
+      final TreeBuilder builder = new TreeBuilder(type, inputDirectory, maxDepth, cellSplit);
+      
+      if(Boolean.valueOf(args[BUILD_EXPORT_TREE_INDEX])) {
+         builder.build();
+         builder.export(outputDirectory);
+      }
+      
+      if(Boolean.valueOf(args[EXPORT_CSV_INDEX])) {
+         builder.exportFlat(outputDirectory);
+      }
    }
    
    /**
