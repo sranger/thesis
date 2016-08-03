@@ -1,7 +1,9 @@
 package com.stephenwranger.thesis.data;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -183,8 +185,8 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
                childBounds.put(childIndex, childBound);
             }
             
-            
-            final TreeCell cell = cellType.getConstructor(String.class, BoundingVolume.class, DataAttributes.class, int[].class, Map.class).newInstance(path, bounds, dataAttributes, cellSplit, childBounds);
+            final Constructor<? extends TreeCell> cellConstructor = cellType.getConstructor(String.class, BoundingVolume.class, DataAttributes.class, int[].class, Map.class);
+            final TreeCell cell = cellConstructor.newInstance(path, bounds, dataAttributes, cellSplit, childBounds);
             
             final byte[] buffer = new byte[in.readInt()];
             final int pointCount = in.readInt();

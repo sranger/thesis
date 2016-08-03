@@ -18,11 +18,11 @@ public class Icosatet extends TreeCell {
    
    private final Tuple3d current = new Tuple3d();
 
-   protected Icosatet(final TreeStructure tree, final String path) {
+   public Icosatet(final TreeStructure tree, final String path) {
       super(tree, path);
    }
    
-   protected Icosatet(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
+   public Icosatet(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
       super(path, bounds, attributes, cellSplit, childBounds);
    }
 

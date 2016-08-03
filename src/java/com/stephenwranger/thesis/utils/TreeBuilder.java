@@ -68,17 +68,11 @@ public class TreeBuilder {
    public void build() {
       final long startTime = System.nanoTime();
       int count = 0;
-      double currentPrintPercentage = 0;
+//      double currentPrintPercentage = 0;
       System.out.println("building tree...");
-      long pointCount = -1;
+      System.out.println();
+      final long pointCount = this.inputDatFile.length() / this.attributes.stride;
       
-      final Path path = FileSystems.getDefault().getPath(this.inputDatFile.getAbsolutePath());
-      try (final Stream<String> lines = Files.lines(path, Charset.defaultCharset())) {
-         pointCount = lines.count();
-       } catch (final IOException e1) {
-         e1.printStackTrace();
-         pointCount = this.inputDatFile.getTotalSpace() / 100;
-      }
       
       try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(this.inputDatFile))) {
          final byte[] buffer = new byte[this.attributes.stride];
@@ -98,12 +92,13 @@ public class TreeBuilder {
             percentage *= 10000.0;
             percentage = ((int) percentage) / 100.0;
             
-            if(percentage >= currentPrintPercentage + 0.1) {
+//            if(percentage >= currentPrintPercentage + 0.1) {
                final long elapsed = (System.nanoTime() - startTime);
                final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
+               System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it (note: doesn't work when console wraps lines)
                System.out.println("[" + percentage + "%]: " + count + " of " + pointCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
-               currentPrintPercentage += 0.1;
-            }
+//               currentPrintPercentage += 0.1;
+//            }
             
             count++;
          }
