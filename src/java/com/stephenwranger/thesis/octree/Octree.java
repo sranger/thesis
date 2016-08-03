@@ -31,10 +31,10 @@ public class Octree extends TreeStructure {
    
    @Override
    public BoundingVolume getBoundingVolume(final String path) {
-      return Octree.getOctetBoundingVolume(path);
+      return Octree.getCellBoundingVolume(path);
    }
    
-   public static BoundingVolume getOctetBoundingVolume(final String path) {
+   public static BoundingVolume getCellBoundingVolume(final String path) {
       final Tuple3d childmin = new Tuple3d(-MAX_RADIUS, -MAX_RADIUS, -MAX_RADIUS);
       final Tuple3d childmax = new Tuple3d(MAX_RADIUS, MAX_RADIUS, MAX_RADIUS);
       final Tuple3d size = new Tuple3d();
@@ -67,6 +67,10 @@ public class Octree extends TreeStructure {
    
    @Override
    public String getPath(final String parentPath, final int childIndex) {
+      return Octree.getCellPath(parentPath, childIndex);
+   }
+   
+   public static String getCellPath(final String parentPath, final int childIndex) {
       return (parentPath == null) ? "" : parentPath + childIndex;
    }
    

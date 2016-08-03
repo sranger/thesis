@@ -87,14 +87,15 @@ public class TreeBuilder {
                System.err.println("Could not add point: " + point);
                e.printStackTrace();
             }
-            
+
+            final double exactPercentage = (count / (double) pointCount);
             double percentage = (count / (double) pointCount);
             percentage *= 10000.0;
             percentage = ((int) percentage) / 100.0;
             
 //            if(percentage >= currentPrintPercentage + 0.1) {
                final long elapsed = (System.nanoTime() - startTime);
-               final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
+               final long eta = (long) (((1.0 - exactPercentage) * elapsed) / exactPercentage);
                System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it (note: doesn't work when console wraps lines)
                System.out.println("[" + percentage + "%]: " + count + " of " + pointCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
 //               currentPrintPercentage += 0.1;
