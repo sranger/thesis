@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JOptionPane;
@@ -67,8 +68,16 @@ public class TreeImporter {
    }
    
    private void readDirectory(final File directory, final BufferedOutputStream fout, final int depth) {
+      System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it 
+      System.out.print("\33[1A\33[2K"); // these two prints allow the completed and read lines below to stay in place
+      System.out.println("completed: " + (pointCount / 1000000) + " million");
+      System.out.println("read: " + directory.getAbsolutePath());
+      System.out.flush();
+      final String[] list = directory.list();
+      Arrays.sort(list);
+      
       try {
-         for(final String name : directory.list()) {
+         for(final String name : list) {
             final File path = new File(directory, name);
             
             if(path.isDirectory()) {
@@ -78,20 +87,15 @@ public class TreeImporter {
             } else if(name.endsWith(".dat")) {
                try(final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(path))) {
                   final byte[] buffer = new byte[this.attributes.stride];
-                  int index = -1;
+                  int bytesRead = -1;
                   
                   // read points until file is empty
-                  while((index = fin.read(buffer)) != -1) {
-                     if(index == buffer.length) {
-                        final Point point = new Point(this.attributes, buffer);
-                        fout.write(point.getRawData().array());
+                  while((bytesRead = fin.read(buffer)) != -1) {
+                     if(bytesRead == buffer.length) {
+                        fout.write(buffer);
                         pointCount++;
-                        
-                        if(pointCount % 1000000 == 0) {
-                           System.out.println("completed " + (pointCount / 1000000) + " million");
-                        }
                      } else {
-                        throw new IOException("Could not read full buffer");
+                        throw new IOException("Could not read full buffer\n");
                      }
                   }
                } catch(final IOException e) {
@@ -100,7 +104,7 @@ public class TreeImporter {
             }
          }
       } catch(final OutOfMemoryError e) {
-         System.err.println("OutOfMemory: " + pointCount + " completed.");
+         System.err.println("OutOfMemory: " + pointCount + " completed.\n");
          throw e;
       }
    }
