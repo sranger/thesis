@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +35,7 @@ public class TreeImporter {
       OCTREE, ICOSATREE;
    }
    
+   private final DecimalFormat formatter = new DecimalFormat("###,###,###,##0");
    private final File inputDirectory;
    private final int maxDepth;
    
@@ -68,9 +70,9 @@ public class TreeImporter {
    }
    
    private void readDirectory(final File directory, final BufferedOutputStream fout, final int depth) {
-      System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it 
+      System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it (note: doesn't work when console wraps lines)
       System.out.print("\33[1A\33[2K"); // these two prints allow the completed and read lines below to stay in place
-      System.out.println("completed: " + (pointCount / 1000000) + " million");
+      System.out.println("completed: " + formatter.format(pointCount));
       System.out.println("read: " + directory.getAbsolutePath());
       System.out.flush();
       final String[] list = directory.list();
