@@ -1,5 +1,6 @@
 package com.stephenwranger.thesis.data;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -22,6 +23,10 @@ import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
 
 public abstract class TreeCell implements Iterable<Point>, SegmentObject {
+   static {
+      System.out.println(System.getProperty("java.io.tmpdir"));
+   }
+   
    public enum Status {
       EMPTY, PENDING, COMPLETE
    }
@@ -39,7 +44,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    // used only when building tree manually
    private final int[]                        cellSplit;
 // private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
-   private final DB                           mapDB         = DBMaker.tempFileDB().make(); // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
+   // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
    private final HTreeMap<Integer, Point>     points;
    private final Map<String, Integer>         pointsByChild = new HashMap<>();
 
@@ -57,11 +62,11 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.attributes = tree.getAttributes();
       this.stride = this.attributes.stride;
       
-      for(int i = 0; i < this.getMaxChildren(); i++) {
+      for (int i = 0; i < this.getMaxChildren(); i++) {
          this.childBounds.put(i, tree.getBoundingVolume(this.path, i));
       }
       
-      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
+      this.points = getMap();
    }
    
    public TreeCell(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
@@ -71,8 +76,39 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.attributes = attributes;
       this.stride = this.attributes.stride;
       this.childBounds.putAll(childBounds);
+
+      this.points = this.getMap();
+   }
+   
+   private HTreeMap<Integer, Point> getMap() {
+      final String name = (this.path.isEmpty()) ? "root" : this.path;
+      final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name))
+            .fileMmapEnable()
+            .closeOnJvmShutdown()
+            .fileDeleteAfterClose()
+            .make();
+      final DB memoryDb = DBMaker.memoryDB().make();
+
+      final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name)
+            .keySerializer(Serializer.INTEGER)
+            .valueSerializer(new PointSerializer(this.attributes))
+            .create();
       
-      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
+      final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name)
+            .keySerializer(Serializer.INTEGER)
+            .valueSerializer(new PointSerializer(this.attributes))
+            .expireMaxSize(5000)
+            .expireOverflow(diskMap)
+            .create();
+      
+//      this.mapDB = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), this.path))//.tempFileDB()
+//         .closeOnJvmShutdown()
+//         .fileDeleteAfterClose()
+//         .fileMmapEnable()
+//         .make();
+//      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
+      
+      return memoryMap;
    }
 
    public TreeCell addPoint(final TreeStructure tree, final Point point) {
