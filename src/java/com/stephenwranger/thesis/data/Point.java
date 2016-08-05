@@ -11,8 +11,11 @@ public class Point {
    private final int stride;
    
    public Point(final DataAttributes attributes, final byte[] buffer) {
+      if(attributes.stride != buffer.length) {
+         throw new RuntimeException("Buffer length must match attrbiute stride");
+      }
       this.attributes = attributes;
-      this.stride = buffer.length;
+      this.stride = attributes.stride;
       this.rawData = ByteBuffer.allocate(buffer.length).order(ByteOrder.LITTLE_ENDIAN);
       this.rawData.put(buffer);
       this.rawData.rewind();
@@ -47,12 +50,17 @@ public class Point {
    }
    
    public Tuple3d getXYZ(final TreeStructure tree, final Tuple3d output) {
-      final Tuple3d outValue = (output == null) ? new Tuple3d() : output;
-      outValue.x = tree.xAttribute.getValue(this.rawData, 0, stride).doubleValue();
-      outValue.y = tree.yAttribute.getValue(this.rawData, 0, stride).doubleValue();
-      outValue.z = tree.zAttribute.getValue(this.rawData, 0, stride).doubleValue();
-      
-      return outValue;
+      try {
+         final Tuple3d outValue = (output == null) ? new Tuple3d() : output;
+         outValue.x = tree.xAttribute.getValue(this.rawData, 0, stride).doubleValue();
+         outValue.y = tree.yAttribute.getValue(this.rawData, 0, stride).doubleValue();
+         outValue.z = tree.zAttribute.getValue(this.rawData, 0, stride).doubleValue();
+         
+         return outValue;
+      } catch(final Exception e) {
+         System.err.println("data capacity: " + this.rawData.capacity() + ", stride: " + this.stride);
+         throw e;
+      }
    }
    
    @Override

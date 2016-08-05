@@ -3,8 +3,11 @@ package com.stephenwranger.thesis.renderables;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -28,7 +31,6 @@ import com.stephenwranger.graphics.utils.buffers.AttributeRegion;
 import com.stephenwranger.graphics.utils.buffers.BufferRegion;
 import com.stephenwranger.graphics.utils.buffers.ColorRegion;
 import com.stephenwranger.graphics.utils.buffers.DataType;
-import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 import com.stephenwranger.graphics.utils.buffers.SegmentedVertexBufferPool;
 import com.stephenwranger.graphics.utils.buffers.VertexRegion;
 import com.stephenwranger.graphics.utils.shader.FloatMatrixUniform;
@@ -44,6 +46,7 @@ import com.stephenwranger.thesis.data.TreeServerProcessor.ConnectionType;
 import com.stephenwranger.thesis.data.TreeStructure;
 import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.octree.Octree;
+import com.stephenwranger.thesis.selection.Volume;
 
 public class TreeRenderable extends Renderable {
    private static final long TEN_MILLISECONDS_IN_NANOSECONDS = 10L * 1000L * 1000L;
@@ -68,11 +71,13 @@ public class TreeRenderable extends Renderable {
    private final TreeStructure tree;
    private final TreeServerConnection connection;
    private final SegmentedVertexBufferPool vboPool;
-   private final Set<SegmentObject> segments = new HashSet<>();
+   private final Set<TreeCell> segments = new HashSet<>();
    private final Set<TreeCell> pending = new TreeSet<>(DEPTH_COMPARATOR);
    private final Timings timings = new Timings(100);
    
    private final Tuple3d currentOrigin = new Tuple3d(0,0,0);
+   
+   private double levelOfDetail = 1.0;
 
    public TreeRenderable(final String basePath, final ConnectionType connectionType) {
       super(new Tuple3d(), new Quat4d());
@@ -145,8 +150,42 @@ public class TreeRenderable extends Renderable {
       gl.glPopAttrib();
    }
    
+   public void setLevelOfDetail(final double levelOfDetail) {
+      this.levelOfDetail = levelOfDetail;
+      
+      if(this.scene != null) {
+         this.scene.repaint();
+      }
+   }
+   
+   public double getLevelOfDetail() {
+      return this.levelOfDetail;
+   }
+   
    public Timings getTimings() {
       return this.timings;
+   }
+   
+   public Collection<Tuple3d> getVolumeIntersection(final Volume volume) {
+      final List<Tuple3d> points = new ArrayList<>();
+      final Tuple3d output = new Tuple3d();
+      
+      // TODO: go through tree structure to cull portions early
+      for(final TreeCell cell : this.segments) {
+         final BoundingVolume bounds = cell.getBoundingVolume();
+         
+         if(volume.contains(bounds)) {
+            cell.forEach((point) -> {
+               point.getXYZ(this.tree, output);
+               
+               if(volume.contains(output)) {
+                  points.add(new Tuple3d(output));
+               }
+            });
+         }
+      }
+      
+      return points;
    }
    
    /**
@@ -217,7 +256,7 @@ public class TreeRenderable extends Renderable {
       boolean split = false;
       
       if(cellCenterScreen != null && cellRightScreen != null) {
-         final double radius = cellCenterScreen.distance(cellRightScreen);
+         final double radius = cellCenterScreen.distance(cellRightScreen) * this.levelOfDetail;
          final double screenArea = Math.PI * radius * radius;
          
          render = distanceToCamera <= boundsViewSpan || screenArea >= MIN_SCREEN_RENDER_AREA;

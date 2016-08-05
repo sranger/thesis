@@ -45,7 +45,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    private final int[]                        cellSplit;
 // private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
    // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
-   private final HTreeMap<Integer, Point>     points;
+   private final Map<Integer, Point>     points;
    private final Map<String, Integer>         pointsByChild = new HashMap<>();
 
    // used only when reading tree from filesystem or http
@@ -80,35 +80,40 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.points = this.getMap();
    }
    
-   private HTreeMap<Integer, Point> getMap() {
-      final String name = (this.path.isEmpty()) ? "root" : this.path;
-      final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name))
-            .fileMmapEnable()
-            .closeOnJvmShutdown()
-            .fileDeleteAfterClose()
-            .make();
-      final DB memoryDb = DBMaker.memoryDB().make();
-
-      final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name)
-            .keySerializer(Serializer.INTEGER)
-            .valueSerializer(new PointSerializer(this.attributes))
-            .create();
+   private Map<Integer, Point> getMap() {
+      final boolean useMapDB = Boolean.valueOf(System.getProperty("mapdb.enable", "false"));
       
-      final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name)
-            .keySerializer(Serializer.INTEGER)
-            .valueSerializer(new PointSerializer(this.attributes))
-            .expireMaxSize(5000)
-            .expireOverflow(diskMap)
-            .create();
-      
-//      this.mapDB = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), this.path))//.tempFileDB()
-//         .closeOnJvmShutdown()
-//         .fileDeleteAfterClose()
-//         .fileMmapEnable()
-//         .make();
-//      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
-      
-      return memoryMap;
+      if(useMapDB) {
+         final String name = (this.path.isEmpty()) ? "root" : this.path;
+         final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name))
+               .closeOnJvmShutdown()
+               .fileDeleteAfterClose()
+               .make();
+         final DB memoryDb = DBMaker.memoryDB().make();
+   
+         final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name)
+               .keySerializer(Serializer.INTEGER)
+               .valueSerializer(new PointSerializer(this.attributes))
+               .create();
+         
+         final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name)
+               .keySerializer(Serializer.INTEGER)
+               .valueSerializer(new PointSerializer(this.attributes))
+               .expireAfterCreate()
+               .expireOverflow(diskMap)
+               .create();
+         
+   //      this.mapDB = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), this.path))//.tempFileDB()
+   //         .closeOnJvmShutdown()
+   //         .fileDeleteAfterClose()
+   //         .fileMmapEnable()
+   //         .make();
+   //      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
+         
+         return memoryMap;
+      } else {
+         return new HashMap<Integer, Point>();
+      }
    }
 
    public TreeCell addPoint(final TreeStructure tree, final Point point) {
@@ -212,7 +217,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       if (this.pointBuffer == null) {
          return this.points.get(index);
       } else {
-         return new Point(this.attributes, Arrays.copyOfRange(this.pointBuffer, index * this.stride, this.stride));
+         return new Point(this.attributes, Arrays.copyOfRange(this.pointBuffer, index * this.stride, index * this.stride + this.stride));
       }
    }
 
