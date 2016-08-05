@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 
 import com.jogamp.opengl.GL2;
@@ -32,6 +33,7 @@ import com.stephenwranger.thesis.geospatial.EarthImagery.ImageryType;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
+import com.stephenwranger.thesis.selection.ContextAwarePointSelection;
 
 public class ThesisVisualization extends JFrame {
    private static final long   serialVersionUID = 545923577250987084L;
@@ -83,12 +85,16 @@ public class ThesisVisualization extends JFrame {
 
       // this.loadIcosatreeBounds("");
 
-       final TreeRenderable renderer = new TreeRenderable(basePath, connectionType);
-       this.scene.addRenderable(renderer);
+       final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
+       tree.setLevelOfDetail(0.1);
+       this.scene.addRenderable(tree);
+       
+       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
+       this.scene.addPostProcessor(pointSelector);
 
        // this.addTimingDisplay(scene, renderer);
 
-      this.getContentPane().add(this.scene);
+       this.getContentPane().add(this.scene);
 
       SwingUtilities.invokeLater(() -> {
          this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

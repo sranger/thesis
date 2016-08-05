@@ -70,33 +70,41 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    @Override
    public synchronized void mouseClicked(final MouseEvent event) {
-      if (event.getClickCount() == 2) {
-         this.mouseLonLatAlt = null;
-         this.previousEvent = null;
-         this.currentEvent = event.getPoint();
-         this.eventType = EventType.MOUSE_CLICK;
-
-         this.update = true;
+      if(!event.isControlDown()) {
+         if (event.getClickCount() == 2) {
+            this.mouseLonLatAlt = null;
+            this.previousEvent = null;
+            this.currentEvent = event.getPoint();
+            this.eventType = EventType.MOUSE_CLICK;
+   
+            this.update = true;
+         }
+      } else {
+         mouseReleased(null);
       }
    }
 
    @Override
    public synchronized void mouseDragged(final MouseEvent event) {
-      if (SwingUtilities.isLeftMouseButton(event)) {
-         this.currentEvent = event.getPoint();
-         this.eventType = EventType.MOUSE_DRAG_LEFT;
-      } else if (SwingUtilities.isRightMouseButton(event) && (this.previousEvent != null)) {
-         this.mouseLonLatAlt = null;
-         this.currentEvent = event.getPoint();
-         this.eventType = EventType.MOUSE_DRAG_RIGHT;
+      if(!event.isControlDown()) {
+         if (SwingUtilities.isLeftMouseButton(event)) {
+            this.currentEvent = event.getPoint();
+            this.eventType = EventType.MOUSE_DRAG_LEFT;
+         } else if (SwingUtilities.isRightMouseButton(event) && (this.previousEvent != null)) {
+            this.mouseLonLatAlt = null;
+            this.currentEvent = event.getPoint();
+            this.eventType = EventType.MOUSE_DRAG_RIGHT;
+         } else {
+            this.mouseLonLatAlt = null;
+            this.previousEvent = null;
+            this.currentEvent = null;
+            this.eventType = null;
+         }
+   
+         this.update = true;
       } else {
-         this.mouseLonLatAlt = null;
-         this.previousEvent = null;
-         this.currentEvent = null;
-         this.eventType = null;
+         mouseReleased(null);
       }
-
-      this.update = true;
    }
 
    @Override
@@ -113,15 +121,23 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    @Override
    public synchronized void mouseMoved(final MouseEvent event) {
-      this.updateText(event);
+      if(!event.isControlDown()) {
+         this.updateText(event);
+      } else {
+         mouseReleased(null);
+      }
    }
 
    @Override
    public synchronized void mousePressed(final MouseEvent event) {
-      this.mouseLonLatAlt = null;
-      this.previousEvent = event.getPoint();
-      this.currentEvent = null;
-      this.eventType = null;
+      if(!event.isControlDown()) {
+         this.mouseLonLatAlt = null;
+         this.previousEvent = event.getPoint();
+         this.currentEvent = null;
+         this.eventType = null;
+      } else {
+         mouseReleased(null);
+      }
    }
 
    @Override
