@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
-import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 
 import com.jogamp.opengl.GL2;
@@ -52,7 +51,7 @@ public class ThesisVisualization extends JFrame {
       this.earth.setAltitudeOffset(-60);
 
       this.scene = new Scene(new Dimension(1600, 1000));
-      this.scene.addRenderable(this.earth);
+      //      this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
       this.scene.addKeyListener(new KeyAdapter() {
@@ -61,10 +60,10 @@ public class ThesisVisualization extends JFrame {
             if (event.getKeyCode() == KeyEvent.VK_W) {
                ThesisVisualization.this.earth.setWireframe(!ThesisVisualization.this.earth.isWireframe());
             } else if (event.getKeyCode() == KeyEvent.VK_E) {
-               if(earth.inScene()) {
-                  earth.remove();
+               if (ThesisVisualization.this.earth.inScene()) {
+                  ThesisVisualization.this.earth.remove();
                } else {
-                  scene.addRenderable(earth);
+                  ThesisVisualization.this.scene.addRenderable(ThesisVisualization.this.earth);
                }
             } else if (event.getKeyCode() == KeyEvent.VK_L) {
                ThesisVisualization.this.earth.setLightingEnabled(!ThesisVisualization.this.earth.isLightingEnabled());
@@ -80,21 +79,21 @@ public class ThesisVisualization extends JFrame {
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8687371531015, 35.368949194257716, 81.32168056350201, 0, 0, 200000);
-      navigator.setEarth(this.earth);
+      //      navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
       // this.loadIcosatreeBounds("");
 
-       final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
-       tree.setLevelOfDetail(0.1);
-       this.scene.addRenderable(tree);
-       
-       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
-       this.scene.addPostProcessor(pointSelector);
+      final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
+      tree.setLevelOfDetail(0.01);
+      this.scene.addRenderable(tree);
 
-       // this.addTimingDisplay(scene, renderer);
+      final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
+      this.scene.addPostProcessor(pointSelector);
 
-       this.getContentPane().add(this.scene);
+      // this.addTimingDisplay(scene, renderer);
+
+      this.getContentPane().add(this.scene);
 
       SwingUtilities.invokeLater(() -> {
          this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
