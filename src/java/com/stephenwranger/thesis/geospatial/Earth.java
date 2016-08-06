@@ -1,8 +1,5 @@
 package com.stephenwranger.thesis.geospatial;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2GL3;
@@ -59,6 +56,10 @@ public class Earth extends Renderable {
       this.shader = new ShaderProgram("Earth Texture Shader", null, vert, frag);
    }
 
+   public double getAltitudeOffset() {
+      return this.altitudeOffset;
+   }
+
    @Override
    public BoundingVolume getBoundingVolume() {
       return Earth.BOUNDS;
@@ -111,7 +112,7 @@ public class Earth extends Renderable {
    @Override
    public void render(final GL2 gl, final GLU glu, final GLAutoDrawable glDrawable, final Scene scene) {
       if (this.geometry == null) {
-         this.geometry = new EllipticalGeometry(gl, this.ellipsoid, WGS84.EQUATORIAL_RADIUS, 2, this::getAltitude, this::setImagery);
+         this.geometry = new EllipticalGeometry(gl, this.ellipsoid, WGS84.EQUATORIAL_RADIUS, 0, this::getAltitude, this::setImagery);
          this.geometry.setLightingEnabled(this.isLightingEnabled);
          this.geometry.setLoadFactor(this.loadFactor);
       }
@@ -123,6 +124,10 @@ public class Earth extends Renderable {
       this.geometry.render(gl, glu, glDrawable, scene);
       this.shader.disable(gl);
       gl.glPopAttrib();
+   }
+
+   public void setAltitudeOffset(final double altitudeOffset) {
+      this.altitudeOffset = altitudeOffset;
    }
 
    public void setLightingEnabled(final boolean isLightingEnabled) {
@@ -143,14 +148,6 @@ public class Earth extends Renderable {
 
    public void setWireframe(final boolean isWireframe) {
       this.isWireframe = isWireframe;
-   }
-   
-   public void setAltitudeOffset(final double altitudeOffset) {
-      this.altitudeOffset = altitudeOffset;
-   }
-   
-   public double getAltitudeOffset() {
-      return this.altitudeOffset;
    }
 
    private double getAltitude(final double longitudeDegrees, final double latitudeDegrees) {
