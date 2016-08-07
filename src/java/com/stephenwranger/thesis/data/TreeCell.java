@@ -15,6 +15,7 @@ import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
+import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
@@ -23,12 +24,12 @@ import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
 
 public abstract class TreeCell implements Iterable<Point>, SegmentObject {
-   static {
-      System.out.println(System.getProperty("java.io.tmpdir"));
-   }
-   
    public enum Status {
       EMPTY, PENDING, COMPLETE
+   }
+
+   static {
+      System.out.println(System.getProperty("java.io.tmpdir"));
    }
 
    public final String                        path;
@@ -43,9 +44,9 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
    // used only when building tree manually
    private final int[]                        cellSplit;
-// private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
+   // private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
    // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
-   private final Map<Integer, Point>     points;
+   private final Map<Integer, Point>          points;
    private final Map<String, Integer>         pointsByChild = new HashMap<>();
 
    // used only when reading tree from filesystem or http
@@ -53,22 +54,8 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    private ByteBuffer                         gpuBuffer     = null;
    private String[]                           children      = null;
    private Status                             status        = Status.EMPTY;
+   private BoundingBox                        pointBounds;
 
-   protected TreeCell(final TreeStructure tree, final String path) {
-      this.path = path;
-      this.cellSplit = tree.getCellSplit().clone();
-
-      this.bounds = tree.getBoundingVolume(this.path);
-      this.attributes = tree.getAttributes();
-      this.stride = this.attributes.stride;
-      
-      for (int i = 0; i < this.getMaxChildren(); i++) {
-         this.childBounds.put(i, tree.getBoundingVolume(this.path, i));
-      }
-      
-      this.points = getMap();
-   }
-   
    public TreeCell(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
       this.path = path;
       this.cellSplit = cellSplit.clone();
@@ -79,41 +66,20 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
       this.points = this.getMap();
    }
-   
-   private Map<Integer, Point> getMap() {
-      final boolean useMapDB = Boolean.valueOf(System.getProperty("mapdb.enable", "false"));
-      
-      if(useMapDB) {
-         final String name = (this.path.isEmpty()) ? "root" : this.path;
-         final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name))
-               .closeOnJvmShutdown()
-               .fileDeleteAfterClose()
-               .make();
-         final DB memoryDb = DBMaker.memoryDB().make();
-   
-         final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name)
-               .keySerializer(Serializer.INTEGER)
-               .valueSerializer(new PointSerializer(this.attributes))
-               .create();
-         
-         final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name)
-               .keySerializer(Serializer.INTEGER)
-               .valueSerializer(new PointSerializer(this.attributes))
-               .expireAfterCreate()
-               .expireOverflow(diskMap)
-               .create();
-         
-   //      this.mapDB = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), this.path))//.tempFileDB()
-   //         .closeOnJvmShutdown()
-   //         .fileDeleteAfterClose()
-   //         .fileMmapEnable()
-   //         .make();
-   //      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
-         
-         return memoryMap;
-      } else {
-         return new HashMap<Integer, Point>();
+
+   protected TreeCell(final TreeStructure tree, final String path) {
+      this.path = path;
+      this.cellSplit = tree.getCellSplit().clone();
+
+      this.bounds = tree.getBoundingVolume(this.path);
+      this.attributes = tree.getAttributes();
+      this.stride = this.attributes.stride;
+
+      for (int i = 0; i < this.getMaxChildren(); i++) {
+         this.childBounds.put(i, tree.getBoundingVolume(this.path, i));
       }
+
+      this.points = this.getMap();
    }
 
    public TreeCell addPoint(final TreeStructure tree, final Point point) {
@@ -150,7 +116,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
          this.pointsByChild.put(insertedInto.getPath(), count);
       }
-      
+
       return insertedInto;
    }
 
@@ -172,17 +138,9 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    public int[] getCellSplit() {
       return this.cellSplit;
    }
-   
-   public int getStride() {
-      return this.stride;
-   }
-   
-   public DataAttributes getDataAttributes() {
-      return this.attributes;
-   }
-   
-   public Map<Integer, Point> points() {
-      return Collections.unmodifiableMap(this.points);
+
+   public Map<Integer, BoundingVolume> getChildBounds() {
+      return Collections.unmodifiableMap(this.childBounds);
    }
 
    /**
@@ -197,9 +155,9 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
          return this.children.clone();
       }
    }
-   
-   public Map<Integer, BoundingVolume> getChildBounds() {
-      return Collections.unmodifiableMap(this.childBounds);
+
+   public DataAttributes getDataAttributes() {
+      return this.attributes;
    }
 
    /**
@@ -217,8 +175,12 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       if (this.pointBuffer == null) {
          return this.points.get(index);
       } else {
-         return new Point(this.attributes, Arrays.copyOfRange(this.pointBuffer, index * this.stride, index * this.stride + this.stride));
+         return new Point(this.attributes, Arrays.copyOfRange(this.pointBuffer, index * this.stride, (index * this.stride) + this.stride));
       }
+   }
+
+   public BoundingBox getPointBounds() {
+      return this.pointBounds;
    }
 
    public int getPointCount() {
@@ -232,6 +194,10 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
    public Status getStatus() {
       return this.status;
+   }
+
+   public int getStride() {
+      return this.stride;
    }
 
    @Override
@@ -256,7 +222,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       return this.status == Status.EMPTY;
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    public Iterator<Point> iterator() {
       if (this.pointBuffer == null) {
@@ -295,6 +260,10 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.gpuBuffer.rewind();
    }
 
+   public Map<Integer, Point> points() {
+      return Collections.unmodifiableMap(this.points);
+   }
+
    public void setData(final byte[] buffer, final String[] children) {
       this.pointBuffer = buffer;
       this.children = children;
@@ -321,6 +290,31 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       return "[TreeCell: " + this.path + ", point count: " + this.getPointCount() + ", status: " + this.status + "]";
    }
 
+   private Map<Integer, Point> getMap() {
+      final boolean useMapDB = Boolean.valueOf(System.getProperty("mapdb.enable", "false"));
+
+      if (useMapDB) {
+         final String name = (this.path.isEmpty()) ? "root" : this.path;
+         final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name)).closeOnJvmShutdown().fileDeleteAfterClose().make();
+         final DB memoryDb = DBMaker.memoryDB().make();
+
+         final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name).keySerializer(Serializer.INTEGER).valueSerializer(new PointSerializer(this.attributes)).create();
+
+         final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name).keySerializer(Serializer.INTEGER).valueSerializer(new PointSerializer(this.attributes)).expireAfterCreate().expireOverflow(diskMap).create();
+
+         //      this.mapDB = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), this.path))//.tempFileDB()
+         //         .closeOnJvmShutdown()
+         //         .fileDeleteAfterClose()
+         //         .fileMmapEnable()
+         //         .make();
+         //      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
+
+         return memoryMap;
+      } else {
+         return new HashMap<>();
+      }
+   }
+
    private void loadGpuBuffer(final Tuple3d origin) {
       final int pointCount = this.getPointCount();
 
@@ -328,11 +322,24 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
          this.gpuBuffer = BufferUtils.newByteBuffer(this.attributes.getGpuSize() * pointCount);
       }
 
+      final Tuple3d min = new Tuple3d(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+      final Tuple3d max = new Tuple3d(-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE);
+
       final ByteBuffer temp = ByteBuffer.wrap(this.pointBuffer).order(ByteOrder.LITTLE_ENDIAN);
+      final Tuple3d xyz = new Tuple3d();
 
       for (int i = 0; i < pointCount; i++) {
-         this.attributes.loadBuffer(origin, this.gpuBuffer, temp, i);
+         this.attributes.loadBuffer(origin, this.gpuBuffer, temp, i, xyz);
+         min.x = Math.min(min.x, xyz.x);
+         min.y = Math.min(min.y, xyz.y);
+         min.z = Math.min(min.z, xyz.z);
+
+         max.x = Math.max(max.x, xyz.x);
+         max.y = Math.max(max.y, xyz.y);
+         max.z = Math.max(max.z, xyz.z);
       }
+
+      this.pointBounds = new BoundingBox(min, max);
 
       this.gpuBuffer.rewind();
    }
@@ -369,7 +376,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
       if (child == null) {
          double distance = Double.MAX_VALUE;
-         
+
          // TODO: this doesn't seem like the issue
          // most likely the point is on the edge of a cell and is "just" outside it
          // choose the cell that the point is closest to its center
@@ -377,46 +384,47 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
             final int childIndex = entry.getKey();
             final BoundingVolume childBounds = entry.getValue();
             final double temp = point.distance(childBounds.getCenter());
-            
+
             if (temp < distance) {
                child = tree.getCell(this.path, childIndex);
                distance = temp;
             }
          }
-         
-         if(child == null) {
+
+         if (child == null) {
             final StringBuilder sb = new StringBuilder();
-   
+
             if (this.bounds instanceof TrianglePrismVolume) {
                final TrianglePrismVolume tpv = (TrianglePrismVolume) this.bounds;
                final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
                final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
-   
+
                for (final Tuple3d corner : topCorners) {
                   sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",this.bounds.top");
                }
-   
+
                for (final Tuple3d corner : botCorners) {
                   sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",this.bounds.bottom");
                }
             }
-   
+
             for (final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
                if (entry.getValue() instanceof TrianglePrismVolume) {
                   final TrianglePrismVolume tpv = (TrianglePrismVolume) entry.getValue();
                   final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
                   final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
-   
+
                   for (final Tuple3d corner : topCorners) {
                      sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append("child #" + entry.getKey() + " top");
                   }
-   
+
                   for (final Tuple3d corner : botCorners) {
                      sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append("child #" + entry.getKey() + " bottom");
                   }
                }
             }
-            throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",the point\n" + sb.toString() + "\nthis.bounds: " + this.bounds + "\nchild bounds: " + this.childBounds.size());
+            throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",the point\n" + sb.toString() + "\nthis.bounds: " + this.bounds + "\nchild bounds: "
+                  + this.childBounds.size());
          }
       }
 
@@ -432,6 +440,13 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
     * @return
     */
    protected abstract int getIndex(final TreeStructure tree, final Point point);
+
+   /**
+    * Returns the class type of this TreeCell's parent TreeStructure; used for serialization.
+    *
+    * @return the parent TreeStructure class
+    */
+   protected abstract Class<? extends TreeStructure> getTreeType();
 
    protected Point swapPoint(final int index, final Point point) {
       if (this.pointBuffer != null) {
@@ -456,11 +471,4 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
     * @return true to swap points; false to send pending point to child node
     */
    protected abstract boolean swapPointCheck(final TreeStructure tree, final Point current, final Point pending);
-   
-   /**
-    * Returns the class type of this TreeCell's parent TreeStructure; used for serialization.
-    * 
-    * @return the parent TreeStructure class
-    */
-   protected abstract Class<? extends TreeStructure> getTreeType();
 }

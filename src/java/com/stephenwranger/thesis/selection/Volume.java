@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.stephenwranger.graphics.Scene;
+import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.math.CameraUtils;
 import com.stephenwranger.graphics.math.Tuple2d;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.IntersectionUtils;
 import com.stephenwranger.graphics.math.intersection.LineSegment;
 import com.stephenwranger.graphics.utils.TupleMath;
@@ -69,16 +71,60 @@ public class Volume {
    }
 
    public boolean contains(final BoundingVolume bounds) {
-      // TODO project bounds to screen
-      return true;
+      final BoundingBox aabb = new BoundingBox(bounds);
+      final List<Tuple2d> screenPoints = new ArrayList<>();
+
+      for (final Tuple3d corner : aabb.getCorners()) {
+         final Tuple3d point3dScreen = CameraUtils.gluProject(this.scene, TupleMath.sub(corner, this.scene.getOrigin()));
+
+         if (point3dScreen != null) {
+            final Tuple2d pointScreen = new Tuple2d(point3dScreen.x, this.scene.getHeight() - point3dScreen.y);
+            final boolean contains = IntersectionUtils.pointInPolygon(pointScreen, this.polygon);
+            screenPoints.add(pointScreen);
+
+            if (contains) {
+               return true;
+            }
+         }
+      }
+
+      final Tuple2d min = Tuple2d.getMin(screenPoints);
+      final Tuple2d max = Tuple2d.getMax(screenPoints);
+
+      for (final LineSegment segment : this.polygon) {
+         if (TupleMath.inRange(segment.min, min, max)) {
+            return true;
+         }
+      }
+
+      return false;
    }
 
-   public boolean contains(final Tuple3d point) {
+   public boolean contains(final Tuple3d point, final double radius) {
       final Tuple3d point3dScreen = CameraUtils.gluProject(this.scene, TupleMath.sub(point, this.scene.getOrigin()));
-      final Tuple2d pointScreen = new Tuple2d(point3dScreen.x, this.scene.getHeight() - point3dScreen.y);
-      final boolean contains = IntersectionUtils.pointInPolygon(pointScreen, this.polygon);
 
-      return contains;
+      if (point3dScreen != null) {
+         final Tuple2d pointScreen = new Tuple2d(point3dScreen.x, this.scene.getHeight() - point3dScreen.y);
+         final boolean contains = IntersectionUtils.pointInPolygon(pointScreen, this.polygon);
+
+         if (!contains) {
+            final Tuple3d right3d = TupleMath.sub(point, this.scene.getOrigin());
+            final Vector3d rightVector = this.scene.getRightVector();
+            rightVector.scale(radius);
+            right3d.add(rightVector);
+            final Tuple3d right3dScreen = CameraUtils.gluProject(this.scene, right3d);
+            final double radiusScreen = pointScreen.distance(new Tuple2d(right3dScreen.x, this.scene.getHeight() - right3dScreen.y));
+
+            for (final LineSegment segment : this.polygon) {
+               if (segment.distance(pointScreen) < radiusScreen) {
+                  return true;
+               }
+            }
+         }
+         return contains;
+      }
+
+      return false;
    }
 
    //   public boolean contains(final BoundingVolume bounds) {

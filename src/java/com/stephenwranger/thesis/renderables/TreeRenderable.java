@@ -17,6 +17,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.fixedfunc.GLLightingFunc;
 import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
+import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.BoundsUtils;
 import com.stephenwranger.graphics.bounds.BoundsUtils.FrustumResult;
@@ -52,11 +53,12 @@ import com.stephenwranger.thesis.selection.Volume;
 
 public class TreeRenderable extends Renderable {
    private static final long                 TEN_MILLISECONDS_IN_NANOSECONDS = 10L * 1000L * 1000L;
-   private static final double               MIN_SCREEN_RENDER_AREA          = Math.PI * 50.0 * 50.0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 50 px radius circle
-   private static final double               MIN_SCREEN_SPLIT_AREA           = Math.PI * 200.0 * 200.0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     // 200 px radius circle
+   private static final double               MIN_SCREEN_RENDER_AREA          = Math.PI * 50.0 * 50.0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 50 px radius circle
+   private static final double               MIN_SCREEN_SPLIT_AREA           = Math.PI * 200.0 * 200.0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               // 200 px radius circle
 
    private static final String               FRUSTUM_CULLING                 = "Frustum Culling";
    private static final String               UPLOAD_CELLS                    = "Upload Cells";
+   private static final String               BUILD_BOUNDS                    = "Building Bounds";
    private static final String               PENDING_UPLOADS                 = "Pending Upload";
    private static final String               RENDERING                       = "Rendering";
 
@@ -76,9 +78,9 @@ public class TreeRenderable extends Renderable {
    private final Set<TreeCell>               segments                        = new HashSet<>();
    private final Set<TreeCell>               pending                         = new TreeSet<>(TreeRenderable.DEPTH_COMPARATOR);
    private final Timings                     timings                         = new Timings(100);
-
    private final Tuple3d                     currentOrigin                   = new Tuple3d(0, 0, 0);
 
+   private BoundingBox                       bounds                          = null;
    private double                            levelOfDetail                   = 1.0;
    private float                             pointSize                       = 1f;
 
@@ -98,11 +100,26 @@ public class TreeRenderable extends Renderable {
 
    @Override
    public BoundingVolume getBoundingVolume() {
-      return this.tree.getBoundingVolume("");
+      return this.bounds;
    }
 
    public double getLevelOfDetail() {
       return this.levelOfDetail;
+   }
+
+   @Override
+   public double[] getNearFar(final Scene scene) {
+      final double[] nearFar = super.getNearFar(scene);
+
+      //      if (this.bounds != null) {
+      //         final Tuple3d min = this.bounds.getMin();
+      //         final Tuple3d max = this.bounds.getMax();
+      //         System.out.println("\n\nnear/far: " + nearFar[0] + " / " + nearFar[1]);
+      //         System.out.println("min: " + min + ", " + min.distance(this.scene.getCameraPosition()));
+      //         System.out.println("max: " + max + ", " + max.distance(this.scene.getCameraPosition()));
+      //      }
+
+      return nearFar;
    }
 
    public float getPointSize() {
@@ -124,7 +141,7 @@ public class TreeRenderable extends Renderable {
             cell.forEach((point) -> {
                final Tuple3d xyz = point.getXYZ(this.tree, null);
 
-               if (volume.contains(xyz)) {
+               if (volume.contains(xyz, 2)) {
                   points.add(xyz);
                }
             });
@@ -155,9 +172,14 @@ public class TreeRenderable extends Renderable {
       this.timings.start(TreeRenderable.FRUSTUM_CULLING);
       this.frustumCulling(gl, scene, true, root);
       this.timings.end(TreeRenderable.FRUSTUM_CULLING);
+
       this.timings.start(TreeRenderable.UPLOAD_CELLS);
       this.uploadPending(gl, scene);
       this.timings.end(TreeRenderable.UPLOAD_CELLS);
+
+      this.timings.start(TreeRenderable.BUILD_BOUNDS);
+      this.buildBounds();
+      this.timings.end(TreeRenderable.BUILD_BOUNDS);
 
       gl.glPushAttrib(GL2.GL_LIGHTING_BIT | GL2.GL_POINT_BIT);
 
@@ -200,6 +222,27 @@ public class TreeRenderable extends Renderable {
 
    public void setPointSize(final float pointSize) {
       this.pointSize = pointSize;
+   }
+
+   private void buildBounds() {
+      final Tuple3d min = new Tuple3d(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+      final Tuple3d max = new Tuple3d(-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE);
+
+      for (final TreeCell cell : this.segments) {
+         final BoundingBox cellBounds = cell.getPointBounds();
+         final Tuple3d cellMin = cellBounds.getMin();
+         final Tuple3d cellMax = cellBounds.getMax();
+         min.x = Math.min(min.x, cellMin.x);
+         min.y = Math.min(min.y, cellMin.y);
+         min.z = Math.min(min.z, cellMin.z);
+
+         max.x = Math.max(max.x, cellMax.x);
+         max.y = Math.max(max.y, cellMax.y);
+         max.z = Math.max(max.z, cellMax.z);
+      }
+
+      this.bounds = new BoundingBox(min, max);
+      //      this.bounds = new BoundingBox(min.subtract(this.currentOrigin), max.subtract(this.currentOrigin));
    }
 
    private boolean[] checkLevelOfDetail(final GL2 gl, final Scene scene, final TreeCell cell) {
