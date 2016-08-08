@@ -40,7 +40,10 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private final List<Tuple2d>   mouseSelection     = new ArrayList<>();
 
    private double                minDensity         = 1.0;
-   private int                   gridSize           = 4;
+   private double                gridSize           = 1.0;
+   private int                   neighborDistance   = 3;
+   private boolean               isDrawTriangles    = true;
+   private boolean               isDrawPoints       = false;
 
    public ContextAwarePointSelection(final Scene scene, final TreeRenderable tree) {
       this.scene = scene;
@@ -55,12 +58,24 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.scene.addRenderable(this.pointRenderer);
    }
 
-   public int getGridSizeMeters() {
+   public double getGridSizeMeters() {
       return this.gridSize;
    }
 
    public double getMinDensity() {
       return this.minDensity;
+   }
+
+   public int getNeighborDistance() {
+      return this.neighborDistance;
+   }
+
+   public boolean isDrawPoints() {
+      return this.isDrawPoints;
+   }
+
+   public boolean isDrawTriangles() {
+      return this.isDrawTriangles;
    }
 
    @Override
@@ -164,23 +179,29 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       if (selection != null) {
          final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection);
          final List<GridCell> cells = new ArrayList<>();
-         final double averageDensity = ContextAwarePointSelection.getAverageDensity(selection, selectedPoints, cells, this.gridSize);
+         final double averageDensity = ContextAwarePointSelection.getAverageDensity(scene, selection, selectedPoints, cells, this.gridSize, this.neighborDistance);
          System.out.println("selected points count: " + selectedPoints.size());
          System.out.println("average density: " + averageDensity);
-         this.pointRenderer.setPoints(selectedPoints);
+
+         if (this.isDrawPoints) {
+            this.pointRenderer.setPoints(selectedPoints);
+         }
 
          if (this.selectionTriangles != null) {
             this.selectionTriangles.remove();
             this.selectionTriangles = null;
          }
 
-         final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
+         if (this.isDrawTriangles) {
+            final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
 
-         if (triangles.length > 0) {
-            this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
-            this.selectionTriangles.setPolygonMode(GL.GL_FRONT_AND_BACK);
-            this.selectionTriangles.setDrawNormals(false);
-            this.scene.addRenderable(this.selectionTriangles);
+            if (triangles.length > 0) {
+               this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
+               this.selectionTriangles.setPolygonMode(GL.GL_FRONT_AND_BACK);
+               this.selectionTriangles.setDrawNormals(false);
+               this.selectionTriangles.setCullFace(false);
+               this.scene.addRenderable(this.selectionTriangles);
+            }
          }
       } else if (!this.mouseSelection.isEmpty()) {
          final int size = this.mouseSelection.size();
@@ -209,6 +230,14 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       }
    }
 
+   public void setDrawPoints(final boolean isDrawPoints) {
+      this.isDrawPoints = isDrawPoints;
+   }
+
+   public void setDrawTriangles(final boolean isDrawTriangles) {
+      this.isDrawTriangles = isDrawTriangles;
+   }
+
    public void setGridSizeMeters(final int gridSize) {
       this.gridSize = gridSize;
    }
@@ -217,8 +246,12 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.minDensity = minDensity;
    }
 
+   public void setNeighborDistance(final int neighborDistance) {
+      this.neighborDistance = neighborDistance;
+   }
+
    // TODO: fix grid size
-   private static double getAverageDensity(final Volume volume, final Collection<Tuple3d> points, final Collection<GridCell> outputCells, final int gridSize) {
+   private static double getAverageDensity(final Scene scene, final Volume volume, final Collection<Tuple3d> points, final Collection<GridCell> outputCells, final double gridSize, final int neighborDistance) {
       if (points.isEmpty()) {
          return 0;
       }
@@ -274,13 +307,31 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       for (int x = 0; x < xSize; x++) {
          for (int y = 0; y < ySize; y++) {
             for (int z = 0; z < zSize; z++) {
-               if (cells[x][y][z] != null) {
-                  cells[x][y][z].finish();
-                  outputCells.add(cells[x][y][z]);
+               final GridCell cell = cells[x][y][z];
+               if ((cell != null) && !cell.points.isEmpty()) {
+                  cell.finish(scene, cells, x, y, z, neighborDistance);
+                  outputCells.add(cell);
                }
             }
          }
       }
+
+      final List<GridCell> interpolatedCells = new ArrayList<>();
+
+      for (int x = 1; x < (xSize - 1); x++) {
+         for (int y = 1; y < (ySize - 1); y++) {
+            for (int z = 1; z < (zSize - 1); z++) {
+               final GridCell cell = cells[x][y][z];
+               if ((cell != null) && cell.points.isEmpty()) {
+                  // we have an empty cell; lets "fake" the isosurface a bit
+                  interpolatedCells.add(cell);
+                  cell.finish(cells, x, y, z);
+               }
+            }
+         }
+      }
+
+      outputCells.addAll(interpolatedCells);
 
       return density / nodeCount;
    }

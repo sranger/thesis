@@ -85,7 +85,7 @@ public class ThesisVisualization extends JFrame {
       // this.loadIcosatreeBounds("");
 
       final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
-      tree.setLevelOfDetail(0.02);
+      tree.setLevelOfDetail(0.5);
       this.scene.addRenderable(tree);
 
       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
