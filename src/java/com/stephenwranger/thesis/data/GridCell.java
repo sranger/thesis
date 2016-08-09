@@ -4,14 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
+
 import com.mkobos.pca_transform.PCA;
-import com.mkobos.pca_transform.PCA.TransformationType;
-import com.mkobos.pca_transform.covmatrixevd.CovarianceMatrixEVDCalculator;
 import com.mkobos.pca_transform.covmatrixevd.SVDBased;
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
+import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.graphics.utils.TupleMath;
 
 import Jama.EigenvalueDecomposition;
@@ -29,10 +32,20 @@ public class GridCell {
 
    private final Tuple3d         min;
    private final Tuple3d         max;
+   private final int             x;
+   private final int             y;
+   private final int             z;
+   
+   private Vector3d              normal       = null;
+   private double                normalMagnitude = 0;
 
-   public GridCell(final Tuple3d min, final Tuple3d max) {
+   public GridCell(final Tuple3d min, final Tuple3d max, final int x, final int y, final int z) {
       this.min = min;
       this.max = max;
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      
       this.p = new Tuple3d[8];
       this.val = new double[8];
       Arrays.fill(this.val, GridCell.ABOVE);
@@ -47,98 +60,86 @@ public class GridCell {
       this.p[7] = new Tuple3d(min.x, max.y, max.z);
    }
 
-   public void finish(final GridCell[][][] cells, final int x, final int y, final int z) {
-      // this.p[0] = new Tuple3d(min);
-      // this.p[1] = new Tuple3d(max.x, min.y, min.z);
-      // this.p[2] = new Tuple3d(max.x, max.y, min.z);
-      // this.p[3] = new Tuple3d(min.x, max.y, min.z);
-      // this.p[4] = new Tuple3d(min.x, min.y, max.z);
-      // this.p[5] = new Tuple3d(max.x, min.y, max.z);
-      // this.p[6] = new Tuple3d(max);
-      // this.p[7] = new Tuple3d(min.x, max.y, max.z);
-      main: for (int i = 0; i < 8; i++) {
-         final int minX = Math.min(x, x + GridCell.GRID_OFFSETS[i][0]);
-         final int maxX = Math.max(x, x + GridCell.GRID_OFFSETS[i][0]);
-         final int minY = Math.min(y, y + GridCell.GRID_OFFSETS[i][1]);
-         final int maxY = Math.max(y, y + GridCell.GRID_OFFSETS[i][1]);
-         final int minZ = Math.min(z, z + GridCell.GRID_OFFSETS[i][2]);
-         final int maxZ = Math.max(z, z + GridCell.GRID_OFFSETS[i][2]);
+   // TODO: per point normal with k-nearest?
+   public void computeNormals(final Scene scene, final GridCell[][][] cells, final int k) {
+      if (!this.points.isEmpty()) {
+         this.normal = this.computeAverageNormal(scene, cells, k);
+         this.normalMagnitude = this.normal.length();
+      }
+   }
+   
+   public void checkNeighborCells(final Scene scene, final GridCell[][][] cells) {
+      if(this.normal != null) {
+         final double dot = this.normal.dot(scene.getViewVector());
+         
+         if(dot >= 0) {
+            this.normal.scale(-1);
+         }
+      }
+//      final int xSize = cells.length;
+//      final int ySize = cells[0].length;
+//      final int zSize = cells[0][0].length;
+//      
+//      for(int xi = Math.max(0, this.x - 1); xi < Math.min(xSize, this.x + 1); xi++) {
+//         for(int yi = Math.max(0, this.y - 1); yi < Math.min(ySize, this.y + 1); yi++) {
+//            for(int zi = Math.max(0, this.z - 1); zi < Math.min(zSize, this.z + 1); zi++) {
+//               final GridCell cell = cells[xi][yi][zi];
+//               
+//               if(cell != null && this.normal != null && cell.normal != null) {
+//                  final double diff = this.normal.dot(cell.normal);
+//                  
+//                  if(diff < 0 && this.normalMagnitude < cell.normalMagnitude) {
+//                     this.normal.scale(-1);
+//                  }
+//               }
+//            }
+//         }
+//      }
+   }
 
-         for (int xi = minX; xi <= maxX; xi++) {
-            for (int yi = minY; yi <= maxY; yi++) {
-               for (int zi = minZ; zi <= maxZ; zi++) {
-                  if ((this.val[i] != GridCell.BELOW) && (cells[xi][yi][zi] != null)) {
-                     final int index = GridCell.getIndex(i, x - xi, y - yi, z - zi);
-                     if ((index >= 0) && (index <= 7) && (cells[xi][yi][zi].val[index] == GridCell.BELOW)) {
-                        this.val[i] = GridCell.BELOW;
-                        continue main;
+   public void finish() {
+      if (this.normal != null) {
+         final Tuple3d center = TupleMath.average(this.min, this.max);
+
+         for (int i = 0; i < 8; i++) {
+            final Vector3d toCenter = new Vector3d();
+            toCenter.subtract(center, this.p[i]);
+            toCenter.normalize();
+
+            this.val[i] = (toCenter.dot(this.normal));
+         }
+         
+         MarchingCubes.polygonise(this, 0, this.triangles);
+      }
+   }
+
+   private Vector3d computeAverageNormal(final Scene scene, final GridCell[][][] cells, final int k) {
+      final List<Tuple3d> neighbors = new ArrayList<>();
+
+      // TODO: per point normal with k-nearest?
+      int offset = 0;
+      
+      while(neighbors.size() < Math.max(3, k) && offset < MathUtils.getMax(cells.length, cells[0].length, cells[0][0].length)) {
+         neighbors.clear();
+         for(int xi = x - offset; xi <= x + offset; xi++) {
+            for(int yi = y - offset; yi <= y + offset; yi++) {
+               for(int zi = z - offset; zi <= z + offset; zi++) {
+                  if(xi >= 0 && xi < cells.length && yi >= 0 && yi < cells[0].length && zi >= 0 && zi < cells[0][0].length) {
+                     final GridCell cell = cells[xi][yi][zi];
+                     
+                     if(cell != null) {
+                        neighbors.addAll(cell.points);
                      }
                   }
                }
             }
          }
-      }
-   }
-
-   public void finish(final Scene scene, final GridCell[][][] cells, final int x, final int y, final int z, final int k) {
-      if (!this.points.isEmpty()) {
-         final Vector3d average = this.computeAverageNormal(scene, cells, x, y, z, k);
-
-         if (average != null) {
-            final Tuple3d center = TupleMath.average(this.min, this.max);
-
-            for (int i = 0; i < 8; i++) {
-               final Vector3d toCenter = new Vector3d();
-               toCenter.subtract(center, this.p[i]);
-               toCenter.normalize();
-
-               this.val[i] = (toCenter.dot(average) < 0) ? GridCell.ABOVE : GridCell.BELOW;
-            }
-
-            MarchingCubes.polygonise(this, 0, this.triangles);
-         }
-      }
-   }
-
-   private Vector3d computeAverageNormal(final Scene scene, final GridCell[][][] cells, final int x, final int y, final int z, final int k) {
-      final List<Tuple3d> neighbors = new ArrayList<>();
-
-      // TODO: per point normal with k-nearest?
-      neighbors.addAll(this.points);
-      int offset = 1;
-      
-      while(neighbors.size() < Math.max(3, k) && offset < 5) {
-         System.out.println("neighbors.size: " + neighbors.size() + ", k = " + k);
-         System.out.println(x + ", " + y + ", " + z + ", " + offset);
-         if(x >= offset && y >= offset && z >= offset && cells[x-offset][y-offset][z-offset] != null) {
-            neighbors.addAll(cells[x-offset][y-offset][z-offset].points);
-         }
-         if(x >= offset && y >= offset && z < cells[0][0].length - offset && cells[x-offset][y-offset][z+offset] != null) {
-            neighbors.addAll(cells[x-offset][y-offset][z+offset].points);
-         }
-         if(x >= offset && y < cells[0].length - offset && z >= offset && cells[x-offset][y+offset][z-offset] != null) {
-            neighbors.addAll(cells[x-offset][y+offset][z-offset].points);
-         }
-         if(x >= offset && y < cells[0].length - offset && z < cells[0][0].length - offset && cells[x-offset][y+offset][z+offset] != null) {
-            neighbors.addAll(cells[x-offset][y+offset][z+offset].points);
-         }
-         if(x < cells.length - offset && y >= offset && z >= offset && cells[x+offset][y-offset][z-offset] != null) {
-            neighbors.addAll(cells[x+offset][y-offset][z-offset].points);
-         }
-         if(x < cells.length - offset && y >= offset && z < cells[0][0].length - offset && cells[x+offset][y-offset][z+offset] != null) {
-            neighbors.addAll(cells[x+offset][y-offset][z+offset].points);
-         }
-         if(x < cells.length - offset && y < cells[0].length - offset && z >= offset && cells[x+offset][y+offset][z-offset] != null) {
-            neighbors.addAll(cells[x+offset][y+offset][z-offset].points);
-         }
-         if(x < cells.length - offset && y < cells[0].length - offset && z < cells[0][0].length - offset && cells[x+offset][y+offset][z+offset] != null) {
-            neighbors.addAll(cells[x+offset][y+offset][z+offset].points);
-         }
          
          offset++;
       }
 
-      if (!neighbors.isEmpty()) {
+      if (neighbors.size() > 2) {
+         System.out.println("checking neighbors: " + neighbors.size());
          return GridCell.getAverageNormal(neighbors);
       }
 
@@ -169,13 +170,48 @@ public class GridCell {
       System.out.println(" 1,-1, 1: " + new Vector3d(1, -1, 1).dot(average));
       System.out.println(" 1, 1,-1: " + new Vector3d(1, 1, -1).dot(average));
       System.out.println(" 1, 1, 1: " + new Vector3d(1, 1, 1).dot(average));
+      System.out.println(" 1, 0, 0: " + new Vector3d(1, 0, 0).dot(average));
+      System.out.println(" 0, 1, 0: " + new Vector3d(0, 1, 0).dot(average));
+      System.out.println(" 0, 0, 1: " + new Vector3d(0, 0, 1).dot(average));
+      System.out.println("-1, 0, 0: " + new Vector3d(-1, 0, 0).dot(average));
+      System.out.println(" 0,-1, 0: " + new Vector3d(0, -1, 0).dot(average));
+      System.out.println(" 0, 0,-1: " + new Vector3d(0, 0, -1).dot(average));
+   }
+   
+   private static Vector3d getAverageNormal(final List<Tuple3d> points) {
+      return getAverageNormalCommonsMath3(points);
+//      return getAverageNormalCommonsMkobos(points);
+   }
+   
+   /**
+    * http://commons.apache.org/proper/commons-math/userguide/linear.html
+    * @param points
+    * @return
+    */
+   private static Vector3d getAverageNormalCommonsMath3(final List<Tuple3d> points) {
+      final Tuple3d centroid = Tuple3d.getAverage(points);
+      final double[][] samples = new double[points.size()][3];
+      
+      for(int i = 0; i < points.size(); i++) {
+         final Tuple3d tuple = points.get(i);
+         samples[i][0] = tuple.x - centroid.x;
+         samples[i][1] = tuple.y - centroid.y;
+         samples[i][2] = tuple.z - centroid.z;
+      }
+      
+      final RealMatrix matrix = MatrixUtils.createRealMatrix(samples);
+      final SingularValueDecomposition solver = new SingularValueDecomposition(matrix);
+      final RealMatrix v = solver.getV();
+      final Vector3d v2 = new Vector3d(v.getRow(2));
+      
+      return v2;
    }
 
    // TODO: look at the following
    // http://www.gamedev.net/topic/494852-eigenvector-of-a-3-x-3-matrix-for-plane-fitting/
    // https://github.com/mkobos/pca_transform/issues/3
    // http://stats.stackexchange.com/questions/163356/fitting-a-plane-to-a-set-of-points-in-3d-using-pca
-   private static Vector3d getAverageNormal(final List<Tuple3d> neighbors) {
+   private static Vector3d getAverageNormalMkobos(final List<Tuple3d> neighbors) {
       final Tuple3d centroid = Tuple3d.getAverage(neighbors);
       final Tuple3d min = Tuple3d.getMin(neighbors);
       final Tuple3d max = Tuple3d.getMax(neighbors);

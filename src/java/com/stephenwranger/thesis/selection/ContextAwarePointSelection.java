@@ -41,7 +41,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
    private double                minDensity         = 1.0;
    private double                gridSize           = 1.0;
-   private int                   k                  = 10;
+   private int                   k                  = 250;
    private boolean               isDrawTriangles    = true;
    private boolean               isDrawPoints       = false;
 
@@ -288,7 +288,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
 //               if (volume.contains(new Tuple3d(px + halfGrid, py + halfGrid, pz + halfGrid), halfGrid)) {
                   nodeCount++;
-                  cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + gridSize, py + gridSize, pz + gridSize));
+                  cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + gridSize, py + gridSize, pz + gridSize), x, y, z);
 //               }
             }
          }
@@ -315,29 +315,34 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             for (int z = 0; z < zSize; z++) {
                final GridCell cell = cells[x][y][z];
                if ((cell != null) && !cell.points.isEmpty()) {
-                  cell.finish(scene, cells, x, y, z, k);
+                  cell.computeNormals(scene, cells, k);
                   outputCells.add(cell);
                }
             }
          }
       }
 
-      final List<GridCell> interpolatedCells = new ArrayList<>();
-
-      for (int x = 1; x < (xSize - 1); x++) {
-         for (int y = 1; y < (ySize - 1); y++) {
-            for (int z = 1; z < (zSize - 1); z++) {
+      for (int x = 0; x < xSize; x++) {
+         for (int y = 0; y < ySize; y++) {
+            for (int z = 0; z < zSize; z++) {
                final GridCell cell = cells[x][y][z];
-               if ((cell != null) && cell.points.isEmpty()) {
-                  // we have an empty cell; lets "fake" the isosurface a bit
-                  interpolatedCells.add(cell);
-                  cell.finish(cells, x, y, z);
+               if ((cell != null) && !cell.points.isEmpty()) {
+                  cell.checkNeighborCells(scene, cells);
                }
             }
          }
       }
 
-      outputCells.addAll(interpolatedCells);
+      for (int x = 0; x < xSize; x++) {
+         for (int y = 0; y < ySize; y++) {
+            for (int z = 0; z < zSize; z++) {
+               final GridCell cell = cells[x][y][z];
+               if ((cell != null) && !cell.points.isEmpty()) {
+                  cell.finish();
+               }
+            }
+         }
+      }
 
       return density / nodeCount;
    }
