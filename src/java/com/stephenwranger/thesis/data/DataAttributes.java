@@ -94,7 +94,7 @@ public class DataAttributes implements Iterable<Attribute> {
          final boolean normalize = DataAttributes.normalize[i];
 
          if (attribute == null) {
-            buffer.putFloat(0f);
+            throw new RuntimeException("Attribute cannot be null");
          } else {
             double value = attribute.getValue(pointData, pointIndex, this.stride).doubleValue();
 

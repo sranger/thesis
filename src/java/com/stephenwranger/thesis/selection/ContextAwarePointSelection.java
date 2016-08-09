@@ -41,7 +41,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
    private double                minDensity         = 1.0;
    private double                gridSize           = 1.0;
-   private int                   neighborDistance   = 3;
+   private int                   k                  = 10;
    private boolean               isDrawTriangles    = true;
    private boolean               isDrawPoints       = false;
 
@@ -66,8 +66,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return this.minDensity;
    }
 
-   public int getNeighborDistance() {
-      return this.neighborDistance;
+   public int getNeighborCount() {
+      return this.k;
    }
 
    public boolean isDrawPoints() {
@@ -179,7 +179,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       if (selection != null) {
          final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection);
          final List<GridCell> cells = new ArrayList<>();
-         final double averageDensity = ContextAwarePointSelection.getAverageDensity(scene, selection, selectedPoints, cells, this.gridSize, this.neighborDistance);
+         final double averageDensity = ContextAwarePointSelection.getAverageDensity(scene, selection, selectedPoints, cells, this.gridSize, this.k);
          System.out.println("selected points count: " + selectedPoints.size());
          System.out.println("average density: " + averageDensity);
 
@@ -246,12 +246,12 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.minDensity = minDensity;
    }
 
-   public void setNeighborDistance(final int neighborDistance) {
-      this.neighborDistance = neighborDistance;
+   public void setNeighborCount(final int neighborCount) {
+      this.k = neighborCount;
    }
 
    // TODO: fix grid size
-   private static double getAverageDensity(final Scene scene, final Volume volume, final Collection<Tuple3d> points, final Collection<GridCell> outputCells, final double gridSize, final int neighborDistance) {
+   private static double getAverageDensity(final Scene scene, final Volume volume, final Collection<Tuple3d> points, final Collection<GridCell> outputCells, final double gridSize, final int k) {
       if (points.isEmpty()) {
          return 0;
       }
@@ -276,7 +276,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       // TODO: for now, just points per cubic meter = point count / (xSize * ySize * zSize)
       // average all the nodes' densities by dividing the sum by the number of nodes
       final GridCell[][][] cells = new GridCell[xSize][ySize][zSize];
-      final double halfGrid = gridSize / 2.0;
+//      final double halfGrid = gridSize / 2.0;
       int nodeCount = 0;
 
       for (int x = 0; x < xSize; x++) {
@@ -286,13 +286,16 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
                final double py = min.y + (y * gridSize);
                final double pz = min.z + (z * gridSize);
 
-               if (volume.contains(new Tuple3d(px + halfGrid, py + halfGrid, pz + halfGrid), halfGrid)) {
+//               if (volume.contains(new Tuple3d(px + halfGrid, py + halfGrid, pz + halfGrid), halfGrid)) {
                   nodeCount++;
                   cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + gridSize, py + gridSize, pz + gridSize));
-               }
+//               }
             }
          }
       }
+      
+      System.out.println("node count: " +nodeCount);
+      int pointCount = 0;
 
       for (final Tuple3d point : points) {
          final int x = (int) Math.floor((point.x - min.x) / gridSize);
@@ -301,15 +304,18 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
          if (cells[x][y][z] != null) {
             cells[x][y][z].points.add(point);
+            pointCount++;
          }
       }
+      
+      System.out.println("point count: " + pointCount + " of " + points.size());
 
       for (int x = 0; x < xSize; x++) {
          for (int y = 0; y < ySize; y++) {
             for (int z = 0; z < zSize; z++) {
                final GridCell cell = cells[x][y][z];
                if ((cell != null) && !cell.points.isEmpty()) {
-                  cell.finish(scene, cells, x, y, z, neighborDistance);
+                  cell.finish(scene, cells, x, y, z, k);
                   outputCells.add(cell);
                }
             }
