@@ -40,8 +40,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private final List<Tuple2d>   mouseSelection     = new ArrayList<>();
 
    private double                minDensity         = 1.0;
-   private double                gridSize           = 1.0;
-   private int                   k                  = 250;
+   private double                gridSize           = 0.5;
+   private int                   k                  = 10;
    private boolean               isDrawTriangles    = true;
    private boolean               isDrawPoints       = false;
 
@@ -276,7 +276,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       // TODO: for now, just points per cubic meter = point count / (xSize * ySize * zSize)
       // average all the nodes' densities by dividing the sum by the number of nodes
       final GridCell[][][] cells = new GridCell[xSize][ySize][zSize];
-//      final double halfGrid = gridSize / 2.0;
+      //      final double halfGrid = gridSize / 2.0;
       int nodeCount = 0;
 
       for (int x = 0; x < xSize; x++) {
@@ -286,15 +286,15 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
                final double py = min.y + (y * gridSize);
                final double pz = min.z + (z * gridSize);
 
-//               if (volume.contains(new Tuple3d(px + halfGrid, py + halfGrid, pz + halfGrid), halfGrid)) {
-                  nodeCount++;
-                  cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + gridSize, py + gridSize, pz + gridSize), x, y, z);
-//               }
+               //               if (volume.contains(new Tuple3d(px + halfGrid, py + halfGrid, pz + halfGrid), halfGrid)) {
+               nodeCount++;
+               cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + gridSize, py + gridSize, pz + gridSize), x, y, z);
+               //               }
             }
          }
       }
-      
-      System.out.println("node count: " +nodeCount);
+
+      System.out.println("node count: " + nodeCount);
       int pointCount = 0;
 
       for (final Tuple3d point : points) {
@@ -307,7 +307,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             pointCount++;
          }
       }
-      
+
       System.out.println("point count: " + pointCount + " of " + points.size());
 
       for (int x = 0; x < xSize; x++) {
