@@ -1,15 +1,24 @@
 package com.stephenwranger.thesis.visualization;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
@@ -85,15 +94,68 @@ public class ThesisVisualization extends JFrame {
       // this.loadIcosatreeBounds("");
 
       final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
-      tree.setLevelOfDetail(0.5);
       this.scene.addRenderable(tree);
 
       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
       this.scene.addPostProcessor(pointSelector);
 
       // this.addTimingDisplay(scene, renderer);
+      
+      final JPanel options = new JPanel();
+      options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+      options.setPreferredSize(new Dimension(400,1000));
+      
+      final JLabel ratioLabel = new JLabel("Split Ratio (screen area)");
+      final JSpinner ratioSpinner = new JSpinner(new SpinnerNumberModel(tree.getLevelOfDetail(), 0.1, Double.MAX_VALUE, 0.1));
+      final JPanel ratioSpinnerPanel = new JPanel();
+      ratioSpinnerPanel.setLayout(new GridLayout(1,2));
+      ratioSpinnerPanel.setMaximumSize(new Dimension(400,30));
+      ratioSpinnerPanel.add(ratioLabel);
+      ratioSpinnerPanel.add(ratioSpinner);
+      options.add(ratioSpinnerPanel);
+      
+      ratioSpinner.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(final ChangeEvent e) {
+            tree.setLevelOfDetail(((Number) ratioSpinner.getValue()).doubleValue()); 
+         }
+      });
+      
+      final JLabel gridLabel = new JLabel("Grid Size (meters)");
+      final JSpinner gridSpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getGridSizeMeters(), 0.1, Double.MAX_VALUE, 0.1));
+      final JPanel gridSpinnerPanel = new JPanel();
+      gridSpinnerPanel.setLayout(new GridLayout(1,2));
+      gridSpinnerPanel.setMaximumSize(new Dimension(400,30));
+      gridSpinnerPanel.add(gridLabel);
+      gridSpinnerPanel.add(gridSpinner);
+      options.add(gridSpinnerPanel);
+      
+      gridSpinner.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(final ChangeEvent e) {
+            pointSelector.setGridSizeMeters(((Number) gridSpinner.getValue()).doubleValue()); 
+         }
+      });
+      
+      final JLabel nearestLabel = new JLabel("k-Nearest Count");
+      final JSpinner nearestSpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getNeighborCount(), 3, Integer.MAX_VALUE, 1));
+      final JPanel nearestSpinnerPanel = new JPanel();
+      nearestSpinnerPanel.setLayout(new GridLayout(1,2));
+      nearestSpinnerPanel.setMaximumSize(new Dimension(400,30));
+      nearestSpinnerPanel.add(nearestLabel);
+      nearestSpinnerPanel.add(nearestSpinner);
+      options.add(nearestSpinnerPanel);
+      
+      nearestSpinner.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(final ChangeEvent e) {
+            pointSelector.setNeighborCount(((Number) nearestSpinner.getValue()).intValue()); 
+         }
+      });
 
-      this.getContentPane().add(this.scene);
+      this.getContentPane().setLayout(new BorderLayout());
+      this.getContentPane().add(this.scene, BorderLayout.CENTER);
+      this.getContentPane().add(options, BorderLayout.WEST);
 
       SwingUtilities.invokeLater(() -> {
          this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -40,8 +40,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private final List<Tuple2d>   mouseSelection     = new ArrayList<>();
 
    private double                minDensity         = 1.0;
-   private double                gridSize           = 0.5;
-   private int                   k                  = 10;
+   private double                gridSize           = 5.0;
+   private int                   k                  = 25;
    private boolean               isDrawTriangles    = true;
    private boolean               isDrawPoints       = false;
 
@@ -238,7 +238,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.isDrawTriangles = isDrawTriangles;
    }
 
-   public void setGridSizeMeters(final int gridSize) {
+   public void setGridSizeMeters(final double gridSize) {
       this.gridSize = gridSize;
    }
 
@@ -260,8 +260,11 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       // pf = 1/nf * sigma(density(node[n]))
 
       // first, split collected points into grid
+      final Tuple3d offset = new Tuple3d(0,0,0);//gridSize, gridSize, gridSize);
       final Tuple3d min = Tuple3d.getMin(points);
+      min.subtract(offset);
       final Tuple3d max = Tuple3d.getMax(points);
+      min.add(offset);
       final Tuple3d range = TupleMath.sub(max, min);
       final int xSize = (int) Math.ceil(range.x / gridSize);
       final int ySize = (int) Math.ceil(range.y / gridSize);
@@ -272,7 +275,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       // how many points we have and then divide it by the number of nodes within the lasso
       final double density = points.size();
 
-      // TODO: don't count the grid cubes outside the lasso
+      // TODO: change to use https://commons.apache.org/sandbox/commons-graph/apidocs/org/apache/commons/graph/spanning/Kruskal.html
       // TODO: for now, just points per cubic meter = point count / (xSize * ySize * zSize)
       // average all the nodes' densities by dividing the sum by the number of nodes
       final GridCell[][][] cells = new GridCell[xSize][ySize][zSize];
@@ -327,18 +330,20 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             for (int z = 0; z < zSize; z++) {
                final GridCell cell = cells[x][y][z];
                if ((cell != null) && !cell.points.isEmpty()) {
-                  cell.checkNeighborCells(scene, cells);
+                  cell.finish(scene);
                }
             }
          }
       }
 
+      // TODO: replace with nearest neighbor search; any empty cells copy vertex values from neighbors
       for (int x = 0; x < xSize; x++) {
          for (int y = 0; y < ySize; y++) {
             for (int z = 0; z < zSize; z++) {
                final GridCell cell = cells[x][y][z];
-               if ((cell != null) && !cell.points.isEmpty()) {
-                  cell.finish();
+               if ((cell != null) && (cell.points.isEmpty() || cell.normals == null || cell.normals.isEmpty())) {
+//                  System.out.println("check neighbors: " + x + ", " + y + ", " + z);
+                  cell.checkNeighborCells(scene, cells);
                }
             }
          }
