@@ -10,14 +10,14 @@ import com.stephenwranger.graphics.math.Tuple3d;
 
 public class DataAttributes implements Iterable<Attribute> {
    private static final int            BYTES_PER_POINT      = 32;
-   private static final String         X_ATTRIBUTE_NAME     = "X";
-   private static final String         Y_ATTRIBUTE_NAME     = "Y";
-   private static final String         Z_ATTRIBUTE_NAME     = "Z";
-   private static final String         R_ATTRIBUTE_NAME     = "Red";
-   private static final String         G_ATTRIBUTE_NAME     = "Green";
-   private static final String         B_ATTRIBUTE_NAME     = "Blue";
-   private static final String         A_ATTRIBUTE_NAME     = "Altitude";
-   private static final String         I_ATTRIBUTE_NAME     = "Intensity";
+   public static final String         X_ATTRIBUTE_NAME     = "X";
+   public static final String         Y_ATTRIBUTE_NAME     = "Y";
+   public static final String         Z_ATTRIBUTE_NAME     = "Z";
+   public static final String         R_ATTRIBUTE_NAME     = "Red";
+   public static final String         G_ATTRIBUTE_NAME     = "Green";
+   public static final String         B_ATTRIBUTE_NAME     = "Blue";
+   public static final String         A_ATTRIBUTE_NAME     = "Altitude";
+   public static final String         I_ATTRIBUTE_NAME     = "Intensity";
 
    private static final String[]       USED_ATTRIBUTE_NAMES = new String[] { DataAttributes.X_ATTRIBUTE_NAME, DataAttributes.Y_ATTRIBUTE_NAME, DataAttributes.Z_ATTRIBUTE_NAME, DataAttributes.R_ATTRIBUTE_NAME,
          DataAttributes.G_ATTRIBUTE_NAME, DataAttributes.B_ATTRIBUTE_NAME, DataAttributes.A_ATTRIBUTE_NAME, DataAttributes.I_ATTRIBUTE_NAME };
