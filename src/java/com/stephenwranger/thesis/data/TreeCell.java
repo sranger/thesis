@@ -1,19 +1,15 @@
 package com.stephenwranger.thesis.data;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
-import org.mapdb.Serializer;
+import java.util.Set;
 
 import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
@@ -33,7 +29,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    }
 
    public final String                        path;
-
+   private final TreeStructure                tree;
    private final BoundingVolume               bounds;
    private final DataAttributes               attributes;
    private final int                          stride;
@@ -44,9 +40,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
    // used only when building tree manually
    private final int[]                        cellSplit;
-   // private final Map<Integer, Point>          points        = new HashMap<>(100, 0.95f);
-   // TODO: update to have off-heap copy as well then move old cells (LRU) to file db?
-   private final Map<Integer, Point>          points;
+   private final Set<PointIndex>              points        = new HashSet<>();
    private final Map<String, Integer>         pointsByChild = new HashMap<>();
 
    // used only when reading tree from filesystem or http
@@ -56,18 +50,8 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    private Status                             status        = Status.EMPTY;
    private BoundingBox                        pointBounds;
 
-   public TreeCell(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
-      this.path = path;
-      this.cellSplit = cellSplit.clone();
-      this.bounds = bounds;
-      this.attributes = attributes;
-      this.stride = this.attributes.stride;
-      this.childBounds.putAll(childBounds);
-
-      this.points = this.getMap();
-   }
-
    protected TreeCell(final TreeStructure tree, final String path) {
+      this.tree = tree;
       this.path = path;
       this.cellSplit = tree.getCellSplit().clone();
 
@@ -78,8 +62,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       for (int i = 0; i < this.getMaxChildren(); i++) {
          this.childBounds.put(i, tree.getBoundingVolume(this.path, i));
       }
-
-      this.points = this.getMap();
    }
 
    public TreeCell addPoint(final TreeStructure tree, final Point point) {
@@ -88,12 +70,13 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       }
 
       final int index = this.getIndex(tree, point);
+      final PointIndex pointIndex = new PointIndex(this.path, index);
       TreeCell insertedInto = this;
 
-      if (this.points.containsKey(index)) {
+      if (this.tree.containsKey(pointIndex)) {
          insertedInto = this.getChildCell(tree, point.getXYZ(tree, this.tempTuple));
 
-         final Point current = this.getPoint(index);
+         final Point current = this.getPoint(pointIndex);
          final boolean swap = this.swapPointCheck(tree, current, point);
          Point toInsert = point;
 
@@ -171,11 +154,11 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       return this.path;
    }
 
-   public Point getPoint(final int index) {
+   public Point getPoint(final PointIndex pointIndex) {
       if (this.pointBuffer == null) {
-         return this.points.get(index);
+         return this.tree.getPoint(pointIndex);
       } else {
-         return new Point(this.attributes, Arrays.copyOfRange(this.pointBuffer, index * this.stride, (index * this.stride) + this.stride));
+         return new Point(this.attributes, Arrays.copyOfRange(this.pointBuffer, pointIndex.index * this.stride, (pointIndex.index * this.stride) + this.stride));
       }
    }
 
@@ -225,7 +208,22 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    @Override
    public Iterator<Point> iterator() {
       if (this.pointBuffer == null) {
-         return this.points.values().iterator();
+         return new Iterator<Point>() {
+            private final Iterator<PointIndex> iterator = TreeCell.this.points.iterator();
+            
+            @Override
+            public boolean hasNext() {
+               return iterator.hasNext();
+            }
+
+            @Override
+            public Point next() {
+               final PointIndex pointIndex = this.iterator.next();
+               
+               return TreeCell.this.tree.getPoint(pointIndex);
+            }
+            
+         };
       } else {
          final int pointCount = this.getPointCount();
 
@@ -239,7 +237,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
             @Override
             public Point next() {
-               final Point point = TreeCell.this.getPoint(this.index);
+               final Point point = TreeCell.this.getPoint(new PointIndex(TreeCell.this.path, this.index));
                this.index++;
 
                return point;
@@ -258,10 +256,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       this.loadGpuBuffer(origin);
       buffer.put(this.gpuBuffer);
       this.gpuBuffer.rewind();
-   }
-
-   public Map<Integer, Point> points() {
-      return Collections.unmodifiableMap(this.points);
    }
 
    public void setData(final byte[] buffer, final String[] children) {
@@ -288,31 +282,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    @Override
    public String toString() {
       return "[TreeCell: " + this.path + ", point count: " + this.getPointCount() + ", status: " + this.status + "]";
-   }
-
-   private Map<Integer, Point> getMap() {
-      final boolean useMapDB = Boolean.valueOf(System.getProperty("mapdb.enable", "false"));
-
-      if (useMapDB) {
-         final String name = (this.path.isEmpty()) ? "root" : this.path;
-         final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name)).closeOnJvmShutdown().fileDeleteAfterClose().make();
-         final DB memoryDb = DBMaker.memoryDB().make();
-
-         final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name).keySerializer(Serializer.INTEGER).valueSerializer(new PointSerializer(this.attributes)).create();
-
-         final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name).keySerializer(Serializer.INTEGER).valueSerializer(new PointSerializer(this.attributes)).expireAfterCreate().expireOverflow(diskMap).create();
-
-         //      this.mapDB = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), this.path))//.tempFileDB()
-         //         .closeOnJvmShutdown()
-         //         .fileDeleteAfterClose()
-         //         .fileMmapEnable()
-         //         .make();
-         //      this.points = mapDB.hashMap("map", Serializer.INTEGER, new PointSerializer(this.attributes)).create();
-
-         return memoryMap;
-      } else {
-         return new HashMap<>();
-      }
    }
 
    private void loadGpuBuffer(final Tuple3d origin) {
@@ -345,14 +314,16 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    }
 
    protected void addPoint(final int index, final Point point) {
+      final PointIndex pointIndex = new PointIndex(this.path, index);
+      
       if (this.pointBuffer != null) {
          throw new RuntimeException("Cannot add points to a TreeCell initialized via byte array");
-      } else if (this.points.containsKey(index)) {
+      } else if (this.tree.containsKey(pointIndex)) {
          throw new RuntimeException(
                "Cannot add new Point when existing Point resides at the given index; use TreeCell.getPoint(int) to determine whether an index is occupied and TreeCell.swapPoint(int, Point) to replace a Point at a given index.");
       }
 
-      this.points.put(index, point);
+      this.tree.setPoint(pointIndex, point);
    }
 
    protected TreeCell getChildCell(final TreeStructure tree, final Tuple3d point) {
@@ -449,14 +420,16 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
    protected abstract Class<? extends TreeStructure> getTreeType();
 
    protected Point swapPoint(final int index, final Point point) {
+      final PointIndex pointIndex = new PointIndex(this.path, index);
+      
       if (this.pointBuffer != null) {
          throw new RuntimeException("Cannot modify points to a TreeCell initialized via byte array");
-      } else if (!this.points.containsKey(index)) {
+      } else if (!this.tree.containsKey(pointIndex)) {
          throw new RuntimeException(
                "Cannot swap new Point when existing Point does not exist at the given index; use TreeCell.getPoint(int) to determine whether an index is occupied and TreeCell.addPoint(int, Point) to add a new Point at a given index.");
       }
 
-      return this.points.put(index, point);
+      return this.tree.setPoint(pointIndex, point);
    }
 
    /**

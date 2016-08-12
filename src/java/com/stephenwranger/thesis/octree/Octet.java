@@ -1,11 +1,7 @@
 package com.stephenwranger.thesis.octree;
 
-import java.util.Map;
-
 import com.stephenwranger.graphics.bounds.BoundingBox;
-import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
-import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.Point;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
@@ -17,10 +13,6 @@ public class Octet extends TreeCell {
    
    public Octet(final TreeStructure tree, final String path) {
       super(tree, path);
-   }
-   
-   public Octet(final String path, final BoundingVolume bounds, final DataAttributes attributes, final int[] cellSplit, final Map<Integer, BoundingVolume> childBounds) {
-      super(path, bounds, attributes, cellSplit, childBounds);
    }
 
    @Override
