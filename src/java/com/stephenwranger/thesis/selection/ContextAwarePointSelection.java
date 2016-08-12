@@ -373,6 +373,11 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       for (final GridCell cell : cells) {
          triangles.addAll(cell.triangles);
       }
+      
+      final TriangleMerge merge = new TriangleMerge(triangles);
+      // rebuilding triangles hash lookup not correct
+//      final List<Triangle3d> mergedTriangles = merge.process(false, true);
+      
 
       return triangles.toArray(new Triangle3d[triangles.size()]);
    }

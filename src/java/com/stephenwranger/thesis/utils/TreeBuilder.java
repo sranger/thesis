@@ -84,6 +84,9 @@ public class TreeBuilder {
       long lastPrint = 0;      
       
       for(final File file : this.inputDir.listFiles()) {
+         if(!file.getName().endsWith(".dat")) {
+            continue;
+         }
          System.out.println("Reading:" + file.getAbsolutePath() + "\n");
          
          try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file))) {
@@ -224,7 +227,7 @@ public class TreeBuilder {
    }
    
    public static void main(final String[] args) throws IOException {
-      if(args.length != 5 && args.length != 7) {
+      if(args.length != 4 && args.length != 6) {
          throw new IllegalArgumentException(USAGE);
       }
       
