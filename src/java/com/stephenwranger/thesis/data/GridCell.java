@@ -257,8 +257,8 @@ public class GridCell {
 //      System.out.println(" 0, 0,-1: " + new Vector3d(0, 0, -1).dot(average));
    }
 
-   private static Vector3d getAverageNormal(final Collection<Tuple3d> neighbors) {
-      return GridCell.getAverageNormalCommonsMath3(neighbors);
+   public static Vector3d getAverageNormal(final Collection<Tuple3d> points) {
+      return GridCell.getAverageNormalCommonsMath3(points);
       //      return getAverageNormalCommonsMkobos(points);
    }
 
