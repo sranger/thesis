@@ -1,5 +1,6 @@
 package com.stephenwranger.thesis.data;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -8,6 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
+
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 
 public abstract class TreeStructure implements Iterable<TreeCell> {
@@ -15,6 +20,7 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
    
    private final Map<String, TreeCell> treeCells = new HashMap<>();
    private final DataAttributes attributes;
+   private final Map<PointIndex, Point> pointsCache;
    private final Comparator<TreeCell> pathLengthComparator = new Comparator<TreeCell>() {
       @Override
       public int compare(final TreeCell o1, final TreeCell o2) {
@@ -34,10 +40,24 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
    public final Attribute iAttribute;
    public final int maxPoints;
    
+   /**
+    * Creates a new {@link TreeStructure} object for use when building a new tree.
+    * 
+    * @param attributes the point attributes
+    * @param cellSplit the xyz cell split values
+    * @param maxPoints the maximum number of points to be loaded
+    */
    public TreeStructure(final DataAttributes attributes, final int[] cellSplit, final int maxPoints) {
+      this(attributes, cellSplit, maxPoints, TreeStructure.getMap(attributes));
+   }
+
+   private TreeStructure(final DataAttributes attributes, final int[] cellSplit, final int maxPoints, final Map<PointIndex, Point> pointsCache) {
       this.attributes = attributes;
       this.maxPoints = maxPoints;
-      System.arraycopy(cellSplit, 0, this.cellSplit, 0, 3);
+      
+      if(cellSplit != null) {
+         System.arraycopy(cellSplit, 0, this.cellSplit, 0, 3);
+      }
       
       // TODO: change hard-coded
       xAttribute = this.attributes.getAttribute("X");
@@ -48,6 +68,75 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
       bAttribute = this.attributes.getAttribute("Blue");
       aAttribute = this.attributes.getAttribute("Altitude");
       iAttribute = this.attributes.getAttribute("Intensity");
+      
+      this.pointsCache = pointsCache;
+   }
+   
+   /**
+    * Creates a new {@link TreeStructure} object for use when loading from a pre-computed tree.
+    * 
+    * @param attributes the point attributes
+    */
+   public TreeStructure(final DataAttributes attributes, final int maxPoints) {
+      this(attributes, null, maxPoints, null);
+   }
+   
+   protected boolean containsKey(final PointIndex index) {
+      return this.pointsCache.containsKey(index);
+   }
+   
+   /**
+    * Retrieves the {@link Point} at the given {@link PointIndex} in the points cache.
+    * @param index the point index
+    * @return the point at the given index or null if no mapping was found
+    */
+   protected Point getPoint(final PointIndex index) {
+      return this.pointsCache.get(index);
+   }
+   
+   /**
+    * Inserts the given {@link Point} at the defined {@link PointIndex} and returns the old mapping, if any.
+    * @param index the point index
+    * @param point the point
+    * @return the point previously mapped to the given index or null if no mapping was found
+    */
+   protected Point setPoint(final PointIndex index, final Point point) {
+      final Point oldPoint = this.pointsCache.get(index);
+      this.pointsCache.put(index, point);
+      
+      return oldPoint;
+   }
+
+   private static Map<PointIndex, Point> getMap(final DataAttributes attributes) {
+      final boolean useMapDB = Boolean.valueOf(System.getProperty("mapdb.enable", "false"));
+
+      if (useMapDB) {
+         final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+         
+         if(!tmpDir.exists()) {
+            tmpDir.mkdirs();
+         } else if(!tmpDir.isDirectory()) {
+            throw new RuntimeException("defined temp directory is not a valid directory. (" + tmpDir.getAbsolutePath() + ")");
+         }
+//         final String name = (this.path.isEmpty()) ? "root" : this.path;
+//         final DB diskDb = DBMaker.fileDB(new File(System.getProperty("java.io.tmpdir"), name)).closeOnJvmShutdown().fileDeleteAfterClose().make();
+//         final DB memoryDb = DBMaker.memoryDB().make();
+//
+//         final HTreeMap<Integer, Point> diskMap = diskDb.hashMap("map" + name).keySerializer(Serializer.INTEGER).valueSerializer(new PointSerializer(this.attributes)).create();
+//
+//         final HTreeMap<Integer, Point> memoryMap = memoryDb.hashMap("map" + name).keySerializer(Serializer.INTEGER).valueSerializer(new PointSerializer(this.attributes)).expireAfterCreate().expireOverflow(diskMap).create();
+
+         final DB db = DBMaker.tempFileDB()
+                              .closeOnJvmShutdown()
+                              .fileDeleteAfterClose()
+                              .fileMmapEnable()
+                              .make();
+         HTreeMap<PointIndex, Point> diskMap = db.hashMap("map", new PointIndexSerializer(), new PointSerializer(attributes)).create();
+
+         return diskMap;
+      } else {
+         return new HashMap<>();
+      }
    }
    
    @Override

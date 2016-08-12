@@ -26,80 +26,99 @@ import com.stephenwranger.thesis.octree.Octree;
 
 public class TreeBuilder {
    private static final String USAGE = "TreeBuilder "
-         + "<type [octree|icosatree; default octree]> "  // 0
-         + "<input csv file> "                           // 1
-         + "<input attributes file> "                    // 2
-         + "<output directory> "                         // 3
-         + "<cell split x> "                             // 4
-         + "[<cell split y> <cell split z>]";            // 5-6
+         + "<type [octree|icosatree]> "                  // 0
+         + "<input directory> "                          // 1
+         + "<output directory> "                         // 2
+         + "<cell split x> "                             // 3
+         + "[<cell split y> <cell split z>]";            // 4-5
    private static final int TREE_TYPE_INDEX = 0;
-   private static final int INPUT_CSV_INDEX = 1;
-   private static final int INPUT_ATTRIBUTES_INDEX = 2;
-   private static final int OUTPUT_DIRECTORY_INDEX = 3;
-   private static final int X_CELL_SPLIT_INDEX = 4;
-   private static final int Y_CELL_SPLIT_INDEX = 5;
-   private static final int Z_CELL_SPLIT_INDEX = 6;
+   private static final int INPUT_DIR_INDEX = 1;
+   private static final int OUTPUT_DIRECTORY_INDEX = 2;
+   private static final int X_CELL_SPLIT_INDEX = 3;
+   private static final int Y_CELL_SPLIT_INDEX = 4;
+   private static final int Z_CELL_SPLIT_INDEX = 5;
+   
+   private static final long ONE_SECOND_NANO = 1000_000_000;
    
    public enum TreeTypes {
       OCTREE, ICOSATREE;
    }
    
    private final TreeTypes type;
-   private final File inputDatFile;
+   private final File inputDir;
    private final int[] cellSplit;
    private final DataAttributes attributes;
    private final TreeStructure tree;
    
-   public TreeBuilder(final String type, final File inputDatFile, final File inputAttributesFile, final int[] cellSplit) {
+   public TreeBuilder(final String type, final File inputDir, final int[] cellSplit) {
       final TreeTypes temp = TreeTypes.valueOf(type.toUpperCase());
       this.type = (temp == null) ? TreeTypes.OCTREE : temp;
-      this.inputDatFile = inputDatFile;
+      this.inputDir = inputDir;
       this.cellSplit = cellSplit;
       
-      this.attributes = new DataAttributes(readAttributes(inputAttributesFile));
+      final File attributesFile = new File(this.inputDir, "attributes.csv");
+
+      if(!attributesFile.exists()) {
+         throw new RuntimeException("Could not find attributes.csv in input directory");
+      }
+      
+      this.attributes = new DataAttributes(readAttributes(attributesFile));
       this.tree = (this.type == TreeTypes.OCTREE) ? new Octree(this.attributes, this.cellSplit) : new Icosatree(this.attributes, this.cellSplit); 
    }
    
    public void build() {
       final long startTime = System.nanoTime();
       int count = 0;
-//      double currentPrintPercentage = 0;
       System.out.println("building tree...");
       System.out.println();
-      final long pointCount = this.inputDatFile.length() / this.attributes.stride;
+      long length = 0;
       
-      
-      try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(this.inputDatFile))) {
-         final byte[] buffer = new byte[this.attributes.stride];
-         
-         while(fin.read(buffer) > -1) {
-            final Point point = new Point(this.attributes, buffer);
-            
-            try {
-               // TODO: not sure why some points don't get added correctly
-               this.tree.addPoint(point);
-            } catch(final Exception e) {
-               System.err.println("Could not add point: " + point);
-               e.printStackTrace();
-            }
-
-            final double exactPercentage = (count / (double) pointCount);
-            double percentage = (count / (double) pointCount);
-            percentage *= 10000.0;
-            percentage = ((int) percentage) / 100.0;
-            
-//            if(percentage >= currentPrintPercentage + 0.1) {
-               final long elapsed = (System.nanoTime() - startTime);
-               final long eta = (long) (((1.0 - exactPercentage) * elapsed) / exactPercentage);
-               System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it (note: doesn't work when console wraps lines)
-               System.out.println("[" + percentage + "%]: " + count + " of " + pointCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
-//               currentPrintPercentage += 0.1;
-//            }
-            
-            count++;
+      for(final File file : this.inputDir.listFiles()) {
+         if(file.getName().endsWith(".dat")) {
+            length += file.length();
          }
-      } catch (final IOException e1) {
-         e1.printStackTrace();
+      }
+      
+      final long pointCount = length / this.attributes.stride;
+      final byte[] buffer = new byte[this.attributes.stride];
+      long lastPrint = 0;      
+      
+      for(final File file : this.inputDir.listFiles()) {
+         System.out.println("Reading:" + file.getAbsolutePath() + "\n");
+         
+         try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file))) {
+            while(fin.read(buffer) > -1) {
+               final Point point = new Point(this.attributes, buffer);
+               
+               try {
+                  // TODO: not sure why some points don't get added correctly
+                  this.tree.addPoint(point);
+               } catch(final Exception e) {
+                  System.err.println("Could not add point: " + point);
+                  e.printStackTrace();
+               }
+   
+               final long elapsed = (System.nanoTime() - startTime);
+               
+               if(elapsed - lastPrint > ONE_SECOND_NANO) {
+                  lastPrint = elapsed;
+      
+                  final double exactPercentage = (count / (double) pointCount);
+                  double percentage = (count / (double) pointCount);
+                  percentage *= 10000.0;
+                  percentage = ((int) percentage) / 100.0;
+               
+                  final long eta = (long) (((1.0 - exactPercentage) * elapsed) / exactPercentage);
+                  System.out.print("\33[1A\33[2K"); // in linux, moves up a line in console and erases it (note: doesn't work when console wraps lines)
+                  System.out.println("[" + percentage + "%]: " + count + " of " + pointCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
+   
+               }
+               
+               count++;
+            }
+         } catch (final IOException e1) {
+            e1.printStackTrace();
+         }
       }
       
       System.out.println("tree built: " + this.tree.getCellCount());
@@ -210,8 +229,7 @@ public class TreeBuilder {
       }
       
       final String type = args[TREE_TYPE_INDEX];
-      final File inputCsvFile = new File(args[INPUT_CSV_INDEX]);
-      final File inputAttributesFile = new File(args[INPUT_ATTRIBUTES_INDEX]);
+      final File inputDir = new File(args[INPUT_DIR_INDEX]);
       final File outputDirectory = new File(args[OUTPUT_DIRECTORY_INDEX]);
       final int[] cellSplit = new int[] { Integer.parseInt(args[X_CELL_SPLIT_INDEX]), 0, 0 };
       
@@ -223,8 +241,8 @@ public class TreeBuilder {
          cellSplit[2] = cellSplit[0];
       }
       
-      if(!inputCsvFile.isFile() || !inputAttributesFile.isFile()) {
-         throw new IllegalArgumentException("Input CSV and Attribute files must exist and be a directory.");
+      if(!inputDir.isDirectory()) {
+         throw new IllegalArgumentException("Input directory must exist and be a directory.");
       }
       
       if(!outputDirectory.exists()) {
@@ -252,7 +270,7 @@ public class TreeBuilder {
          purgeContents(outputDirectory);
       }
       
-      final TreeBuilder builder = new TreeBuilder(type, inputCsvFile, inputAttributesFile, cellSplit);
+      final TreeBuilder builder = new TreeBuilder(type, inputDir, cellSplit);
       builder.build();
       builder.export(outputDirectory);
    }
