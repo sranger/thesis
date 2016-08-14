@@ -94,7 +94,7 @@ public class ThesisVisualization extends JFrame {
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8643, 35.371, 0, 0, 0, 100);
-      navigator.setEarth(this.earth);
+      //      navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
       // this.loadIcosatreeBounds("");
@@ -292,7 +292,7 @@ public class ThesisVisualization extends JFrame {
       options.add(timingsScroll);
 
       this.scene.addPostProcessor((gl, glu, scene) -> {
-         timingsArea.setText(timings.toString());
+         timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
       });
 
       this.getContentPane().setLayout(new BorderLayout());

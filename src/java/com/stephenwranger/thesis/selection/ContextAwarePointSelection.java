@@ -250,6 +250,10 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
    public void setDrawPoints(final boolean isDrawPoints) {
       this.isDrawPoints = isDrawPoints;
+
+      if (!this.isDrawPoints) {
+         this.pointRenderer.setPoints(null);
+      }
    }
 
    public void setDrawTriangles(final boolean isDrawTriangles) {
@@ -406,12 +410,17 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       final List<Tuple3d> toRemove = new ArrayList<>();
 
       for (final Tuple3d point : points) {
-         final Collection<Tuple3d> neighbors = ContextAwarePointSelection.getNeighbors(point, points, k);
-         final Vector3d normal = GridCell.getAverageNormal(neighbors);
-         normal.normalize();
-         //         System.out.println("\tdot: " + normal.dot(orthonormal));
-         if (normal.dot(orthonormal) > this.normalOffset) {
+         final TreeMap<Double, Tuple3d> neighbors = ContextAwarePointSelection.getNeighbors(point, points, k);
+
+         if (neighbors.lastKey() > (this.gridSize * 2)) {
             toRemove.add(point);
+         } else {
+            final Vector3d normal = GridCell.getAverageNormal(neighbors.values());
+            normal.normalize();
+
+            if (normal.dot(orthonormal) > this.normalOffset) {
+               toRemove.add(point);
+            }
          }
       }
 
@@ -433,7 +442,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return null;
    }
 
-   private static Collection<Tuple3d> getNeighbors(final Tuple3d point, final Collection<Tuple3d> points, final int k) {
+   private static TreeMap<Double, Tuple3d> getNeighbors(final Tuple3d point, final Collection<Tuple3d> points, final int k) {
       final TreeMap<Double, Tuple3d> neighbors = new TreeMap<>();
 
       for (final Tuple3d p : points) {
@@ -447,7 +456,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          }
       }
 
-      return neighbors.values();
+      return neighbors;
    }
 
    private static Triangle3d[] getTriangles(final List<GridCell> cells) {
