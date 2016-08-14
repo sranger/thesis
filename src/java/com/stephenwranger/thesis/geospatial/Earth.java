@@ -128,6 +128,7 @@ public class Earth extends Renderable {
 
    public void setAltitudeOffset(final double altitudeOffset) {
       this.altitudeOffset = altitudeOffset;
+      this.geometry = null;
    }
 
    public void setLightingEnabled(final boolean isLightingEnabled) {
