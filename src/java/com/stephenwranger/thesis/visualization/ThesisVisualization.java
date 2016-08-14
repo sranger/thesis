@@ -5,16 +5,22 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -57,10 +63,10 @@ public class ThesisVisualization extends JFrame {
       this.earth.setWireframe(false);
       this.earth.setLightingEnabled(false);
       this.earth.setLoadFactor(0.75);
-      this.earth.setAltitudeOffset(-60);
+      this.earth.setAltitudeOffset(0);
 
-      this.scene = new Scene(new Dimension(1600, 1000));
-      //      this.scene.addRenderable(this.earth);
+      this.scene = new Scene(new Dimension(1200, 750));
+      this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
       this.scene.addKeyListener(new KeyAdapter() {
@@ -87,70 +93,206 @@ public class ThesisVisualization extends JFrame {
       //      this.addFrustumRenderable();
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
-      navigator.moveTo(-120.8687371531015, 35.368949194257716, 81.32168056350201, 0, 0, 200000);
-      //      navigator.setEarth(this.earth);
+      navigator.moveTo(-120.8643, 35.371, 0, 0, 0, 100);
+      navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
       // this.loadIcosatreeBounds("");
 
       final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
+      tree.setLevelOfDetail(0.1);
       this.scene.addRenderable(tree);
 
       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
       this.scene.addPostProcessor(pointSelector);
 
       // this.addTimingDisplay(scene, renderer);
-      
+
       final JPanel options = new JPanel();
       options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-      options.setPreferredSize(new Dimension(400,1000));
-      
+      options.setPreferredSize(new Dimension(300, 500));
+
       final JLabel ratioLabel = new JLabel("Split Ratio (screen area)");
       final JSpinner ratioSpinner = new JSpinner(new SpinnerNumberModel(tree.getLevelOfDetail(), 0.1, Double.MAX_VALUE, 0.1));
       final JPanel ratioSpinnerPanel = new JPanel();
-      ratioSpinnerPanel.setLayout(new GridLayout(1,2));
-      ratioSpinnerPanel.setMaximumSize(new Dimension(400,30));
+      ratioSpinnerPanel.setLayout(new GridLayout(1, 2));
+      ratioSpinnerPanel.setMaximumSize(new Dimension(300, 30));
       ratioSpinnerPanel.add(ratioLabel);
       ratioSpinnerPanel.add(ratioSpinner);
       options.add(ratioSpinnerPanel);
-      
+
       ratioSpinner.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(final ChangeEvent e) {
-            tree.setLevelOfDetail(((Number) ratioSpinner.getValue()).doubleValue()); 
+            tree.setLevelOfDetail(((Number) ratioSpinner.getValue()).doubleValue());
          }
       });
-      
+
       final JLabel gridLabel = new JLabel("Grid Size (meters)");
       final JSpinner gridSpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getGridSizeMeters(), 0.1, Double.MAX_VALUE, 0.1));
       final JPanel gridSpinnerPanel = new JPanel();
-      gridSpinnerPanel.setLayout(new GridLayout(1,2));
-      gridSpinnerPanel.setMaximumSize(new Dimension(400,30));
+      gridSpinnerPanel.setLayout(new GridLayout(1, 2));
+      gridSpinnerPanel.setMaximumSize(new Dimension(300, 30));
       gridSpinnerPanel.add(gridLabel);
       gridSpinnerPanel.add(gridSpinner);
       options.add(gridSpinnerPanel);
-      
+
       gridSpinner.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(final ChangeEvent e) {
-            pointSelector.setGridSizeMeters(((Number) gridSpinner.getValue()).doubleValue()); 
+            pointSelector.setGridSizeMeters(((Number) gridSpinner.getValue()).doubleValue());
          }
       });
-      
+
       final JLabel nearestLabel = new JLabel("k-Nearest Count");
       final JSpinner nearestSpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getNeighborCount(), 3, Integer.MAX_VALUE, 1));
       final JPanel nearestSpinnerPanel = new JPanel();
-      nearestSpinnerPanel.setLayout(new GridLayout(1,2));
-      nearestSpinnerPanel.setMaximumSize(new Dimension(400,30));
+      nearestSpinnerPanel.setLayout(new GridLayout(1, 2));
+      nearestSpinnerPanel.setMaximumSize(new Dimension(300, 30));
       nearestSpinnerPanel.add(nearestLabel);
       nearestSpinnerPanel.add(nearestSpinner);
       options.add(nearestSpinnerPanel);
-      
+
       nearestSpinner.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(final ChangeEvent e) {
-            pointSelector.setNeighborCount(((Number) nearestSpinner.getValue()).intValue()); 
+            pointSelector.setNeighborCount(((Number) nearestSpinner.getValue()).intValue());
          }
+      });
+
+      final JLabel normalLabel = new JLabel("Normal Offset");
+      final JSpinner normalSpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getNormalOffset(), 0.0, 1.0, 0.01));
+      final JPanel normalSpinnerPanel = new JPanel();
+      normalSpinnerPanel.setLayout(new GridLayout(1, 2));
+      normalSpinnerPanel.setMaximumSize(new Dimension(300, 30));
+      normalSpinnerPanel.add(normalLabel);
+      normalSpinnerPanel.add(normalSpinner);
+      options.add(normalSpinnerPanel);
+
+      normalSpinner.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(final ChangeEvent e) {
+            pointSelector.setNormalOffset(((Number) normalSpinner.getValue()).doubleValue());
+         }
+      });
+
+      final JLabel minDensityLabel = new JLabel("Min Density");
+      final JSpinner minDensitySpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getMinDensity(), 0.0, Double.MAX_VALUE, 0.1));
+      final JPanel minDensityPanel = new JPanel();
+      minDensityPanel.setLayout(new GridLayout(1, 2));
+      minDensityPanel.setMaximumSize(new Dimension(300, 30));
+      minDensityPanel.add(minDensityLabel);
+      minDensityPanel.add(minDensitySpinner);
+      options.add(minDensityPanel);
+
+      minDensitySpinner.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(final ChangeEvent e) {
+            pointSelector.setMinDensity(((Number) minDensitySpinner.getValue()).doubleValue());
+         }
+      });
+
+      final JLabel drawPointsLabel = new JLabel("Draw Points");
+      final JCheckBox drawPointsCheckBox = new JCheckBox();
+      if (pointSelector.isDrawPoints()) {
+         drawPointsCheckBox.setSelected(true);
+      }
+      final JPanel drawPointsPanel = new JPanel();
+      drawPointsPanel.setLayout(new GridLayout(1, 2));
+      drawPointsPanel.setMaximumSize(new Dimension(300, 30));
+      drawPointsPanel.add(drawPointsLabel);
+      drawPointsPanel.add(drawPointsCheckBox);
+      options.add(drawPointsPanel);
+
+      drawPointsCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            pointSelector.setDrawPoints(drawPointsCheckBox.isSelected());
+         }
+      });
+
+      final JLabel drawTrianglesLabel = new JLabel("Draw Triangles");
+      final JCheckBox drawTrianglesCheckBox = new JCheckBox();
+      if (pointSelector.isDrawTriangles()) {
+         drawTrianglesCheckBox.setSelected(true);
+      }
+      final JPanel drawTrianglesPanel = new JPanel();
+      drawTrianglesPanel.setLayout(new GridLayout(1, 2));
+      drawTrianglesPanel.setMaximumSize(new Dimension(300, 30));
+      drawTrianglesPanel.add(drawTrianglesLabel);
+      drawTrianglesPanel.add(drawTrianglesCheckBox);
+      options.add(drawTrianglesPanel);
+
+      drawTrianglesCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            pointSelector.setDrawTriangles(drawTrianglesCheckBox.isSelected());
+         }
+      });
+
+      final JLabel drawEarthLabel = new JLabel("Draw Earth");
+      final JCheckBox drawEarthCheckBox = new JCheckBox();
+      drawEarthCheckBox.setSelected(this.earth.inScene());
+      final JPanel drawEarthPanel = new JPanel();
+      drawEarthPanel.setLayout(new GridLayout(1, 2));
+      drawEarthPanel.setMaximumSize(new Dimension(300, 30));
+      drawEarthPanel.add(drawEarthLabel);
+      drawEarthPanel.add(drawEarthCheckBox);
+      options.add(drawEarthPanel);
+
+      drawEarthCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            if (drawEarthCheckBox.isSelected() && !ThesisVisualization.this.earth.inScene()) {
+               ThesisVisualization.this.scene.addRenderable(ThesisVisualization.this.earth);
+            } else if (!drawEarthCheckBox.isSelected() && ThesisVisualization.this.earth.inScene()) {
+               ThesisVisualization.this.earth.remove();
+            }
+         }
+      });
+
+      final JLabel earthElevationLabel = new JLabel("Earth Altitude Offset");
+      final JSpinner earthElevationSpinner = new JSpinner(new SpinnerNumberModel(this.earth.getAltitudeOffset(), -Double.MAX_VALUE, Double.MAX_VALUE, 0.1));
+      final JPanel earthElevationPanel = new JPanel();
+      earthElevationPanel.setLayout(new GridLayout(1, 2));
+      earthElevationPanel.setMaximumSize(new Dimension(300, 30));
+      earthElevationPanel.add(earthElevationLabel);
+      earthElevationPanel.add(earthElevationSpinner);
+      options.add(earthElevationPanel);
+
+      earthElevationSpinner.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(final ChangeEvent e) {
+            ThesisVisualization.this.earth.setAltitudeOffset(((Number) earthElevationSpinner.getValue()).doubleValue());
+         }
+      });
+
+      final JLabel wireframeLabel = new JLabel("Earth Wireframe");
+      final JCheckBox wireframeCheckBox = new JCheckBox();
+      wireframeCheckBox.setSelected(this.earth.isWireframe());
+      final JPanel wireframePanel = new JPanel();
+      wireframePanel.setLayout(new GridLayout(1, 2));
+      wireframePanel.setMaximumSize(new Dimension(300, 30));
+      wireframePanel.add(wireframeLabel);
+      wireframePanel.add(wireframeCheckBox);
+      options.add(wireframePanel);
+
+      wireframeCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            ThesisVisualization.this.earth.setWireframe(wireframeCheckBox.isSelected());
+         }
+      });
+
+      final Timings timings = tree.getTimings();
+      final JTextArea timingsArea = new JTextArea();
+      final JScrollPane timingsScroll = new JScrollPane(timingsArea);
+      timingsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+      timingsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      options.add(timingsScroll);
+
+      this.scene.addPostProcessor((gl, glu, scene) -> {
+         timingsArea.setText(timings.toString());
       });
 
       this.getContentPane().setLayout(new BorderLayout());
@@ -159,7 +301,7 @@ public class ThesisVisualization extends JFrame {
 
       SwingUtilities.invokeLater(() -> {
          this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-         this.setLocation(2000, 100);
+         this.setLocation(100, 100);
          this.pack();
          this.scene.start();
          this.setVisible(true);

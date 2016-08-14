@@ -8,6 +8,8 @@ import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
 
@@ -20,6 +22,7 @@ import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.color.Color4f;
 import com.stephenwranger.graphics.math.Tuple2d;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.IntersectionUtils;
 import com.stephenwranger.graphics.math.intersection.LineSegment;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
@@ -28,6 +31,7 @@ import com.stephenwranger.graphics.renderables.PostProcessor;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
 import com.stephenwranger.graphics.utils.TupleMath;
 import com.stephenwranger.thesis.data.GridCell;
+import com.stephenwranger.thesis.geospatial.WGS84;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
 
 public class ContextAwarePointSelection implements PostProcessor, MouseListener, MouseMotionListener, MouseWheelListener {
@@ -35,15 +39,17 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private final TreeRenderable  tree;
    private final PointRenderable pointRenderer;
 
-   private TriangleMesh          selectionTriangles = null;
-   private Volume                selection          = null;
-   private final List<Tuple2d>   mouseSelection     = new ArrayList<>();
+   private TriangleMesh          selectionTriangles  = null;
+   private Volume                selection           = null;
+   private final List<Tuple2d>   mouseSelection      = new ArrayList<>();
 
-   private double                minDensity         = 1.0;
-   private double                gridSize           = 5.0;
-   private int                   k                  = 25;
-   private boolean               isDrawTriangles    = true;
-   private boolean               isDrawPoints       = false;
+   private double                minDensity          = 0.2;
+   private double                gridSize            = 5.0;
+   private int                   k                   = 25;
+   private boolean               isDrawTriangles     = false;
+   private boolean               isDrawPoints        = true;
+   private double                normalOffset        = 0.98;
+   private double                groundDistanceRatio = 0.1;
 
    public ContextAwarePointSelection(final Scene scene, final TreeRenderable tree) {
       this.scene = scene;
@@ -62,12 +68,20 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return this.gridSize;
    }
 
+   public double getGroundDistanceRatio() {
+      return this.groundDistanceRatio;
+   }
+
    public double getMinDensity() {
       return this.minDensity;
    }
 
    public int getNeighborCount() {
       return this.k;
+   }
+
+   public double getNormalOffset() {
+      return this.normalOffset;
    }
 
    public boolean isDrawPoints() {
@@ -178,29 +192,33 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
       if (selection != null) {
          final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection);
+         this.prune(selectedPoints);
+
          final List<GridCell> cells = new ArrayList<>();
-         final double averageDensity = ContextAwarePointSelection.getAverageDensity(scene, selection, selectedPoints, cells, this.gridSize, this.k);
+         final double averageDensity = this.getAverageDensity(scene, selection, selectedPoints, cells);
          System.out.println("selected points count: " + selectedPoints.size());
          System.out.println("average density: " + averageDensity);
 
-         if (this.isDrawPoints) {
-            this.pointRenderer.setPoints(selectedPoints);
-         }
+         if (!selectedPoints.isEmpty()) {
+            if (this.isDrawPoints) {
+               this.pointRenderer.setPoints(selectedPoints);
+            }
 
-         if (this.selectionTriangles != null) {
-            this.selectionTriangles.remove();
-            this.selectionTriangles = null;
-         }
+            if (this.selectionTriangles != null) {
+               this.selectionTriangles.remove();
+               this.selectionTriangles = null;
+            }
 
-         if (this.isDrawTriangles) {
-            final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
+            if (this.isDrawTriangles) {
+               final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
 
-            if (triangles.length > 0) {
-               this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
-               this.selectionTriangles.setPolygonMode(GL.GL_FRONT_AND_BACK);
-               this.selectionTriangles.setDrawNormals(false);
-               this.selectionTriangles.setCullFace(false);
-               this.scene.addRenderable(this.selectionTriangles);
+               if (triangles.length > 0) {
+                  this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
+                  this.selectionTriangles.setPolygonMode(GL.GL_FRONT_AND_BACK);
+                  this.selectionTriangles.setDrawNormals(false);
+                  this.selectionTriangles.setCullFace(false);
+                  this.scene.addRenderable(this.selectionTriangles);
+               }
             }
          }
       } else if (!this.mouseSelection.isEmpty()) {
@@ -242,6 +260,10 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.gridSize = gridSize;
    }
 
+   public void setGroundDistanceRatio(final double groundDistanceRatio) {
+      this.groundDistanceRatio = groundDistanceRatio;
+   }
+
    public void setMinDensity(final double minDensity) {
       this.minDensity = minDensity;
    }
@@ -250,8 +272,12 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.k = neighborCount;
    }
 
+   public void setNormalOffset(final double normalOffset) {
+      this.normalOffset = normalOffset;
+   }
+
    // TODO: fix grid size
-   private static double getAverageDensity(final Scene scene, final Volume volume, final Collection<Tuple3d> points, final Collection<GridCell> outputCells, final double gridSize, final int k) {
+   private double getAverageDensity(final Scene scene, final Volume volume, final Collection<Tuple3d> points, final Collection<GridCell> outputCells) {
       if (points.isEmpty()) {
          return 0;
       }
@@ -260,50 +286,42 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       // pf = 1/nf * sigma(density(node[n]))
 
       // first, split collected points into grid
-      final Tuple3d offset = new Tuple3d(0,0,0);//gridSize, gridSize, gridSize);
+      final Tuple3d offset = new Tuple3d(0, 0, 0);//gridSize, gridSize, gridSize);
       final Tuple3d min = Tuple3d.getMin(points);
       min.subtract(offset);
       final Tuple3d max = Tuple3d.getMax(points);
       min.add(offset);
       final Tuple3d range = TupleMath.sub(max, min);
-      final int xSize = (int) Math.ceil(range.x / gridSize);
-      final int ySize = (int) Math.ceil(range.y / gridSize);
-      final int zSize = (int) Math.ceil(range.z / gridSize);
-
-      // then, determine density of points per grid node and sum them all
-      // for us, points per grid node is the density so we just need to determine
-      // how many points we have and then divide it by the number of nodes within the lasso
-      final double density = points.size();
+      final int xSize = (int) Math.max(1, Math.ceil(range.x / this.gridSize));
+      final int ySize = (int) Math.max(1, Math.ceil(range.y / this.gridSize));
+      final int zSize = (int) Math.max(1, Math.ceil(range.z / this.gridSize));
 
       // TODO: change to use https://commons.apache.org/sandbox/commons-graph/apidocs/org/apache/commons/graph/spanning/Kruskal.html
       // TODO: for now, just points per cubic meter = point count / (xSize * ySize * zSize)
       // average all the nodes' densities by dividing the sum by the number of nodes
       final GridCell[][][] cells = new GridCell[xSize][ySize][zSize];
       //      final double halfGrid = gridSize / 2.0;
-      int nodeCount = 0;
 
       for (int x = 0; x < xSize; x++) {
          for (int y = 0; y < ySize; y++) {
             for (int z = 0; z < zSize; z++) {
-               final double px = min.x + (x * gridSize);
-               final double py = min.y + (y * gridSize);
-               final double pz = min.z + (z * gridSize);
+               final double px = min.x + (x * this.gridSize);
+               final double py = min.y + (y * this.gridSize);
+               final double pz = min.z + (z * this.gridSize);
 
                //               if (volume.contains(new Tuple3d(px + halfGrid, py + halfGrid, pz + halfGrid), halfGrid)) {
-               nodeCount++;
-               cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + gridSize, py + gridSize, pz + gridSize), x, y, z);
+               cells[x][y][z] = new GridCell(new Tuple3d(px, py, pz), new Tuple3d(px + this.gridSize, py + this.gridSize, pz + this.gridSize), x, y, z);
                //               }
             }
          }
       }
 
-      System.out.println("node count: " + nodeCount);
       int pointCount = 0;
 
       for (final Tuple3d point : points) {
-         final int x = (int) Math.floor((point.x - min.x) / gridSize);
-         final int y = (int) Math.floor((point.y - min.y) / gridSize);
-         final int z = (int) Math.floor((point.z - min.z) / gridSize);
+         final int x = (int) Math.floor((point.x - min.x) / this.gridSize);
+         final int y = (int) Math.floor((point.y - min.y) / this.gridSize);
+         final int z = (int) Math.floor((point.z - min.z) / this.gridSize);
 
          if (cells[x][y][z] != null) {
             cells[x][y][z].points.add(point);
@@ -311,45 +329,93 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          }
       }
 
+      int nodeCount = 0;
       System.out.println("point count: " + pointCount + " of " + points.size());
 
       for (int x = 0; x < xSize; x++) {
          for (int y = 0; y < ySize; y++) {
             for (int z = 0; z < zSize; z++) {
                final GridCell cell = cells[x][y][z];
-               if ((cell != null) && !cell.points.isEmpty()) {
-                  cell.computeNormals(scene, cells, k);
+               if ((cell != null) && !cell.points.isEmpty() && ((cell.points.size() / (this.gridSize * this.gridSize * this.gridSize)) > this.minDensity)) {
+                  cell.computeNormals(scene, cells, this.k);
                   outputCells.add(cell);
+                  nodeCount++;
                }
             }
          }
       }
 
-      for (int x = 0; x < xSize; x++) {
-         for (int y = 0; y < ySize; y++) {
-            for (int z = 0; z < zSize; z++) {
-               final GridCell cell = cells[x][y][z];
-               if ((cell != null) && !cell.points.isEmpty()) {
-                  cell.finish(scene);
-               }
-            }
+      System.out.println("node count: " + nodeCount);
+
+      for (final GridCell cell : outputCells) {
+         cell.finish(scene);
+      }
+
+      //      // TODO: replace with nearest neighbor search; any empty cells copy vertex values from neighbors
+      //      for (int x = 0; x < xSize; x++) {
+      //         for (int y = 0; y < ySize; y++) {
+      //            for (int z = 0; z < zSize; z++) {
+      //               final GridCell cell = cells[x][y][z];
+      //               if ((cell != null) && (cell.points.isEmpty() || (cell.normals == null) || cell.normals.isEmpty())) {
+      //                  //                  System.out.println("check neighbors: " + x + ", " + y + ", " + z);
+      //                  cell.checkNeighborCells(scene, cells);
+      //               }
+      //            }
+      //         }
+      //      }
+
+      // points per unit square
+      return pointCount / (nodeCount * Math.pow(this.gridSize, 3));
+   }
+
+   private void prune(final Collection<Tuple3d> points) {
+      //      this.pruneByAltitude(points);
+      this.pruneOrthonormal(points);
+   }
+
+   private void pruneByAltitude(final Collection<Tuple3d> points) {
+      final TreeMap<Double, Tuple3d> altitudeMap = new TreeMap<>();
+      double minAltitude = Double.MAX_VALUE;
+      double maxAltitude = -Double.MAX_VALUE;
+
+      for (final Tuple3d point : points) {
+         final Tuple3d lla = WGS84.cartesianToGeodesic(point);
+         altitudeMap.put(lla.z, point);
+         minAltitude = Math.min(minAltitude, lla.z);
+         maxAltitude = Math.max(maxAltitude, lla.z);
+      }
+
+      final double pruneAlt = minAltitude + ((maxAltitude - minAltitude) * 0.1);
+      System.out.println("minAltitude: " + minAltitude);
+      System.out.println("maxAltitude: " + maxAltitude);
+      System.out.println("pruneAlt: " + pruneAlt);
+      System.out.println("before: " + points.size());
+      for (final Entry<Double, Tuple3d> entry : altitudeMap.entrySet()) {
+         if (entry.getKey() <= pruneAlt) {
+            points.remove(entry.getValue());
+         }
+      }
+      System.out.println("after: " + points.size());
+   }
+
+   private void pruneOrthonormal(final Collection<Tuple3d> points) {
+      final Vector3d orthonormal = GridCell.getAverageNormal(points);
+      orthonormal.normalize();
+      //      System.out.println("normal: " + orthonormal);
+      final int k = Math.max(3, this.k);
+      final List<Tuple3d> toRemove = new ArrayList<>();
+
+      for (final Tuple3d point : points) {
+         final Collection<Tuple3d> neighbors = ContextAwarePointSelection.getNeighbors(point, points, k);
+         final Vector3d normal = GridCell.getAverageNormal(neighbors);
+         normal.normalize();
+         //         System.out.println("\tdot: " + normal.dot(orthonormal));
+         if (normal.dot(orthonormal) > this.normalOffset) {
+            toRemove.add(point);
          }
       }
 
-      // TODO: replace with nearest neighbor search; any empty cells copy vertex values from neighbors
-      for (int x = 0; x < xSize; x++) {
-         for (int y = 0; y < ySize; y++) {
-            for (int z = 0; z < zSize; z++) {
-               final GridCell cell = cells[x][y][z];
-               if ((cell != null) && (cell.points.isEmpty() || cell.normals == null || cell.normals.isEmpty())) {
-//                  System.out.println("check neighbors: " + x + ", " + y + ", " + z);
-                  cell.checkNeighborCells(scene, cells);
-               }
-            }
-         }
-      }
-
-      return density / nodeCount;
+      points.removeAll(toRemove);
    }
 
    private static Tuple2d getIntersections(final LineSegment toCheck, final List<LineSegment> existing) {
@@ -367,17 +433,33 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return null;
    }
 
+   private static Collection<Tuple3d> getNeighbors(final Tuple3d point, final Collection<Tuple3d> points, final int k) {
+      final TreeMap<Double, Tuple3d> neighbors = new TreeMap<>();
+
+      for (final Tuple3d p : points) {
+         final double distance = p.distanceSquared(point);
+
+         if (neighbors.size() < k) {
+            neighbors.put(distance, p);
+         } else if (distance < neighbors.lastKey()) {
+            neighbors.remove(neighbors.lastKey());
+            neighbors.put(distance, p);
+         }
+      }
+
+      return neighbors.values();
+   }
+
    private static Triangle3d[] getTriangles(final List<GridCell> cells) {
-      final List<Triangle3d> triangles = new ArrayList<>();
+      List<Triangle3d> triangles = new ArrayList<>();
 
       for (final GridCell cell : cells) {
          triangles.addAll(cell.triangles);
       }
-      
+
       final TriangleMerge merge = new TriangleMerge(triangles);
       // rebuilding triangles hash lookup not correct
-//      final List<Triangle3d> mergedTriangles = merge.process(false, true);
-      
+      triangles = merge.process(false, true);
 
       return triangles.toArray(new Triangle3d[triangles.size()]);
    }

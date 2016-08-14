@@ -18,15 +18,15 @@ import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.utils.MathUtils;
 
 public class GridCell {
-   private static final int[][]  GRID_OFFSETS    = new int[][] { { -1, -1, -1 }, { 1, -1, -1 }, { 1, 1, -1 }, { -1, 1, -1 }, { -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 } };
-   private static final int      ABOVE           = 1;
-   private static final int      BELOW           = -1;
+   private static final int[][]  GRID_OFFSETS = new int[][] { { -1, -1, -1 }, { 1, -1, -1 }, { 1, 1, -1 }, { -1, 1, -1 }, { -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 } };
+   private static final int      ABOVE        = 1;
+   private static final int      BELOW        = -1;
 
    public final Tuple3d[]        p;
    public final double[]         val;
-   public final List<Tuple3d>    points          = new ArrayList<>();
-   public List<Vector3d>         normals         = null;
-   public final List<Triangle3d> triangles       = new ArrayList<>();
+   public final List<Tuple3d>    points       = new ArrayList<>();
+   public List<Vector3d>         normals      = null;
+   public final List<Triangle3d> triangles    = new ArrayList<>();
 
    private final Tuple3d         min;
    private final Tuple3d         max;
@@ -56,16 +56,16 @@ public class GridCell {
    }
 
    public void checkNeighborCells(final Scene scene, final GridCell[][][] cells) {
-      for(int i = 0; i < 8; i++) {
+      for (int i = 0; i < 8; i++) {
          final Tuple3d corner = this.p[i];
          final Pair<Tuple3d, Vector3d> pair = this.getClosest(corner, cells, 2);
-         
-         if(pair != null) {
+
+         if (pair != null) {
             final Vector3d toPoint = Vector3d.getVector(this.p[i], pair.left, false);
             this.val[i] = -(toPoint.dot(pair.right));
          }
       }
-      
+
       this.finish(scene);
    }
 
@@ -78,69 +78,25 @@ public class GridCell {
    public void finish(final Scene scene) {
       if (this.normals != null) {
          this.updateNormals(scene);
-         
+
          for (int i = 0; i < 8; i++) {
             final int index = this.getClosestPointIndex(this.p[i]);
             final Tuple3d point = this.points.get(index);
             final Vector3d pointNormal = this.normals.get(index);
             final Vector3d toPoint = Vector3d.getVector(this.p[i], point, false);
-            
+
             this.val[i] = -(toPoint.dot(pointNormal));// >= 0) ? BELOW : ABOVE;
          }
 
          MarchingCubes.polygonise(this, 0, this.triangles);
       }
    }
-   
-   // TODO: handle faces behind others?
-   private void updateNormals(final Scene scene) {
-      final Vector3d viewVector = scene.getViewVector();
-      
-      for(final Vector3d normal : this.normals) {
-         if(normal != null && normal.dot(viewVector) < 0) {
-            normal.scale(-1);
-         }
-      }
-   }
-   
-   private int getClosestPointIndex(final Tuple3d origin) {
-      double distanceSquared = Double.MAX_VALUE;
-      int index = -1;
-      
-      for(int i = 0; i < this.points.size(); i++) {
-         final Tuple3d point = this.points.get(i);
-         final Vector3d normal = this.normals.get(i);
-         
-         if(point != null && normal != null) {
-            final double dsq = origin.distanceSquared(point);
-            
-            if(dsq < distanceSquared) {
-               distanceSquared = dsq;
-               index = i;
-            }
-         }
-      }
-      
-      return index;
-   }
 
-   private List<Vector3d> computePointNormals(final Scene scene, final GridCell[][][] cells, final int neighborCount) {
-      final List<Vector3d> normals = new ArrayList<>();
-
-      for(final Tuple3d currentPoint : this.points) {
-         final Vector3d normal = computePointNormal(currentPoint, cells, neighborCount);
-         normals.add(normal);
-      }
-
-      // no neighbors
-      return normals;
-   }
-   
    private Vector3d computePointNormal(final Tuple3d currentPoint, final GridCell[][][] cells, final int neighborCount) {
       final TreeMap<Double, Tuple3d> neighbors = new TreeMap<>();
       final int k = Math.max(3, neighborCount);
       int offset = 0;
-      
+
       while ((neighbors.size() < k) && (offset < MathUtils.getMax(cells.length, cells[0].length, cells[0][0].length))) {
          neighbors.clear();
          for (int xi = this.x - offset; xi <= (this.x + offset); xi++) {
@@ -149,14 +105,14 @@ public class GridCell {
                   if ((xi >= 0) && (xi < cells.length) && (yi >= 0) && (yi < cells[0].length) && (zi >= 0) && (zi < cells[0][0].length)) {
                      final GridCell cell = cells[xi][yi][zi];
 
-                     for(final Tuple3d point : cell.points) {
+                     for (final Tuple3d point : cell.points) {
                         final double distanceSquared = point.distanceSquared(currentPoint);
-                        
-                        if(distanceSquared > 0) {
-                           if(neighbors.size() == k && neighbors.lastKey() > distanceSquared) {
+
+                        if (distanceSquared > 0) {
+                           if ((neighbors.size() == k) && (neighbors.lastKey() > distanceSquared)) {
                               neighbors.remove(neighbors.lastKey());
                               neighbors.put(distanceSquared, point);
-                           } else if(neighbors.size() < k) {
+                           } else if (neighbors.size() < k) {
                               neighbors.put(distanceSquared, point);
                            }
                         }
@@ -175,7 +131,19 @@ public class GridCell {
          return null;
       }
    }
-   
+
+   private List<Vector3d> computePointNormals(final Scene scene, final GridCell[][][] cells, final int neighborCount) {
+      final List<Vector3d> normals = new ArrayList<>();
+
+      for (final Tuple3d currentPoint : this.points) {
+         final Vector3d normal = this.computePointNormal(currentPoint, cells, neighborCount);
+         normals.add(normal);
+      }
+
+      // no neighbors
+      return normals;
+   }
+
    private Pair<Tuple3d, Vector3d> getClosest(final Tuple3d currentPoint, final GridCell[][][] cells, final int maxOffset) {
       final int xSize = cells.length;
       final int ySize = cells[0].length;
@@ -185,22 +153,22 @@ public class GridCell {
       Pair<Tuple3d, Vector3d> pair = null;
       double distanceSquared = Double.NaN;
       int offset = 0;
-      
-      while (pair == null && offset < maxSize) {
+
+      while ((pair == null) && (offset < maxSize)) {
          for (int xi = this.x - offset; xi <= (this.x + offset); xi++) {
             for (int yi = this.y - offset; yi <= (this.y + offset); yi++) {
                for (int zi = this.z - offset; zi <= (this.z + offset); zi++) {
                   if ((xi >= 0) && (xi < xSize) && (yi >= 0) && (yi < ySize) && (zi >= 0) && (zi < zSize)) {
                      final GridCell cell = cells[xi][yi][zi];
 
-                     for(int i = 0; i < cell.points.size(); i++) {
+                     for (int i = 0; i < cell.points.size(); i++) {
                         final Tuple3d point = cell.points.get(i);
                         final Vector3d normal = cell.normals.get(i);
-                        
-                        if(point != null && normal != null) {
+
+                        if ((point != null) && (normal != null)) {
                            final double temp = point.distanceSquared(currentPoint);
-                           
-                           if(pair == null || temp < distanceSquared) {
+
+                           if ((pair == null) || (temp < distanceSquared)) {
                               pair = Pair.getInstance(point, normal);
                            }
                         }
@@ -216,45 +184,36 @@ public class GridCell {
       return pair;
    }
 
-   public static void main(final String[] args) {
-      final Vector3d v1 = new Vector3d(0,1,0);
-      final Vector3d v2 = new Vector3d(0.1, 0.8, 0.2);
-      final Vector3d v3 = new Vector3d(-0.1,-0.3,0.4);
-      final Vector3d v4 = new Vector3d(1,0,0);
+   private int getClosestPointIndex(final Tuple3d origin) {
+      double distanceSquared = Double.MAX_VALUE;
+      int index = -1;
 
-      System.out.println("(equal)         v1.dot(v1) == " + v1.dot(v1));
-      System.out.println("(same dir)      v1.dot(v2) == " + v1.dot(v2));
-      System.out.println("(opposite dir)  v1.dot(v3) == " + v1.dot(v3));
-      System.out.println("(perpendicular) v1.dot(v4) == " + v1.dot(v4));
-      
-//      final List<Tuple3d> points = new ArrayList<>();
-//
-//      for (int x = -10; x <= 10; x++) {
-//         for (int z = -10; z <= 10; z++) {
-//            points.add(new Tuple3d(x, 0, z));
-//         }
-//      }
-//
-//      //    for (int i = 0; i < 1000; i++) {
-//      //       points.add(new Tuple3d(Math.random() - 0.5, (Math.random() - 0.5) * 0.0, Math.random() - 0.5));
-//      //    }
-//
-//      final Vector3d average = GridCell.getAverageNormal(points);
-//      System.out.println("\n\naverage: " + average);
-//      System.out.println("-1,-1,-1: " + new Vector3d(-1, -1, -1).dot(average));
-//      System.out.println("-1,-1, 1: " + new Vector3d(-1, -1, 1).dot(average));
-//      System.out.println("-1, 1,-1: " + new Vector3d(-1, 1, -1).dot(average));
-//      System.out.println("-1, 1, 1: " + new Vector3d(-1, 1, 1).dot(average));
-//      System.out.println(" 1,-1,-1: " + new Vector3d(1, -1, -1).dot(average));
-//      System.out.println(" 1,-1, 1: " + new Vector3d(1, -1, 1).dot(average));
-//      System.out.println(" 1, 1,-1: " + new Vector3d(1, 1, -1).dot(average));
-//      System.out.println(" 1, 1, 1: " + new Vector3d(1, 1, 1).dot(average));
-//      System.out.println(" 1, 0, 0: " + new Vector3d(1, 0, 0).dot(average));
-//      System.out.println(" 0, 1, 0: " + new Vector3d(0, 1, 0).dot(average));
-//      System.out.println(" 0, 0, 1: " + new Vector3d(0, 0, 1).dot(average));
-//      System.out.println("-1, 0, 0: " + new Vector3d(-1, 0, 0).dot(average));
-//      System.out.println(" 0,-1, 0: " + new Vector3d(0, -1, 0).dot(average));
-//      System.out.println(" 0, 0,-1: " + new Vector3d(0, 0, -1).dot(average));
+      for (int i = 0; i < this.points.size(); i++) {
+         final Tuple3d point = this.points.get(i);
+         final Vector3d normal = this.normals.get(i);
+
+         if ((point != null) && (normal != null)) {
+            final double dsq = origin.distanceSquared(point);
+
+            if (dsq < distanceSquared) {
+               distanceSquared = dsq;
+               index = i;
+            }
+         }
+      }
+
+      return index;
+   }
+
+   // TODO: handle faces behind others?
+   private void updateNormals(final Scene scene) {
+      final Vector3d viewVector = scene.getViewVector();
+
+      for (final Vector3d normal : this.normals) {
+         if ((normal != null) && (normal.dot(viewVector) < 0)) {
+            normal.scale(-1);
+         }
+      }
    }
 
    public static Vector3d getAverageNormal(final Collection<Tuple3d> points) {
@@ -262,17 +221,11 @@ public class GridCell {
       //      return getAverageNormalCommonsMkobos(points);
    }
 
-   /**
-    * http://commons.apache.org/proper/commons-math/userguide/linear.html
-    *
-    * @param points
-    * @return
-    */
-   private static Vector3d getAverageNormalCommonsMath3(final Collection<Tuple3d> points) {
+   public static RealMatrix getCovarianceMatrix(final Collection<Tuple3d> points) {
       final Tuple3d centroid = Tuple3d.getAverage(points);
       final double[][] samples = new double[points.size()][3];
       int i = 0;
-      
+
       for (final Tuple3d neighbor : points) {
          samples[i][0] = neighbor.x - centroid.x;
          samples[i][1] = neighbor.y - centroid.y;
@@ -282,7 +235,58 @@ public class GridCell {
 
       final RealMatrix matrix = MatrixUtils.createRealMatrix(samples);
       final Covariance covariance = new Covariance(matrix);
-      final RealMatrix cm = covariance.getCovarianceMatrix();
+      return covariance.getCovarianceMatrix();
+   }
+
+   public static void main(final String[] args) {
+      final Vector3d v1 = new Vector3d(0, 1, 0);
+      final Vector3d v2 = new Vector3d(0.1, 0.8, 0.2);
+      final Vector3d v3 = new Vector3d(-0.1, -0.3, 0.4);
+      final Vector3d v4 = new Vector3d(1, 0, 0);
+
+      System.out.println("(equal)         v1.dot(v1) == " + v1.dot(v1));
+      System.out.println("(same dir)      v1.dot(v2) == " + v1.dot(v2));
+      System.out.println("(opposite dir)  v1.dot(v3) == " + v1.dot(v3));
+      System.out.println("(perpendicular) v1.dot(v4) == " + v1.dot(v4));
+
+      //      final List<Tuple3d> points = new ArrayList<>();
+      //
+      //      for (int x = -10; x <= 10; x++) {
+      //         for (int z = -10; z <= 10; z++) {
+      //            points.add(new Tuple3d(x, 0, z));
+      //         }
+      //      }
+      //
+      //      //    for (int i = 0; i < 1000; i++) {
+      //      //       points.add(new Tuple3d(Math.random() - 0.5, (Math.random() - 0.5) * 0.0, Math.random() - 0.5));
+      //      //    }
+      //
+      //      final Vector3d average = GridCell.getAverageNormal(points);
+      //      System.out.println("\n\naverage: " + average);
+      //      System.out.println("-1,-1,-1: " + new Vector3d(-1, -1, -1).dot(average));
+      //      System.out.println("-1,-1, 1: " + new Vector3d(-1, -1, 1).dot(average));
+      //      System.out.println("-1, 1,-1: " + new Vector3d(-1, 1, -1).dot(average));
+      //      System.out.println("-1, 1, 1: " + new Vector3d(-1, 1, 1).dot(average));
+      //      System.out.println(" 1,-1,-1: " + new Vector3d(1, -1, -1).dot(average));
+      //      System.out.println(" 1,-1, 1: " + new Vector3d(1, -1, 1).dot(average));
+      //      System.out.println(" 1, 1,-1: " + new Vector3d(1, 1, -1).dot(average));
+      //      System.out.println(" 1, 1, 1: " + new Vector3d(1, 1, 1).dot(average));
+      //      System.out.println(" 1, 0, 0: " + new Vector3d(1, 0, 0).dot(average));
+      //      System.out.println(" 0, 1, 0: " + new Vector3d(0, 1, 0).dot(average));
+      //      System.out.println(" 0, 0, 1: " + new Vector3d(0, 0, 1).dot(average));
+      //      System.out.println("-1, 0, 0: " + new Vector3d(-1, 0, 0).dot(average));
+      //      System.out.println(" 0,-1, 0: " + new Vector3d(0, -1, 0).dot(average));
+      //      System.out.println(" 0, 0,-1: " + new Vector3d(0, 0, -1).dot(average));
+   }
+
+   /**
+    * http://commons.apache.org/proper/commons-math/userguide/linear.html
+    *
+    * @param points
+    * @return
+    */
+   private static Vector3d getAverageNormalCommonsMath3(final Collection<Tuple3d> points) {
+      final RealMatrix cm = GridCell.getCovarianceMatrix(points);
       final double[][] cmarr = cm.getData();
 
       final Vector3d v0 = new Vector3d(cmarr[0]);
