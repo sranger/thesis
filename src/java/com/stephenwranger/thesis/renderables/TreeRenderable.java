@@ -86,8 +86,6 @@ public class TreeRenderable extends Renderable {
    private double                            levelOfDetail                   = 1.0;
    private float                             pointSize                       = 1f;
 
-   int                                       cullingChecks                   = 0;
-
    public TreeRenderable(final String basePath, final ConnectionType connectionType) {
       super(new Tuple3d(), new Quat4d());
 
@@ -184,9 +182,7 @@ public class TreeRenderable extends Renderable {
       this.pending.clear();
 
       this.timings.start(TreeRenderable.FRUSTUM_CULLING);
-      this.cullingChecks = 0;
       this.frustumCulling(gl, scene, false, root);
-      //      System.out.println("culling checks: " + this.cullingChecks);
       this.timings.end(TreeRenderable.FRUSTUM_CULLING);
 
       this.timings.start(TreeRenderable.UPLOAD_CELLS);
@@ -322,47 +318,52 @@ public class TreeRenderable extends Renderable {
     * @param ignoreFrustum
     */
    private void frustumCulling(final GL2 gl, final Scene scene, final boolean ignoreFrustum, final TreeCell cell) {
-      this.cullingChecks++;
       boolean shouldIgnoreFrustum = ignoreFrustum;
 
-      this.timings.start(TreeRenderable.TEST_FRUSTUM);
-      if (!shouldIgnoreFrustum) {
-         final Plane[] frustum = scene.getFrustumPlanes();
-
-         final BoundingVolume bounds = cell.getBoundingVolume().offset(scene.getOrigin());
-         final FrustumResult result = BoundsUtils.testFrustum(frustum, bounds);
-
-         if (result == FrustumResult.OUT) {
-            this.deleteCachedData(gl, scene, cell);
-            return;
-         }
-
-         shouldIgnoreFrustum = result == FrustumResult.IN;
-      }
-      this.timings.end(TreeRenderable.TEST_FRUSTUM);
-
-      this.timings.start(TreeRenderable.TEST_CHILDREN);
-      if (cell.isComplete()) {
-         if (cell.getSegmentPoolIndex() == -1) {
-            this.pending.add(cell);
-         } else {
-            final boolean[] renderAndSplit = this.checkLevelOfDetail(gl, scene, cell);
-            if (renderAndSplit[0]) {
-               this.segments.add(cell);
-            }
-
-            if (renderAndSplit[1]) {
-               for (final String childPath : cell.getChildList()) {
-                  final TreeCell childCell = this.tree.getCell(childPath);
-
-                  this.frustumCulling(gl, scene, shouldIgnoreFrustum, childCell);
+      try {
+         this.timings.start(TreeRenderable.TEST_FRUSTUM);
+            if (!shouldIgnoreFrustum) {
+               final Plane[] frustum = scene.getFrustumPlanes();
+      
+               final BoundingVolume bounds = cell.getBoundingVolume().offset(scene.getOrigin());
+               final FrustumResult result = BoundsUtils.testFrustum(frustum, bounds);
+      
+               if (result == FrustumResult.OUT) {
+                  this.deleteCachedData(gl, scene, cell);
+                  return;
                }
+      
+               shouldIgnoreFrustum = result == FrustumResult.IN;
             }
-         }
-      } else if (cell.isEmpty()) {
-         this.connection.request(cell);
+      } finally {
+         this.timings.end(TreeRenderable.TEST_FRUSTUM);
       }
-      this.timings.end(TreeRenderable.TEST_CHILDREN);
+
+      try {
+         this.timings.start(TreeRenderable.TEST_CHILDREN);
+            if (cell.isComplete()) {
+               if (cell.getSegmentPoolIndex() == -1) {
+                  this.pending.add(cell);
+               } else {
+                  final boolean[] renderAndSplit = this.checkLevelOfDetail(gl, scene, cell);
+                  if (renderAndSplit[0]) {
+                     this.segments.add(cell);
+                  }
+      
+                  if (renderAndSplit[1]) {
+                     for (final String childPath : cell.getChildList()) {
+                        final TreeCell childCell = this.tree.getCell(childPath);
+      
+                        this.frustumCulling(gl, scene, shouldIgnoreFrustum, childCell);
+                     }
+                  }
+               }
+            } else if (cell.isEmpty()) {
+               this.connection.request(cell);
+            }
+      } finally {
+         this.timings.end(TreeRenderable.TEST_CHILDREN);
+      }
    }
 
    private TreeStructure initializeTree(final String basePath, final ConnectionType connectionType) {

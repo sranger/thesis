@@ -66,7 +66,7 @@ public class ThesisVisualization extends JFrame {
       this.earth.setAltitudeOffset(0);
 
       this.scene = new Scene(new Dimension(1200, 750));
-      this.scene.addRenderable(this.earth);
+      //      this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
       this.scene.addKeyListener(new KeyAdapter() {
@@ -291,8 +291,15 @@ public class ThesisVisualization extends JFrame {
       timingsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       options.add(timingsScroll);
 
+      final long[] last = new long[] { 0 };
+      
       this.scene.addPostProcessor((gl, glu, scene) -> {
-         timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
+         final long time = System.nanoTime();
+         
+         if(last[0] + 1000000000 > time) {
+            last[0] = time;
+            timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
+         }
       });
 
       this.getContentPane().setLayout(new BorderLayout());
