@@ -3,7 +3,7 @@
 
 ##
 # Java VM flags
-JAVA_FLAGS='-Djava.io.tmpdir=/media/data/tmp -Dmapdb.enable=true -Djava.net.useSystemProxies=true -Xmx256g -Dcom.sun.management.jmxremote.port=3335 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false'
+JAVA_FLAGS='-Djava.io.tmpdir=/media/dev/tmp -Dmapdb.enable=true -Djava.net.useSystemProxies=true -Xmx32g -Dcom.sun.management.jmxremote.port=3335 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false'
 
 ##
 # The main class

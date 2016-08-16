@@ -3,10 +3,12 @@ package com.stephenwranger.thesis.utils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -58,9 +60,26 @@ public class DataSplitter extends Thread {
       this.degreeStep = Math.max(0.0001, degreeStep);
    }
    
+   private static String getFormatter(final double step) {
+      final String value = Double.toString(step);
+      final int index = value.indexOf(".");
+      final int count = value.length() - index - 1;
+      
+      if(index >= 0) {
+         final StringBuilder sb = new StringBuilder("0.");
+         for(int i = 0 ; i < count; i++) {
+            sb.append("0");
+         }
+         
+         return sb.toString();
+      } else {
+         return "0";
+      }
+   }
+   
    @Override
    public void run() {
-      final DecimalFormat formatter = new DecimalFormat("0.0");
+      final DecimalFormat formatter = new DecimalFormat(getFormatter(this.degreeStep));
       final Map<Pair<Integer, Integer>, BufferedOutputStream> writers = new HashMap<>();
       final Attribute x = this.attributes.getAttribute(DataAttributes.X_ATTRIBUTE_NAME);
       final Attribute y = this.attributes.getAttribute(DataAttributes.Y_ATTRIBUTE_NAME);
@@ -125,6 +144,32 @@ public class DataSplitter extends Thread {
             } catch (IOException e) {
                e.printStackTrace();
             }
+         }
+         
+         try (final BufferedWriter fout = new BufferedWriter(new FileWriter(new File(this.outputDir, "bounds.csv")))) {
+            fout.write("bounds_id,corner_id,lon_deg,lat_deg\n");
+            int ctr = 0;
+            
+            for(final Pair<Integer, Integer> bounds : writers.keySet()) {
+               final int lonIndex = bounds.left;
+               final int latIndex = bounds.right;
+               final double minLon = lonIndex*degreeStep;
+               final double minLat = latIndex*degreeStep;
+               final double centerLon = minLon + (degreeStep / 2.0);
+               final double centerLat = minLat + (degreeStep / 2.0);
+               final double maxLon = (lonIndex+1)*degreeStep;
+               final double maxLat = (latIndex+1)*degreeStep;
+               fout.write(ctr + ",-1," + centerLon + "," + centerLat + "\n"); // center point for labeling
+               fout.write(ctr + ",0," + minLon + "," + minLat + "\n");        // bottom-left
+               fout.write(ctr + ",1," + maxLon + "," + minLat + "\n");        // bottom-right
+               fout.write(ctr + ",2," + maxLon + "," + maxLat + "\n");        // top-right
+               fout.write(ctr + ",3," + minLon + "," + maxLat + "\n");        // top-left
+               fout.write(ctr + ",4," + minLon + "," + minLat + "\n");        // bottom-left (closing loop)
+               ctr++;
+            }
+         } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
          }
       }
    }
