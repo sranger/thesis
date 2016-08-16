@@ -326,11 +326,14 @@ public class EarthImagery {
     */
    public static void setImagery(final EllipticalSegment segment, final ImageryType imageryType) {
       // set base texture until server can get around to handling this
-      segment.setTexture(null, null);//new Texture2d[] { EarthImagery.BASE_EARTH_TEXTURE }, null);
+      segment.setTexture(null, null);
 
       // TODO: need to support multiple textures; they're never at the same depth
       if ((imageryType != null) && imageryType.isValid()) {
          EarthImagery.TEXTURE_SERVER.addPending(segment, imageryType);
+      } else {
+         // set base texture if no imagery is available
+         segment.setBaseTexture(EarthImagery.BASE_EARTH_TEXTURE);
       }
    }
 

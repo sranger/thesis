@@ -42,7 +42,6 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    private final Tuple3d             anchor           = WGS84.geodesicToCartesian(new Tuple3d());
    private final SphericalCoordinate cameraCoordinate = new SphericalCoordinate(0, 0, 2e7);
 
-   private Tuple3d                   mouseLonLatAlt   = null;
    private Point                     previousEvent    = null;
    private Point                     currentEvent     = null;
    private EventType                 eventType        = null;
@@ -72,7 +71,6 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    public synchronized void mouseClicked(final MouseEvent event) {
       if(!event.isControlDown()) {
          if (event.getClickCount() == 2) {
-            this.mouseLonLatAlt = null;
             this.previousEvent = null;
             this.currentEvent = event.getPoint();
             this.eventType = EventType.MOUSE_CLICK;
@@ -91,11 +89,9 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
             this.currentEvent = event.getPoint();
             this.eventType = EventType.MOUSE_DRAG_LEFT;
          } else if (SwingUtilities.isRightMouseButton(event) && (this.previousEvent != null)) {
-            this.mouseLonLatAlt = null;
             this.currentEvent = event.getPoint();
             this.eventType = EventType.MOUSE_DRAG_RIGHT;
          } else {
-            this.mouseLonLatAlt = null;
             this.previousEvent = null;
             this.currentEvent = null;
             this.eventType = null;
@@ -131,7 +127,6 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    @Override
    public synchronized void mousePressed(final MouseEvent event) {
       if(!event.isControlDown()) {
-         this.mouseLonLatAlt = null;
          this.previousEvent = event.getPoint();
          this.currentEvent = null;
          this.eventType = null;
@@ -142,7 +137,6 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    @Override
    public synchronized void mouseReleased(final MouseEvent event) {
-      this.mouseLonLatAlt = null;
       this.previousEvent = null;
       this.currentEvent = null;
       this.eventType = null;
@@ -279,29 +273,20 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    }
 
    private void dragLeft(final GL2 gl, final Scene scene) {
-      if ((this.previousEvent != null) && (this.currentEvent != null)) {
-         final Tuple3d from = (this.mouseLonLatAlt == null) ? this.getIntersection(this.previousEvent) : new Tuple3d(this.mouseLonLatAlt);
+      if (this.previousEvent != null && this.currentEvent != null) {
+         final Tuple3d from = this.getIntersection(this.previousEvent);
          final Tuple3d to = this.getIntersection(this.currentEvent);
 
          if ((from != null) && (to != null)) {
-            if (this.mouseLonLatAlt == null) {
-               this.mouseLonLatAlt = new Tuple3d(from);
-            }
-
             final RotationTransformation transformation = WGS84.getRotationTransformation(from, to);
 
             if (transformation != null) {
                transformation.apply(this.anchor);
-
-               //               if (this.earth != null) {
-               //                  final Tuple3d lla = WGS84.cartesianToGeodesic(this.anchor);
-               //                  final double elevation = DigitalElevationUtils.getElevation(lla.x, lla.y);
-               //                  lla.z = elevation;
-               //                  this.anchor.set(WGS84.geodesicToCartesian(lla));
-               //               }
             }
          }
       }
+
+      this.previousEvent = this.currentEvent;
    }
 
    private void dragRight(final GL2 gl, final Scene scene) {
@@ -315,20 +300,20 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
             this.cameraCoordinate.update(azimuth, elevation, 0);
          }
-
-         this.previousEvent = this.currentEvent;
       }
+
+      this.previousEvent = this.currentEvent;
    }
 
    private Tuple3d getIntersection(final Point point) {
       final Vector3d currentVector = this.getMouseVector(this.scene, point);
 
-      if (currentVector != null) {
-         final Tuple3d cameraScreen = new Tuple3d(this.scene.getWidth() / 2.0, this.scene.getHeight() / 2.0, 0.0);
-         final Tuple3d cameraWorld = CameraUtils.gluUnProject(this.scene, cameraScreen);
-         cameraWorld.add(this.scene.getOrigin());
-
-         final PickingRay ray = new PickingRay(cameraWorld, currentVector);
+      return getIntersection(scene.getCameraPosition(), currentVector);
+   }
+   
+   private Tuple3d getIntersection(final Tuple3d origin, final Vector3d direction) {
+      if (origin != null && direction != null) {
+         final PickingRay ray = new PickingRay(origin, direction);
 
          if (this.earth == null) {
             return WGS84.getNearIntersection(ray, 0, true);

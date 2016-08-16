@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +67,7 @@ public class ThesisVisualization extends JFrame {
       this.earth.setAltitudeOffset(0);
 
       this.scene = new Scene(new Dimension(1200, 750));
-      //      this.scene.addRenderable(this.earth);
+      this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
       this.scene.addKeyListener(new KeyAdapter() {
@@ -94,14 +95,15 @@ public class ThesisVisualization extends JFrame {
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8643, 35.371, 0, 0, 0, 100);
-      //      navigator.setEarth(this.earth);
+      navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
       // this.loadIcosatreeBounds("");
 
-      final TreeRenderable tree = new TreeRenderable(basePath, connectionType);
-      tree.setLevelOfDetail(0.1);
-      this.scene.addRenderable(tree);
+      final File attributeFile = new File(basePath, "attributes.csv");
+      final TreeRenderable tree = (attributeFile.isFile()) ? new TreeRenderable(basePath, connectionType) : null;
+//      tree.setLevelOfDetail(0.1);
+//      this.scene.addRenderable(tree);
 
       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
       this.scene.addPostProcessor(pointSelector);
@@ -112,21 +114,23 @@ public class ThesisVisualization extends JFrame {
       options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
       options.setPreferredSize(new Dimension(300, 500));
 
-      final JLabel ratioLabel = new JLabel("Split Ratio (screen area)");
-      final JSpinner ratioSpinner = new JSpinner(new SpinnerNumberModel(tree.getLevelOfDetail(), 0.1, Double.MAX_VALUE, 0.1));
-      final JPanel ratioSpinnerPanel = new JPanel();
-      ratioSpinnerPanel.setLayout(new GridLayout(1, 2));
-      ratioSpinnerPanel.setMaximumSize(new Dimension(300, 30));
-      ratioSpinnerPanel.add(ratioLabel);
-      ratioSpinnerPanel.add(ratioSpinner);
-      options.add(ratioSpinnerPanel);
-
-      ratioSpinner.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(final ChangeEvent e) {
-            tree.setLevelOfDetail(((Number) ratioSpinner.getValue()).doubleValue());
-         }
-      });
+      if(tree != null) {
+         final JLabel ratioLabel = new JLabel("Split Ratio (screen area)");
+         final JSpinner ratioSpinner = new JSpinner(new SpinnerNumberModel(tree.getLevelOfDetail(), 0.1, Double.MAX_VALUE, 0.1));
+         final JPanel ratioSpinnerPanel = new JPanel();
+         ratioSpinnerPanel.setLayout(new GridLayout(1, 2));
+         ratioSpinnerPanel.setMaximumSize(new Dimension(300, 30));
+         ratioSpinnerPanel.add(ratioLabel);
+         ratioSpinnerPanel.add(ratioSpinner);
+         options.add(ratioSpinnerPanel);
+   
+         ratioSpinner.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+               tree.setLevelOfDetail(((Number) ratioSpinner.getValue()).doubleValue());
+            }
+         });
+      }
 
       final JLabel gridLabel = new JLabel("Grid Size (meters)");
       final JSpinner gridSpinner = new JSpinner(new SpinnerNumberModel(pointSelector.getGridSizeMeters(), 0.1, Double.MAX_VALUE, 0.1));
@@ -284,23 +288,25 @@ public class ThesisVisualization extends JFrame {
          }
       });
 
-      final Timings timings = tree.getTimings();
-      final JTextArea timingsArea = new JTextArea();
-      final JScrollPane timingsScroll = new JScrollPane(timingsArea);
-      timingsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-      timingsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      options.add(timingsScroll);
-
-      final long[] last = new long[] { 0 };
-      
-      this.scene.addPostProcessor((gl, glu, scene) -> {
-         final long time = System.nanoTime();
+      if(tree != null) {
+         final Timings timings = tree.getTimings();
+         final JTextArea timingsArea = new JTextArea();
+         final JScrollPane timingsScroll = new JScrollPane(timingsArea);
+         timingsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+         timingsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+         options.add(timingsScroll);
+   
+         final long[] last = new long[] { 0 };
          
-         if(last[0] + 1000000000 > time) {
-            last[0] = time;
-            timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
-         }
-      });
+         this.scene.addPostProcessor((gl, glu, scene) -> {
+            final long time = System.nanoTime();
+            
+            if(last[0] + 1000000000 > time) {
+               last[0] = time;
+               timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
+            }
+         });
+      }
 
       this.getContentPane().setLayout(new BorderLayout());
       this.getContentPane().add(this.scene, BorderLayout.CENTER);
@@ -308,7 +314,7 @@ public class ThesisVisualization extends JFrame {
 
       SwingUtilities.invokeLater(() -> {
          this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-         this.setLocation(100, 100);
+         this.setLocation(3940, 100);
          this.pack();
          this.scene.start();
          this.setVisible(true);

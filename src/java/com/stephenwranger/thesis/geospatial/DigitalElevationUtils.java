@@ -48,24 +48,27 @@ public class DigitalElevationUtils {
    }
 
    public static void buildCatalog() {
-      final File catalogDirectory = new File(DigitalElevationUtils.DEM3_DIRECTORY);
-      final File catalog = new File(catalogDirectory, DigitalElevationUtils.CATALOG_FILENAME);
-      final Map<Pair<Integer, Integer>, String> files = DigitalElevationUtils.getFileBounds(catalogDirectory);
-      final StringBuilder sb = new StringBuilder();
-      final List<Pair<Integer, Integer>> keys = new ArrayList<>();
-      keys.addAll(files.keySet());
-
-      Collections.sort(keys);
-
-      for (final Pair<Integer, Integer> key : keys) {
-         final String value = files.get(key);
-         sb.append(key.left).append(DigitalElevationUtils.COMMA).append(key.right).append(DigitalElevationUtils.COMMA).append(value).append(DigitalElevationUtils.NEWLINE);
-      }
-
-      try (final BufferedWriter writer = new BufferedWriter(new FileWriter(catalog))) {
-         writer.write(sb.toString());
-      } catch (final IOException e) {
-         e.printStackTrace();
+      if(DigitalElevationUtils.DEM3_DIRECTORY != null) {
+         final File catalogDirectory = new File(DigitalElevationUtils.DEM3_DIRECTORY);
+         final File catalog = new File(catalogDirectory, DigitalElevationUtils.CATALOG_FILENAME);
+         
+         final Map<Pair<Integer, Integer>, String> files = DigitalElevationUtils.getFileBounds(catalogDirectory);
+         final StringBuilder sb = new StringBuilder();
+         final List<Pair<Integer, Integer>> keys = new ArrayList<>();
+         keys.addAll(files.keySet());
+   
+         Collections.sort(keys);
+   
+         for (final Pair<Integer, Integer> key : keys) {
+            final String value = files.get(key);
+            sb.append(key.left).append(DigitalElevationUtils.COMMA).append(key.right).append(DigitalElevationUtils.COMMA).append(value).append(DigitalElevationUtils.NEWLINE);
+         }
+   
+         try (final BufferedWriter writer = new BufferedWriter(new FileWriter(catalog))) {
+            writer.write(sb.toString());
+         } catch (final IOException e) {
+            e.printStackTrace();
+         }
       }
    }
 
