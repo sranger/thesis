@@ -77,7 +77,7 @@ public class TriangleMerge {
          final Tuple2d v0 = new Tuple2d(min2d.x - 1, min2d.y - 1);
          final Tuple2d v1 = new Tuple2d(min2d.x + triangleBase + 1, min2d.y - 1);
          final Tuple2d v2 = new Tuple2d(min2d.x - 1, min2d.y + triangleHeight + 1);
-         final Triangle2d boundingTriangle = new Triangle2d(v0, v1, v2);
+         final Triangle2d boundingTriangle = new Triangle2d(v0, v1, v2, false);
          final DelaunayTriangulation delaunay = new DelaunayTriangulation(boundingTriangle);
 
          for (final Triangle3d triangle : this.triangles) {
@@ -98,10 +98,10 @@ public class TriangleMerge {
          }
 
          for (final Triangle2d triangle : delaunay.getTriangles()) {
-            final Tuple2d[] corners = triangle.getCorners();
-            final Tuple3d c0 = TriangleMerge.get3d(corners[0], unprojectedPoints);
-            final Tuple3d c1 = TriangleMerge.get3d(corners[1], unprojectedPoints);
-            final Tuple3d c2 = TriangleMerge.get3d(corners[2], unprojectedPoints);
+            final Tuple2d[] corners = triangle.getCorners(false);
+            final Tuple3d c0 = unprojectedPoints.get(corners[0]);
+            final Tuple3d c1 = unprojectedPoints.get(corners[1]);
+            final Tuple3d c2 = unprojectedPoints.get(corners[2]);
 
             if ((c0 != null) && (c1 != null) && (c2 != null)) {
                Triangle3d tri = new Triangle3d(c0, c1, c2);
@@ -116,21 +116,5 @@ public class TriangleMerge {
 
       System.out.println("triangle count: " + output.size());
       return output;
-   }
-
-   private static Tuple3d get3d(final Tuple2d point2d, final Map<Tuple2d, Tuple3d> map) {
-      Tuple2d closestKey = null;
-      double closest = Double.MAX_VALUE;
-
-      for (final Tuple2d p : map.keySet()) {
-         final double temp = p.distanceSquared(point2d);
-
-         if (temp < closest) {
-            closestKey = p;
-            closest = temp;
-         }
-      }
-
-      return (closest == 0) ? map.get(closestKey) : null;
    }
 }

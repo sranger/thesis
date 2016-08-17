@@ -30,7 +30,6 @@ import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.IntersectionUtils;
 import com.stephenwranger.graphics.math.intersection.LineSegment;
-import com.stephenwranger.graphics.math.intersection.Plane;
 import com.stephenwranger.graphics.math.intersection.Triangle2d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.renderables.PointRenderable;
@@ -494,7 +493,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       final Tuple2d c1 = new Tuple2d(min.x - 1, min.y - 1);
       final Tuple2d c2 = new Tuple2d(min.x + xRange + 1, min.y - 1);
       final Tuple2d c3 = new Tuple2d(min.x - 1, min.y + yRange + 1);
-      final Triangle2d boundingTriangle = new Triangle2d(c1, c2, c3);
+      final Triangle2d boundingTriangle = new Triangle2d(c1, c2, c3, false);
       final DelaunayTriangulation dt = new DelaunayTriangulation(boundingTriangle);
       
       for(final Tuple3d xyDepth : visiblePoints) {
@@ -511,11 +510,11 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       final Vector3d viewVector = scene.getViewVector();
       
       for(final Triangle2d triangle : dt.getTriangles()) {
-         final Tuple2d[] corners = triangle.getCorners();
-         
-         final Tuple3d p1 = ContextAwarePointSelection.get3d(corners[0], projectedPoints);
-         final Tuple3d p2 = ContextAwarePointSelection.get3d(corners[1], projectedPoints);
-         final Tuple3d p3 = ContextAwarePointSelection.get3d(corners[2], projectedPoints);
+         final Tuple2d[] corners = triangle.getCorners(false);
+
+         final Tuple3d p1 = projectedPoints.get(corners[0]);
+         final Tuple3d p2 = projectedPoints.get(corners[1]);
+         final Tuple3d p3 = projectedPoints.get(corners[2]);
 
          if ((p1 != null) && (p2 != null) && (p3 != null)) {
             Triangle3d tri = new Triangle3d(p1, p2, p3);
@@ -524,6 +523,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
                tri = new Triangle3d(p2, p1, p3);
             }
             output.add(tri);
+         } else {
+            System.err.println("cannot find 3d match: " + p1 + ", " + p2 + ", " + p3);
          }
       }
       
@@ -542,23 +543,6 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       }
       
       return false;
-   }
-
-   public static Tuple3d get3d(final Tuple2d point2d, final Map<Tuple3d, Tuple3d> map) {
-      Tuple3d closestKey = null;
-      double closest = Double.MAX_VALUE;
-
-      for (final Tuple3d p : map.keySet()) {
-         final double temp = p.xy().distanceSquared(point2d);
-
-         if (temp < closest) {
-            closestKey = p;
-            closest = temp;
-         }
-      }
-
-//      return (closest == 0) ? map.get(closestKey) : null;
-      return map.get(closestKey);
    }
 
    private static Triangle3d[] getTriangles(final List<GridCell> cells) {
