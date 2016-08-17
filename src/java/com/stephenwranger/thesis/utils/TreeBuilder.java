@@ -116,6 +116,7 @@ public class TreeBuilder {
          }
          
          printStats(count, pointCount, (System.nanoTime() - startTime));
+         System.out.println("\n");
       }
       
       System.out.println("tree built: " + this.tree.getCellCount());

@@ -1,0 +1,7 @@
+Build Time
+----------------------------------------------------------
+subcell size: 		100x100x100
+point count: 		163251931
+Elapsed: 		13h 22m
+cells built: 		45552
+export to filesystem: 	24s 855ms

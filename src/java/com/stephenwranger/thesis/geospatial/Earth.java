@@ -84,17 +84,19 @@ public class Earth extends Renderable {
       final double closeDistance = (WGS84.EQUATORIAL_RADIUS / sin);
 
       final Tuple3d cameraPosition = scene.getCameraPosition();
-      // distance from camera to center of earth
-      //      final double distance = TupleMath.length(TupleMath.add(cameraPosition, scene.getOrigin()));
-      final double distance = cameraPosition.distance(scene.getLookAt());
-      double far = distance * 1.618;
-      double near = far / Earth.MAX_DEPTH_RATIO;
+      final Tuple3d lookAt = scene.getLookAt();
+
+      // distance from camera to anchor
+      final double distance = cameraPosition.distance(lookAt);
+      double near = distance * 0.9;
+      double far = near + (WGS84.EQUATORIAL_RADIUS * 2.0);
 
       if (distance <= closeDistance) {
          final double[] nearFar = this.getNearFarDistances(scene);
 
          if ((nearFar[0] != Double.MAX_VALUE) && (nearFar[1] != -Double.MAX_VALUE)) {
-            return nearFar;
+            near = nearFar[0];
+            far = nearFar[1];
          }
       }
 
