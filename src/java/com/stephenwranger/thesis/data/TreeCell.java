@@ -24,10 +24,6 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       EMPTY, PENDING, COMPLETE
    }
 
-   static {
-      System.out.println(System.getProperty("java.io.tmpdir"));
-   }
-
    public final String                        path;
    private final TreeStructure                tree;
    private final BoundingVolume               bounds;

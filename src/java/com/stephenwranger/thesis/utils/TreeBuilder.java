@@ -87,7 +87,7 @@ public class TreeBuilder {
          if(!file.getName().endsWith(".dat")) {
             continue;
          }
-         System.out.println("Reading:" + file.getAbsolutePath());
+         System.out.println("Reading:" + file.getAbsolutePath() + "\n");
          
          try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file))) {
             while(fin.read(buffer) > -1) {
@@ -116,7 +116,6 @@ public class TreeBuilder {
          }
          
          printStats(count, pointCount, (System.nanoTime() - startTime));
-         System.out.println("\n");
       }
       
       System.out.println("tree built: " + this.tree.getCellCount());
