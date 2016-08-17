@@ -71,27 +71,6 @@ public class ThesisVisualization extends JFrame {
       this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
-      this.scene.addKeyListener(new KeyAdapter() {
-         @Override
-         public void keyPressed(final KeyEvent event) {
-            if (event.getKeyCode() == KeyEvent.VK_W) {
-               ThesisVisualization.this.earth.setWireframe(!ThesisVisualization.this.earth.isWireframe());
-            } else if (event.getKeyCode() == KeyEvent.VK_E) {
-               if (ThesisVisualization.this.earth.inScene()) {
-                  ThesisVisualization.this.earth.remove();
-               } else {
-                  ThesisVisualization.this.scene.addRenderable(ThesisVisualization.this.earth);
-               }
-            } else if (event.getKeyCode() == KeyEvent.VK_L) {
-               ThesisVisualization.this.earth.setLightingEnabled(!ThesisVisualization.this.earth.isLightingEnabled());
-            } else if (event.getKeyCode() == KeyEvent.VK_LEFT) {
-               ThesisVisualization.this.earth.setLoadFactor(Math.max(0.01, ThesisVisualization.this.earth.getLoadFactor() - 0.01));
-            } else if (event.getKeyCode() == KeyEvent.VK_RIGHT) {
-               ThesisVisualization.this.earth.setLoadFactor(ThesisVisualization.this.earth.getLoadFactor() + 0.01);
-            }
-         }
-      });
-
       this.addFrustumRenderable();
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
@@ -312,6 +291,19 @@ public class ThesisVisualization extends JFrame {
       this.getContentPane().setLayout(new BorderLayout());
       this.getContentPane().add(this.scene, BorderLayout.CENTER);
       this.getContentPane().add(options, BorderLayout.WEST);
+      
+      this.scene.addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyPressed(final KeyEvent event) {
+            if (event.getKeyCode() == KeyEvent.VK_W) {
+               wireframeCheckBox.doClick();
+            } else if (event.getKeyCode() == KeyEvent.VK_E) {
+               drawEarthCheckBox.doClick();
+            } else if (event.getKeyCode() == KeyEvent.VK_L) {
+               ThesisVisualization.this.earth.setLightingEnabled(!ThesisVisualization.this.earth.isLightingEnabled());
+            }
+         }
+      });
 
       SwingUtilities.invokeLater(() -> {
          this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
