@@ -81,10 +81,6 @@ public abstract class TreeStructure implements Iterable<TreeCell> {
       this(attributes, null, maxPoints, null);
    }
    
-   protected boolean containsKey(final PointIndex index) {
-      return this.pointsCache.containsKey(index);
-   }
-   
    /**
     * Retrieves the {@link Point} at the given {@link PointIndex} in the points cache.
     * @param index the point index

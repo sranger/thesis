@@ -73,7 +73,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       final PointIndex pointIndex = new PointIndex(this.path, index);
       TreeCell insertedInto = this;
 
-      if (this.tree.containsKey(pointIndex)) {
+      if (this.points.contains(pointIndex)) {
          insertedInto = this.getChildCell(tree, point.getXYZ(tree, this.tempTuple));
 
          final Point current = this.getPoint(pointIndex);
@@ -318,11 +318,12 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       
       if (this.pointBuffer != null) {
          throw new RuntimeException("Cannot add points to a TreeCell initialized via byte array");
-      } else if (this.tree.containsKey(pointIndex)) {
+      } else if (this.points.contains(pointIndex)) {
          throw new RuntimeException(
                "Cannot add new Point when existing Point resides at the given index; use TreeCell.getPoint(int) to determine whether an index is occupied and TreeCell.swapPoint(int, Point) to replace a Point at a given index.");
       }
 
+      this.points.add(pointIndex);
       this.tree.setPoint(pointIndex, point);
    }
 
@@ -424,7 +425,7 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
       
       if (this.pointBuffer != null) {
          throw new RuntimeException("Cannot modify points to a TreeCell initialized via byte array");
-      } else if (!this.tree.containsKey(pointIndex)) {
+      } else if (!this.points.contains(pointIndex)) {
          throw new RuntimeException(
                "Cannot swap new Point when existing Point does not exist at the given index; use TreeCell.getPoint(int) to determine whether an index is occupied and TreeCell.addPoint(int, Point) to add a new Point at a given index.");
       }

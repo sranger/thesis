@@ -32,15 +32,23 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       MOUSE_DRAG_LEFT, MOUSE_DRAG_RIGHT, MOUSE_CLICK;
    }
 
-   private static final Vector3d     RIGHT_VECTOR     = new Vector3d(0, 1, 0);
+   public static final double AZIMUTH_NORTH = 0;
+   public static final double AZIMUTH_EAST = -MathUtils.HALF_PI;
+   public static final double AZIMUTH_SOUTH = -Math.PI;
+   public static final double AZIMUTH_WEST = MathUtils.HALF_PI;
+   
+   public static final double ELEVATION_HORIZON = 0;
+   public static final double ELEVATION_ZENITH = MathUtils.HALF_PI;
 
-   private static final Vector3d     UP_VECTOR        = new Vector3d(0, 0, -1);
+   private static final Vector3d     FORWARD_VECTOR     = new Vector3d(0, 0, -1);
+
+   private static final Vector3d     UP_VECTOR        = new Vector3d(0, 1, 0);
 
    private final DecimalFormat       formatter        = new DecimalFormat("0.000");
    private final Scene               scene;
    private final TextRenderable      textRenderer;
    private final Tuple3d             anchor           = WGS84.geodesicToCartesian(new Tuple3d());
-   private final SphericalCoordinate cameraCoordinate = new SphericalCoordinate(0, 0, 2e7);
+   private final SphericalCoordinate cameraCoordinate = new SphericalCoordinate(AZIMUTH_SOUTH, ELEVATION_ZENITH, 2e7);
 
    private Point                     previousEvent    = null;
    private Point                     currentEvent     = null;
@@ -186,14 +194,14 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
             }
          }
 
-         // get geodetic coordinate of anchor
+         // get geodesic coordinate of anchor
          final Tuple3d lonLatAlt = WGS84.cartesianToGeodesic(this.anchor);
          // get orientation of anchor in relation to local surface reference frame (up is surface normal at anchor)
          final Quat4d orientation = WGS84.getOrientation(lonLatAlt.x, lonLatAlt.y);
          final Quat4d sphericalRotation = this.cameraCoordinate.getOrientation();
 
          // create rotation that converts local reference vector to point towards local camera position
-         final Vector3d toCamera = new Vector3d(SphericalNavigator.RIGHT_VECTOR);
+         final Vector3d toCamera = new Vector3d(SphericalNavigator.FORWARD_VECTOR);
          sphericalRotation.mult(toCamera);
          orientation.mult(toCamera);
          toCamera.scale(this.cameraCoordinate.getRange());
@@ -298,7 +306,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
             final double azimuth = ((x / (double) scene.getWidth()) * Math.PI);
             final double elevation = ((y / (double) scene.getHeight()) * Math.PI);
 
-            this.cameraCoordinate.update(azimuth, elevation, 0);
+            this.cameraCoordinate.update(azimuth, -elevation, 0);
          }
       }
 
