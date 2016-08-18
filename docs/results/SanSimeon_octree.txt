@@ -6,6 +6,10 @@ Elapsed: 		5h 6m
 cells built: 		389771
 export to filesystem: 	35m 35s
 max cell point count:   44223
+depth:                  31
+dir count:              389771
+file count:             779543
+filesize:               11 GiB, 109 MiB
 
 Reading:-120.87_35.39_to_-120.86_35.40.dat
 [10.42%]: 17023620 of 163251931 completed. Elapsed: 27m 31s, ETA: 3h 56m
