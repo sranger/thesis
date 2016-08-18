@@ -6,6 +6,7 @@ import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
+import com.stephenwranger.thesis.icosatree.Icosatree;
 
 public class Octree extends TreeStructure {
    
@@ -77,5 +78,27 @@ public class Octree extends TreeStructure {
    public static int getIndex(final String path, final int charIndex) {
       final char ch = path.charAt(charIndex);
       return Integer.parseInt(Character.toString(ch));
+   }
+   
+   public static void main(final String[] args) {
+      String path = "";
+      
+      for(int i = 0; i < 50; i++) {
+         final BoundingVolume bounds = Icosatree.getCellBoundingVolume(path);
+         System.out.println();
+         System.out.println("path depth:     " + path.length());
+         System.out.println("   type:        " + bounds.getClass().getSimpleName());
+         System.out.println("   axis bounds: " + bounds.getDimensions());
+         
+         if(bounds instanceof BoundingBox) {
+            final BoundingBox bb = (BoundingBox) bounds;
+            System.out.println("   X-Y area:    " + bb.getXYSideArea() + " m^2");
+            System.out.println("   X-Z area:    " + bb.getXZSideArea() + " m^2");
+            System.out.println("   Y-Z area:    " + bb.getYZSideArea() + " m^2");
+            System.out.println("   volume:      " + bb.getVolume() + " m^3");
+         }
+         
+         path = Octree.getCellPath(path, 0);
+      }
    }
 }

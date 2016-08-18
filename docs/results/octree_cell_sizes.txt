@@ -1,0 +1,401 @@
+
+path depth:     0
+   type:        BoundingBox
+   axis bounds: (1.6777216E7, 1.6777216E7, 1.6777216E7)
+   X-Y area:    2.81474976710656E14 m^2
+   X-Z area:    2.81474976710656E14 m^2
+   Y-Z area:    2.81474976710656E14 m^2
+   volume:      4.722366482869645E21 m^3
+
+path depth:     1
+   type:        BoundingBox
+   axis bounds: (8388608.0, 8388608.0, 8388608.0)
+   X-Y area:    7.0368744177664E13 m^2
+   X-Z area:    7.0368744177664E13 m^2
+   Y-Z area:    7.0368744177664E13 m^2
+   volume:      5.9029581035870565E20 m^3
+
+path depth:     2
+   type:        BoundingBox
+   axis bounds: (4194304.0, 4194304.0, 4194304.0)
+   X-Y area:    1.7592186044416E13 m^2
+   X-Z area:    1.7592186044416E13 m^2
+   Y-Z area:    1.7592186044416E13 m^2
+   volume:      7.378697629483821E19 m^3
+
+path depth:     3
+   type:        BoundingBox
+   axis bounds: (2097152.0, 2097152.0, 2097152.0)
+   X-Y area:    4.398046511104E12 m^2
+   X-Z area:    4.398046511104E12 m^2
+   Y-Z area:    4.398046511104E12 m^2
+   volume:      9.223372036854776E18 m^3
+
+path depth:     4
+   type:        BoundingBox
+   axis bounds: (1048576.0, 1048576.0, 1048576.0)
+   X-Y area:    1.099511627776E12 m^2
+   X-Z area:    1.099511627776E12 m^2
+   Y-Z area:    1.099511627776E12 m^2
+   volume:      1.15292150460684698E18 m^3
+
+path depth:     5
+   type:        BoundingBox
+   axis bounds: (524288.0, 524288.0, 524288.0)
+   X-Y area:    2.74877906944E11 m^2
+   X-Z area:    2.74877906944E11 m^2
+   Y-Z area:    2.74877906944E11 m^2
+   volume:      1.44115188075855872E17 m^3
+
+path depth:     6
+   type:        BoundingBox
+   axis bounds: (262144.0, 262144.0, 262144.0)
+   X-Y area:    6.8719476736E10 m^2
+   X-Z area:    6.8719476736E10 m^2
+   Y-Z area:    6.8719476736E10 m^2
+   volume:      1.8014398509481984E16 m^3
+
+path depth:     7
+   type:        BoundingBox
+   axis bounds: (131072.0, 131072.0, 131072.0)
+   X-Y area:    1.7179869184E10 m^2
+   X-Z area:    1.7179869184E10 m^2
+   Y-Z area:    1.7179869184E10 m^2
+   volume:      2.251799813685248E15 m^3
+
+path depth:     8
+   type:        BoundingBox
+   axis bounds: (65536.0, 65536.0, 65536.0)
+   X-Y area:    4.294967296E9 m^2
+   X-Z area:    4.294967296E9 m^2
+   Y-Z area:    4.294967296E9 m^2
+   volume:      2.81474976710656E14 m^3
+
+path depth:     9
+   type:        BoundingBox
+   axis bounds: (32768.0, 32768.0, 32768.0)
+   X-Y area:    1.073741824E9 m^2
+   X-Z area:    1.073741824E9 m^2
+   Y-Z area:    1.073741824E9 m^2
+   volume:      3.5184372088832E13 m^3
+
+path depth:     10
+   type:        BoundingBox
+   axis bounds: (16384.0, 16384.0, 16384.0)
+   X-Y area:    2.68435456E8 m^2
+   X-Z area:    2.68435456E8 m^2
+   Y-Z area:    2.68435456E8 m^2
+   volume:      4.398046511104E12 m^3
+
+path depth:     11
+   type:        BoundingBox
+   axis bounds: (8192.0, 8192.0, 8192.0)
+   X-Y area:    6.7108864E7 m^2
+   X-Z area:    6.7108864E7 m^2
+   Y-Z area:    6.7108864E7 m^2
+   volume:      5.49755813888E11 m^3
+
+path depth:     12
+   type:        BoundingBox
+   axis bounds: (4096.0, 4096.0, 4096.0)
+   X-Y area:    1.6777216E7 m^2
+   X-Z area:    1.6777216E7 m^2
+   Y-Z area:    1.6777216E7 m^2
+   volume:      6.8719476736E10 m^3
+
+path depth:     13
+   type:        BoundingBox
+   axis bounds: (2048.0, 2048.0, 2048.0)
+   X-Y area:    4194304.0 m^2
+   X-Z area:    4194304.0 m^2
+   Y-Z area:    4194304.0 m^2
+   volume:      8.589934592E9 m^3
+
+path depth:     14
+   type:        BoundingBox
+   axis bounds: (1024.0, 1024.0, 1024.0)
+   X-Y area:    1048576.0 m^2
+   X-Z area:    1048576.0 m^2
+   Y-Z area:    1048576.0 m^2
+   volume:      1.073741824E9 m^3
+
+path depth:     15
+   type:        BoundingBox
+   axis bounds: (512.0, 512.0, 512.0)
+   X-Y area:    262144.0 m^2
+   X-Z area:    262144.0 m^2
+   Y-Z area:    262144.0 m^2
+   volume:      1.34217728E8 m^3
+
+path depth:     16
+   type:        BoundingBox
+   axis bounds: (256.0, 256.0, 256.0)
+   X-Y area:    65536.0 m^2
+   X-Z area:    65536.0 m^2
+   Y-Z area:    65536.0 m^2
+   volume:      1.6777216E7 m^3
+
+path depth:     17
+   type:        BoundingBox
+   axis bounds: (128.0, 128.0, 128.0)
+   X-Y area:    16384.0 m^2
+   X-Z area:    16384.0 m^2
+   Y-Z area:    16384.0 m^2
+   volume:      2097152.0 m^3
+
+path depth:     18
+   type:        BoundingBox
+   axis bounds: (64.0, 64.0, 64.0)
+   X-Y area:    4096.0 m^2
+   X-Z area:    4096.0 m^2
+   Y-Z area:    4096.0 m^2
+   volume:      262144.0 m^3
+
+path depth:     19
+   type:        BoundingBox
+   axis bounds: (32.0, 32.0, 32.0)
+   X-Y area:    1024.0 m^2
+   X-Z area:    1024.0 m^2
+   Y-Z area:    1024.0 m^2
+   volume:      32768.0 m^3
+
+path depth:     20
+   type:        BoundingBox
+   axis bounds: (16.0, 16.0, 16.0)
+   X-Y area:    256.0 m^2
+   X-Z area:    256.0 m^2
+   Y-Z area:    256.0 m^2
+   volume:      4096.0 m^3
+
+path depth:     21
+   type:        BoundingBox
+   axis bounds: (8.0, 8.0, 8.0)
+   X-Y area:    64.0 m^2
+   X-Z area:    64.0 m^2
+   Y-Z area:    64.0 m^2
+   volume:      512.0 m^3
+
+path depth:     22
+   type:        BoundingBox
+   axis bounds: (4.0, 4.0, 4.0)
+   X-Y area:    16.0 m^2
+   X-Z area:    16.0 m^2
+   Y-Z area:    16.0 m^2
+   volume:      64.0 m^3
+
+path depth:     23
+   type:        BoundingBox
+   axis bounds: (2.0, 2.0, 2.0)
+   X-Y area:    4.0 m^2
+   X-Z area:    4.0 m^2
+   Y-Z area:    4.0 m^2
+   volume:      8.0 m^3
+
+path depth:     24
+   type:        BoundingBox
+   axis bounds: (1.0, 1.0, 1.0)
+   X-Y area:    1.0 m^2
+   X-Z area:    1.0 m^2
+   Y-Z area:    1.0 m^2
+   volume:      1.0 m^3
+
+path depth:     25
+   type:        BoundingBox
+   axis bounds: (0.5, 0.5, 0.5)
+   X-Y area:    0.25 m^2
+   X-Z area:    0.25 m^2
+   Y-Z area:    0.25 m^2
+   volume:      0.125 m^3
+
+path depth:     26
+   type:        BoundingBox
+   axis bounds: (0.25, 0.25, 0.25)
+   X-Y area:    0.0625 m^2
+   X-Z area:    0.0625 m^2
+   Y-Z area:    0.0625 m^2
+   volume:      0.015625 m^3
+
+path depth:     27
+   type:        BoundingBox
+   axis bounds: (0.125, 0.125, 0.125)
+   X-Y area:    0.015625 m^2
+   X-Z area:    0.015625 m^2
+   Y-Z area:    0.015625 m^2
+   volume:      0.001953125 m^3
+
+path depth:     28
+   type:        BoundingBox
+   axis bounds: (0.0625, 0.0625, 0.0625)
+   X-Y area:    0.00390625 m^2
+   X-Z area:    0.00390625 m^2
+   Y-Z area:    0.00390625 m^2
+   volume:      2.44140625E-4 m^3
+
+path depth:     29
+   type:        BoundingBox
+   axis bounds: (0.03125, 0.03125, 0.03125)
+   X-Y area:    9.765625E-4 m^2
+   X-Z area:    9.765625E-4 m^2
+   Y-Z area:    9.765625E-4 m^2
+   volume:      3.0517578125E-5 m^3
+
+path depth:     30
+   type:        BoundingBox
+   axis bounds: (0.015625, 0.015625, 0.015625)
+   X-Y area:    2.44140625E-4 m^2
+   X-Z area:    2.44140625E-4 m^2
+   Y-Z area:    2.44140625E-4 m^2
+   volume:      3.814697265625E-6 m^3
+
+path depth:     31
+   type:        BoundingBox
+   axis bounds: (0.0078125, 0.0078125, 0.0078125)
+   X-Y area:    6.103515625E-5 m^2
+   X-Z area:    6.103515625E-5 m^2
+   Y-Z area:    6.103515625E-5 m^2
+   volume:      4.76837158203125E-7 m^3
+
+path depth:     32
+   type:        BoundingBox
+   axis bounds: (0.00390625, 0.00390625, 0.00390625)
+   X-Y area:    1.52587890625E-5 m^2
+   X-Z area:    1.52587890625E-5 m^2
+   Y-Z area:    1.52587890625E-5 m^2
+   volume:      5.9604644775390625E-8 m^3
+
+path depth:     33
+   type:        BoundingBox
+   axis bounds: (0.001953125, 0.001953125, 0.001953125)
+   X-Y area:    3.814697265625E-6 m^2
+   X-Z area:    3.814697265625E-6 m^2
+   Y-Z area:    3.814697265625E-6 m^2
+   volume:      7.450580596923828E-9 m^3
+
+path depth:     34
+   type:        BoundingBox
+   axis bounds: (9.765625E-4, 9.765625E-4, 9.765625E-4)
+   X-Y area:    9.5367431640625E-7 m^2
+   X-Z area:    9.5367431640625E-7 m^2
+   Y-Z area:    9.5367431640625E-7 m^2
+   volume:      9.313225746154785E-10 m^3
+
+path depth:     35
+   type:        BoundingBox
+   axis bounds: (4.8828125E-4, 4.8828125E-4, 4.8828125E-4)
+   X-Y area:    2.384185791015625E-7 m^2
+   X-Z area:    2.384185791015625E-7 m^2
+   Y-Z area:    2.384185791015625E-7 m^2
+   volume:      1.1641532182693481E-10 m^3
+
+path depth:     36
+   type:        BoundingBox
+   axis bounds: (2.44140625E-4, 2.44140625E-4, 2.44140625E-4)
+   X-Y area:    5.9604644775390625E-8 m^2
+   X-Z area:    5.9604644775390625E-8 m^2
+   Y-Z area:    5.9604644775390625E-8 m^2
+   volume:      1.4551915228366852E-11 m^3
+
+path depth:     37
+   type:        BoundingBox
+   axis bounds: (1.220703125E-4, 1.220703125E-4, 1.220703125E-4)
+   X-Y area:    1.4901161193847656E-8 m^2
+   X-Z area:    1.4901161193847656E-8 m^2
+   Y-Z area:    1.4901161193847656E-8 m^2
+   volume:      1.8189894035458565E-12 m^3
+
+path depth:     38
+   type:        BoundingBox
+   axis bounds: (6.103515625E-5, 6.103515625E-5, 6.103515625E-5)
+   X-Y area:    3.725290298461914E-9 m^2
+   X-Z area:    3.725290298461914E-9 m^2
+   Y-Z area:    3.725290298461914E-9 m^2
+   volume:      2.2737367544323206E-13 m^3
+
+path depth:     39
+   type:        BoundingBox
+   axis bounds: (3.0517578125E-5, 3.0517578125E-5, 3.0517578125E-5)
+   X-Y area:    9.313225746154785E-10 m^2
+   X-Z area:    9.313225746154785E-10 m^2
+   Y-Z area:    9.313225746154785E-10 m^2
+   volume:      2.8421709430404007E-14 m^3
+
+path depth:     40
+   type:        BoundingBox
+   axis bounds: (1.52587890625E-5, 1.52587890625E-5, 1.52587890625E-5)
+   X-Y area:    2.3283064365386963E-10 m^2
+   X-Z area:    2.3283064365386963E-10 m^2
+   Y-Z area:    2.3283064365386963E-10 m^2
+   volume:      3.552713678800501E-15 m^3
+
+path depth:     41
+   type:        BoundingBox
+   axis bounds: (7.62939453125E-6, 7.62939453125E-6, 7.62939453125E-6)
+   X-Y area:    5.820766091346741E-11 m^2
+   X-Z area:    5.820766091346741E-11 m^2
+   Y-Z area:    5.820766091346741E-11 m^2
+   volume:      4.440892098500626E-16 m^3
+
+path depth:     42
+   type:        BoundingBox
+   axis bounds: (3.814697265625E-6, 3.814697265625E-6, 3.814697265625E-6)
+   X-Y area:    1.4551915228366852E-11 m^2
+   X-Z area:    1.4551915228366852E-11 m^2
+   Y-Z area:    1.4551915228366852E-11 m^2
+   volume:      5.551115123125783E-17 m^3
+
+path depth:     43
+   type:        BoundingBox
+   axis bounds: (1.9073486328125E-6, 1.9073486328125E-6, 1.9073486328125E-6)
+   X-Y area:    3.637978807091713E-12 m^2
+   X-Z area:    3.637978807091713E-12 m^2
+   Y-Z area:    3.637978807091713E-12 m^2
+   volume:      6.938893903907228E-18 m^3
+
+path depth:     44
+   type:        BoundingBox
+   axis bounds: (9.5367431640625E-7, 9.5367431640625E-7, 9.5367431640625E-7)
+   X-Y area:    9.094947017729282E-13 m^2
+   X-Z area:    9.094947017729282E-13 m^2
+   Y-Z area:    9.094947017729282E-13 m^2
+   volume:      8.673617379884035E-19 m^3
+
+path depth:     45
+   type:        BoundingBox
+   axis bounds: (4.76837158203125E-7, 4.76837158203125E-7, 4.76837158203125E-7)
+   X-Y area:    2.2737367544323206E-13 m^2
+   X-Z area:    2.2737367544323206E-13 m^2
+   Y-Z area:    2.2737367544323206E-13 m^2
+   volume:      1.0842021724855044E-19 m^3
+
+path depth:     46
+   type:        BoundingBox
+   axis bounds: (2.384185791015625E-7, 2.384185791015625E-7, 2.384185791015625E-7)
+   X-Y area:    5.6843418860808015E-14 m^2
+   X-Z area:    5.6843418860808015E-14 m^2
+   Y-Z area:    5.6843418860808015E-14 m^2
+   volume:      1.3552527156068805E-20 m^3
+
+path depth:     47
+   type:        BoundingBox
+   axis bounds: (1.1920928955078125E-7, 1.1920928955078125E-7, 1.1920928955078125E-7)
+   X-Y area:    1.4210854715202004E-14 m^2
+   X-Z area:    1.4210854715202004E-14 m^2
+   Y-Z area:    1.4210854715202004E-14 m^2
+   volume:      1.6940658945086007E-21 m^3
+
+path depth:     48
+   type:        BoundingBox
+   axis bounds: (5.9604644775390625E-8, 5.9604644775390625E-8, 5.9604644775390625E-8)
+   X-Y area:    3.552713678800501E-15 m^2
+   X-Z area:    3.552713678800501E-15 m^2
+   Y-Z area:    3.552713678800501E-15 m^2
+   volume:      2.1175823681357508E-22 m^3
+
+path depth:     49
+   type:        BoundingBox
+   axis bounds: (2.9802322387695312E-8, 2.9802322387695312E-8, 2.9802322387695312E-8)
+   X-Y area:    8.881784197001252E-16 m^2
+   X-Z area:    8.881784197001252E-16 m^2
+   Y-Z area:    8.881784197001252E-16 m^2
+   volume:      2.6469779601696886E-23 m^3
+

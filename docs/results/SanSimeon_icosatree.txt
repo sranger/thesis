@@ -4,4 +4,30 @@ subcell size: 		100x100x100
 point count: 		163251931
 Elapsed: 		13h 22m
 cells built: 		45552
-export to filesystem: 	24s 855ms
+export to filesystem: 	18m 22s
+max cell point count:   540946
+
+Reading:-120.87_35.39_to_-120.86_35.40.dat
+[10.42%]: 17022575 of 163251931 completed. Elapsed: 1h 10m, ETA: 10h 6m
+Reading:-120.86_35.36_to_-120.85_35.37.dat
+[14.47%]: 23636504 of 163251931 completed. Elapsed: 1h 43m, ETA: 10h 11m
+Reading:-120.88_35.37_to_-120.87_35.38.dat
+[14.59%]: 23819610 of 163251931 completed. Elapsed: 1h 44m, ETA: 10h 11m
+Reading:-120.88_35.36_to_-120.87_35.37.dat
+[14.7%]: 23998122 of 163251931 completed. Elapsed: 1h 45m, ETA: 10h 11m
+Reading:-120.87_35.37_to_-120.86_35.38.dat
+[27.88%]: 45526986 of 163251931 completed. Elapsed: 3h 44m, ETA: 9h 41m
+Reading:-120.86_35.39_to_-120.85_35.40.dat
+[37.43%]: 61115958 of 163251931 completed. Elapsed: 5h 4m, ETA: 8h 29m
+Reading:-120.85_35.36_to_-120.84_35.37.dat
+[45.93%]: 74988987 of 163251931 completed. Elapsed: 6h 12m, ETA: 7h 18m
+Reading:-120.86_35.38_to_-120.85_35.39.dat
+[57.05%]: 93141343 of 163251931 completed. Elapsed: 7h 40m, ETA: 5h 46m
+Reading:-120.87_35.36_to_-120.86_35.37.dat
+[63.78%]: 104128944 of 163251931 completed. Elapsed: 8h 33m, ETA: 4h 51m
+Reading:-120.87_35.38_to_-120.86_35.39.dat
+[73.82%]: 120522545 of 163251931 completed. Elapsed: 9h 54m, ETA: 3h 30m
+Reading:-120.86_35.37_to_-120.85_35.38.dat
+[88.04%]: 143730158 of 163251931 completed. Elapsed: 11h 48m, ETA: 1h 36m
+Reading:-120.85_35.37_to_-120.84_35.38.dat
+[100.0%]: 163251931 of 163251931 completed. Elapsed: 13h 22m, ETA: 0μs

@@ -287,6 +287,8 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
          this.gpuBuffer = BufferUtils.newByteBuffer(this.attributes.getGpuSize() * pointCount);
       }
 
+      this.gpuBuffer.rewind();
+
       final Tuple3d min = new Tuple3d(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
       final Tuple3d max = new Tuple3d(-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE);
 
