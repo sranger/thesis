@@ -37,7 +37,6 @@ import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.renderables.FrustumRenderable;
 import com.stephenwranger.graphics.renderables.TextRenderable;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
-import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.graphics.utils.Timings;
 import com.stephenwranger.thesis.data.Attribute;
 import com.stephenwranger.thesis.data.DataAttributes;
@@ -71,7 +70,7 @@ public class ThesisVisualization extends JFrame {
       this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
-      this.addFrustumRenderable();
+//      this.addFrustumRenderable();
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8643, 35.371, 0, SphericalNavigator.AZIMUTH_SOUTH, SphericalNavigator.ELEVATION_ZENITH, 2e7);

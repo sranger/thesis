@@ -253,4 +253,34 @@ public class Icosatree extends TreeStructure {
       
       return path;
    }
+   
+   public static void main(final String[] args) {
+      String path = "";
+      
+      for(int i = 0; i < 50; i++) {
+         final BoundingVolume bounds = Icosatree.getCellBoundingVolume(path);
+         System.out.println();
+         System.out.println("path depth:     " + path.length());
+         System.out.println("   type:        " + bounds.getClass().getSimpleName());
+         System.out.println("   axis bounds: " + bounds.getDimensions());
+         
+         if(bounds instanceof TrianglePrismVolume) {
+            final TrianglePrismVolume tpv = (TrianglePrismVolume) bounds;
+            final double topArea = tpv.getTopFace().getArea();
+            final double bottomArea = tpv.getBottomFace().getArea();
+            System.out.println("   depth:       " + tpv.getDepth() + " m");
+            System.out.println("   top area:    " + topArea + " m^2");
+            System.out.println("   bottom area: " + bottomArea + " m^2");
+            System.out.println("   volume:      " + tpv.getVolume() + " m^3");
+         } else if(bounds instanceof BoundingBox) {
+            final BoundingBox bb = (BoundingBox) bounds;
+            System.out.println("   X-Y area:    " + bb.getXYSideArea() + " m^2");
+            System.out.println("   X-Z area:    " + bb.getXZSideArea() + " m^2");
+            System.out.println("   Y-Z area:    " + bb.getYZSideArea() + " m^2");
+            System.out.println("   volume:      " + bb.getVolume() + " m^3");
+         }
+         
+         path = Icosatree.getCellPath(path, 0);
+      }
+   }
 }

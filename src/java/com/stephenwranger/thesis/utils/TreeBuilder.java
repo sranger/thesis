@@ -87,7 +87,7 @@ public class TreeBuilder {
          if(!file.getName().endsWith(".dat")) {
             continue;
          }
-         System.out.println("Reading:" + file.getAbsolutePath() + "\n");
+         System.out.println("Reading:" + file.getName() + "\n");
          
          try (final BufferedInputStream fin = new BufferedInputStream(new FileInputStream(file))) {
             while(fin.read(buffer) > -1) {
@@ -137,10 +137,10 @@ public class TreeBuilder {
    public void export(final File outputDirectory) {
       final long startTime = System.nanoTime();
       final int cellCount = this.tree.getCellCount();
-      double currentPrintPercentage = 0;
-      int count = 0;
+      long lastPrint = 0;
+      long count = 0;
       
-      System.out.println("exporting tree to " + outputDirectory);
+      System.out.println("exporting tree to " + outputDirectory + "\n");
       
       for(final TreeCell treeCell : this.tree) {
          final String path = treeCell.getPath();
@@ -150,6 +150,8 @@ public class TreeBuilder {
          if(path.isEmpty()) {
             datFile = new File(outputDirectory, "/root.dat");
             metaFile = new File(outputDirectory, "/root.txt");
+            
+            TreeImporter.exportAttributes(this.attributes, outputDirectory);
          } else {
             final String[] split = treeCell.getPath().substring(0, treeCell.getPath().length()).split("");
             final char childIndex = treeCell.getPath().charAt(treeCell.getPath().length()-1);
@@ -166,8 +168,13 @@ public class TreeBuilder {
             fout.write(String.join(",", treeCell.getChildList()));
             
             if(path.isEmpty()) {
+               final int[] countStats = this.getPointCountStats();
                fout.write("\n");
-               fout.write(Integer.toString(this.getMaxPointCount()));
+               fout.write("min: " + Integer.toString(countStats[0]));
+               fout.write("max: " + Integer.toString(countStats[1]));
+               fout.write("avg: " + Integer.toString(countStats[2]));
+               fout.write("cells: " + Integer.toString(countStats[3]));
+               fout.write("maxDepth: " + Integer.toString(countStats[4]));
             }
          } catch(final IOException e) {
             throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);
@@ -182,31 +189,40 @@ public class TreeBuilder {
          }
          
          count++;
+
+         final long elapsed = (System.nanoTime() - startTime);
          
-         double percentage = (count / (double) cellCount);
-         percentage *= 10000.0;
-         percentage = ((int) percentage) / 100.0;
-         
-         if(percentage >= currentPrintPercentage + 0.1) {
-            final long elapsed = (System.nanoTime() - startTime);
-            final long eta = (long) (((100.0 - percentage) * elapsed) / percentage);
-            System.out.println("[" + percentage + "%]: " + count + " of " + cellCount + " completed. Elapsed: " + TimeUtils.formatNanoseconds(elapsed) + ", ETA: " + TimeUtils.formatNanoseconds(eta));
-            currentPrintPercentage += 0.1;
+         if(elapsed - lastPrint > ONE_SECOND_NANO) {
+            lastPrint = elapsed;
+
+            printStats(count, cellCount, elapsed);
          }
       }
+
+      final long elapsed = (System.nanoTime() - startTime);
+      printStats(count, cellCount, elapsed);
       
       final long endTime = System.nanoTime();
       System.out.println(TimeUtils.formatNanoseconds(endTime - startTime));
    }
    
-   private int getMaxPointCount() {
+   private int[] getPointCountStats() {
+      int total = 0;
+      int minCount = Integer.MAX_VALUE;
       int maxCount = 0;
+      int cellCount = 0;
+      int maxDepth = 0;
       
       for(final TreeCell treeCell : this.tree) {
-         maxCount = Math.max(maxCount, treeCell.getPointCount());
+         final int count = treeCell.getPointCount();
+         minCount = Math.min(minCount, count);
+         maxCount = Math.max(maxCount, count);
+         total += count;
+         cellCount++;
+         maxDepth = Math.max(maxDepth, treeCell.path.length());
       }
       
-      return maxCount;
+      return new int[] { minCount, maxCount, (int) Math.ceil(total / (double) cellCount), cellCount };
    }
    
    private static List<Attribute> readAttributes(final File attributesFile) {

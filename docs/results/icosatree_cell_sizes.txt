@@ -1,0 +1,401 @@
+
+path depth:     0
+   type:        BoundingBox
+   axis bounds: (1.0368889724598555E7, 1.0368889724598555E7, 1.0368889724598555E7)
+   X-Y area:    1.075138741208855E14 m^2
+   X-Z area:    1.075138741208855E14 m^2
+   Y-Z area:    1.075138741208855E14 m^2
+   volume:      1.1147995046238321E21 m^3
+
+path depth:     1
+   type:        TrianglePrismVolume
+   axis bounds: (8388607.999999999, 8388607.999999999, 8388607.999999999)
+   depth:       3918202.8618867537 m
+   top area:    4.6554873123984586E13 m^2
+   bottom area: 1.1638718280996146E13 m^2
+   volume:      1.0640667164701648E20 m^3
+
+path depth:     2
+   type:        TrianglePrismVolume
+   axis bounds: (4842359.60778741, 5242880.0, 4194303.9999999995)
+   depth:       1959101.4309433764 m
+   top area:    1.1638718280996146E13 m^2
+   bottom area: 6.546779033060332E12 m^2
+   volume:      1.7576102013123254E19 m^3
+
+path depth:     3
+   type:        TrianglePrismVolume
+   axis bounds: (2583193.7058405573, 2883584.0, 2097151.9999999998)
+   depth:       979550.7154716887 m
+   top area:    2.9096795702490366E12 m^2
+   bottom area: 2.227723420971919E12 m^2
+   volume:      2.5087510474812764E18 m^3
+
+path depth:     4
+   type:        TrianglePrismVolume
+   axis bounds: (1332100.3284069924, 1507328.0, 1048575.9999999999)
+   depth:       489775.3577358443 m
+   top area:    7.274198925622592E11 m^2
+   bottom area: 6.393338899472982E11 m^2
+   volume:      3.3446921324593203E17 m^3
+
+path depth:     5
+   type:        TrianglePrismVolume
+   axis bounds: (676176.0330751743, 770048.0, 524287.99999999994)
+   depth:       244887.67886792216 m
+   top area:    1.818549731405648E11 m^2
+   bottom area: 1.7066663006648706E11 m^2
+   volume:      4.3156850200812224E16 m^3
+
+path depth:     6
+   type:        TrianglePrismVolume
+   axis bounds: (340619.4837555066, 389120.0, 262143.99999999997)
+   depth:       122443.83943396155 m
+   top area:    4.546374328514122E10 m^2
+   bottom area: 4.4054100854181015E10 m^2
+   volume:      5.480227755282453E15 m^3
+
+path depth:     7
+   type:        TrianglePrismVolume
+   axis bounds: (170942.60868223384, 195584.0, 131071.99999999999)
+   depth:       61221.91971698124 m
+   top area:    1.1365935821285295E10 m^2
+   bottom area: 1.1189036795746498E10 m^2
+   volume:      6.9042228289393E14 m^3
+
+path depth:     8
+   type:        TrianglePrismVolume
+   axis bounds: (85629.52104223706, 98048.0, 65535.99999999999)
+   depth:       30610.959858490154 m
+   top area:    2.841483955321328E9 m^2
+   bottom area: 2.8193282195246816E9 m^2
+   volume:      8.664122592235098E13 m^3
+
+path depth:     9
+   type:        TrianglePrismVolume
+   axis bounds: (42854.314696398564, 49088.0, 32767.999999999996)
+   depth:       15305.479929245077 m
+   top area:    7.1037098883033E8 m^2
+   bottom area: 7.0759881200548E8 m^2
+   volume:      1.0851347250890916E13 m^3
+
+path depth:     10
+   type:        TrianglePrismVolume
+   axis bounds: (21437.045892018825, 24560.0, 16383.999999999998)
+   depth:       7652.739964623004 m
+   top area:    1.7759274720758355E8 m^2
+   bottom area: 1.7724605573883444E8 m^2
+   volume:      1.3577443281349841E12 m^3
+
+path depth:     11
+   type:        TrianglePrismVolume
+   axis bounds: (10720.99508196488, 12284.0, 8191.999999999999)
+   depth:       3826.3699823124334 m
+   top area:    4.43981868018964E7 m^2
+   bottom area: 4.435483978295028E7 m^2
+   volume:      1.6980095163123813E11 m^3
+
+path depth:     12
+   type:        TrianglePrismVolume
+   axis bounds: (5361.115574970841, 6143.0, 4095.9999999999995)
+   depth:       1913.184991155751 m
+   top area:    1.1099546700473841E7 m^2
+   bottom area: 1.1094127661520973E7 m^2
+   volume:      2.1230302133027733E10 m^3
+
+path depth:     13
+   type:        TrianglePrismVolume
+   axis bounds: (2680.7122959829867, 3071.75, 2047.9999999999998)
+   depth:       956.5924955774099 m
+   top area:    2774886.67511859 m^2
+   bottom area: 2774209.2539004805 m^2
+   volume:      2.6541117548770366E9 m^3
+
+path depth:     14
+   type:        TrianglePrismVolume
+   axis bounds: (1340.3947751158848, 1535.9375, 1023.9999999999999)
+   depth:       478.29624778870493 m
+   top area:    693721.6687795826 m^2
+   bottom area: 693636.988543053 m^2
+   volume:      3.317842198612848E8 m^3
+
+path depth:     15
+   type:        TrianglePrismVolume
+   axis bounds: (670.2070443388075, 767.984375, 511.99999999999994)
+   depth:       239.14812389481813 m
+   top area:    173430.41719486314 m^2
+   bottom area: 173419.8320037854 m^2
+   volume:      4.147429317771562E7 m^3
+
+path depth:     16
+   type:        TrianglePrismVolume
+   axis bounds: (335.10593636520207, 383.99609375, 255.99999999999997)
+   depth:       119.5740619469434 m
+   top area:    43357.60429869954 m^2
+   bottom area: 43356.28113974828 m^2
+   volume:      5184365.754337373 m^3
+
+path depth:     17
+   type:        TrianglePrismVolume
+   axis bounds: (167.55357173085213, 191.9990234375, 127.99999999999999)
+   depth:       59.78703097254038 m
+   top area:    10839.40107466676 m^2
+   bottom area: 10839.235679173009 m^2
+   volume:      648050.6635158482 m^3
+
+path depth:     18
+   type:        TrianglePrismVolume
+   axis bounds: (83.77693675272167, 95.999755859375, 63.99999999999999)
+   depth:       29.89351548627019 m
+   top area:    2709.8502686626284 m^2
+   bottom area: 2709.8295941885067 m^2
+   volume:      81006.64195518708 m^3
+
+path depth:     19
+   type:        TrianglePrismVolume
+   axis bounds: (41.88850609771907, 47.99993896484375, 31.999999999999996)
+   depth:       14.946757742203772 m
+   top area:    677.4625671636262 m^2
+   bottom area: 677.4599828534197 m^2
+   volume:      10125.84955727074 m^3
+
+path depth:     20
+   type:        TrianglePrismVolume
+   axis bounds: (20.944262479431927, 23.999984741210938, 15.999999999999998)
+   depth:       7.47337887249887 m
+   top area:    169.36564178989107 m^2
+   bottom area: 169.3653187504535 m^2
+   volume:      1265.732401981538 m^3
+
+path depth:     21
+   type:        TrianglePrismVolume
+   axis bounds: (10.472133597359061, 11.999996185302734, 7.999999999999999)
+   depth:       3.7366894353181124 m
+   top area:    42.3414104479805 m^2
+   bottom area: 42.34137006804117 m^2
+   volume:      158.21662565378432 m^3
+
+path depth:     22
+   type:        TrianglePrismVolume
+   axis bounds: (5.23606738820672, 5.999999046325684, 3.9999999999999996)
+   depth:       1.8683447167277336 m
+   top area:    10.585352611741257 m^2
+   bottom area: 10.585347564184774 m^2
+   volume:      19.777082911558963 m^3
+
+path depth:     23
+   type:        TrianglePrismVolume
+   axis bounds: (2.618033841252327, 2.999999761581421, 1.9999999999999998)
+   depth:       0.9341723592951894 m
+   top area:    2.6463381530622483 m^2
+   bottom area: 2.646337522054183 m^2
+   volume:      2.472135661203882 m^3
+
+path depth:     24
+   type:        TrianglePrismVolume
+   axis bounds: (1.3090169578790665, 1.4999999403953552, 0.9999999999999999)
+   depth:       0.4670861791819334 m
+   top area:    0.6615845383290289 m^2
+   bottom area: 0.6615844594688851 m^2
+   volume:      0.30901697579670767 m^3
+
+path depth:     25
+   type:        TrianglePrismVolume
+   axis bounds: (0.654508488252759, 0.7499999850988388, 0.49999999999999994)
+   depth:       0.2335430895909667 m
+   top area:    0.16539613455052382 m^2
+   bottom area: 0.16539612471680573 m^2
+   volume:      0.038627123121034106 m^3
+
+path depth:     26
+   type:        TrianglePrismVolume
+   axis bounds: (0.3272542469203472, 0.3749999962747097, 0.24999999999999997)
+   depth:       0.11677154339849949 m
+   top area:    0.04134903362176425 m^2
+   bottom area: 0.04134903242031621 m^2
+   volume:      0.004828390403902388 m^3
+
+path depth:     27
+   type:        TrianglePrismVolume
+   axis bounds: (0.1636271234601736, 0.18749999906867743, 0.12499999999999999)
+   depth:       0.058385771699249744 m
+   top area:    0.010337258397507714 m^2
+   bottom area: 0.010337258198900733 m^2
+   volume:      6.035488029951267E-4 m^3
+
+path depth:     28
+   type:        TrianglePrismVolume
+   axis bounds: (0.0818135617300868, 0.09374999906867743, 0.06249999999999999)
+   depth:       0.02919288631528616 m
+   top area:    0.0025843146033436033 m^2
+   bottom area: 0.0025843145465160753 m^2
+   volume:      7.544360158886388E-5 m^3
+
+path depth:     29
+   type:        TrianglePrismVolume
+   axis bounds: (0.04090678133070469, 0.046874999068677425, 0.031249999999999997)
+   depth:       0.014596442691981792 m
+   top area:    6.460786488525635E-4 m^2
+   bottom area: 6.460786364396269E-4 m^2
+   volume:      9.430449881897112E-6 m^3
+
+path depth:     30
+   type:        TrianglePrismVolume
+   axis bounds: (0.020453390665352345, 0.023437499068677425, 0.015624999999999998)
+   depth:       0.007298220880329609 m
+   top area:    1.6151966122147232E-4 m^2
+   bottom area: 1.615196543241896E-4 m^2
+   volume:      1.1788061389413675E-6 m^3
+
+path depth:     31
+   type:        TrianglePrismVolume
+   axis bounds: (0.010226694867014885, 0.011718749068677425, 0.007812499999999999)
+   depth:       0.0036491109058260918 m
+   top area:    4.037991580120239E-5 m^2
+   bottom area: 4.037991189433362E-5 m^2
+   volume:      1.473507839982082E-7 m^3
+
+path depth:     32
+   type:        TrianglePrismVolume
+   axis bounds: (0.0051133474335074425, 0.005859374068677425, 0.0039062499999999996)
+   depth:       0.0018245559185743332 m
+   top area:    1.0094979198217885E-5 m^2
+   bottom area: 1.0094977497401161E-5 m^2
+   volume:      1.8418852492375587E-8 m^3
+
+path depth:     33
+   type:        TrianglePrismVolume
+   axis bounds: (0.0025566741824150085, 0.0029296865686774254, 0.0019531249999999998)
+   depth:       9.12277027964592E-4 m
+   top area:    2.52374467559587E-6 m^2
+   bottom area: 2.5237439497336315E-6 m^2
+   volume:      2.3023539609003326E-9 m^3
+
+path depth:     34
+   type:        TrianglePrismVolume
+   axis bounds: (0.0012783370912075043, 0.0014648428186774254, 9.765624999999999E-4)
+   depth:       4.561394453048706E-4 m
+   top area:    6.309361069197923E-7 m^2
+   bottom area: 6.309357440620817E-7 m^2
+   volume:      2.8779476307634726E-10 m^3
+
+path depth:     35
+   type:        TrianglePrismVolume
+   axis bounds: (6.391685456037521E-4, 7.324209436774254E-4, 4.8828124999999995E-4)
+   depth:       2.280697226524353E-4 m
+   top area:    1.5773399574048566E-7 m^2
+   bottom area: 1.5773381432077E-7 m^2
+   volume:      3.5974327973218874E-11 m^3
+
+path depth:     36
+   type:        TrianglePrismVolume
+   axis bounds: (3.1958427280187607E-4, 3.662100061774254E-4, 2.4414062499999997E-4)
+   depth:       1.1403393000364304E-4 m
+   top area:    3.94334834405154E-8 m^2
+   bottom area: 3.943337723749132E-8 m^2
+   volume:      4.496749035080084E-12 m^3
+
+path depth:     37
+   type:        TrianglePrismVolume
+   axis bounds: (1.5979167073965073E-4, 1.8310453742742538E-4, 1.2207031249999999E-4)
+   depth:       5.701649934053421E-5 m
+   top area:    9.85837860747359E-9 m^2
+   bottom area: 9.858325505938084E-9 m^2
+   volume:      5.620887235392429E-13 m^3
+
+path depth:     38
+   type:        TrianglePrismVolume
+   axis bounds: (7.989630103111267E-5, 9.155180305242538E-5, 6.103515624999999E-5)
+   depth:       2.8507784008979797E-5 m
+   top area:    2.464590778237758E-9 m^2
+   bottom area: 2.464568101035115E-9 m^2
+   volume:      7.025969833788014E-14 m^3
+
+path depth:     39
+   type:        TrianglePrismVolume
+   axis bounds: (3.9948150515556335E-5, 4.5775435864925385E-5, 3.0517578124999997E-5)
+   depth:       1.4254823327064514E-5 m
+   top area:    6.161457578693128E-10 m^2
+   bottom area: 6.161344192285044E-10 m^2
+   volume:      8.782968106862644E-15 m^3
+
+path depth:     40
+   type:        TrianglePrismVolume
+   axis bounds: (1.9974075257778168E-5, 2.2887252271175385E-5, 1.5258789062499998E-5)
+   depth:       7.126480340957642E-6 m
+   top area:    1.5403547124745743E-10 m^2
+   bottom area: 1.540288339995897E-10 m^2
+   volume:      1.0977071074620039E-15 m^3
+
+path depth:     41
+   type:        TrianglePrismVolume
+   axis bounds: (9.986571967601776E-6, 1.1443160474300385E-5, 7.629394531249999E-6)
+   depth:       3.563240170478821E-6 m
+   top area:    3.850935196353063E-11 m^2
+   bottom area: 3.850603317270862E-11 m^2
+   volume:      1.3721215698870614E-16 m^3
+
+path depth:     42
+   type:        TrianglePrismVolume
+   axis bounds: (4.993751645088196E-6, 5.7211145758628845E-6, 3.8146972656249996E-6)
+   depth:       1.7816200852394104E-6 m
+   top area:    9.627095956780313E-12 m^2
+   bottom area: 9.625678512008444E-12 m^2
+   volume:      1.7150564829595668E-17 m^3
+
+path depth:     43
+   type:        TrianglePrismVolume
+   axis bounds: (2.496875822544098E-6, 2.8600916266441345E-6, 1.9073486328124998E-6)
+   depth:       8.922070264816284E-7 m
+   top area:    2.4066530973352973E-12 m^2
+   bottom area: 2.4058237752884927E-12 m^2
+   volume:      2.1468628296418264E-18 m^3
+
+path depth:     44
+   type:        TrianglePrismVolume
+   axis bounds: (1.2479722499847412E-6, 1.4295801520347595E-6, 9.536743164062499E-7)
+   depth:       4.4517219066619873E-7 m
+   top area:    6.017237619943093E-13 m^2
+   bottom area: 6.012487802159398E-13 m^2
+   volume:      2.6776495400614335E-19 m^3
+
+path depth:     45
+   type:        TrianglePrismVolume
+   axis bounds: (6.239861249923706E-7, 7.14324414730072E-7, 4.7683715820312495E-7)
+   depth:       2.2351741790771484E-7 m
+   top area:    1.5046130952456138E-13 m^2
+   bottom area: 1.5022369354318243E-13 m^2
+   volume:      3.36041642470411E-20 m^3
+
+path depth:     46
+   type:        TrianglePrismVolume
+   axis bounds: (3.119930624961853E-7, 3.5669654607772827E-7, 2.3841857910156247E-7)
+   depth:       1.0989606380462646E-7 m
+   top area:    3.7630637101220824E-14 m^2
+   bottom area: 3.7526679714412666E-14 m^2
+   volume:      4.129745325214859E-21 m^3
+
+path depth:     47
+   type:        TrianglePrismVolume
+   axis bounds: (1.564621925354004E-7, 1.778826117515564E-7, 1.1920928955078124E-7)
+   depth:       5.774199962615967E-8 m
+   top area:    9.400046149884329E-15 m^2
+   bottom area: 9.355596435778974E-15 m^2
+   volume:      5.414936466908439E-22 m^3
+
+path depth:     48
+   type:        TrianglePrismVolume
+   axis bounds: (7.82310962677002E-8, 8.847564458847046E-8, 5.960464477539062E-8)
+   depth:       2.7008354663848877E-8 m
+   top area:    2.346330148409992E-15 m^2
+   bottom area: 2.3240642060727796E-15 m^2
+   volume:      6.306959465545666E-23 m^3
+
+path depth:     49
+   type:        TrianglePrismVolume
+   axis bounds: (3.91155481338501E-8, 4.377216100692749E-8, 2.980232238769531E-8)
+   depth:       1.30385160446167E-8 m
+   top area:    5.848669486932676E-16 m^2
+   bottom area: 5.736954075665152E-16 m^2
+   volume:      7.552849887449855E-24 m^3
+

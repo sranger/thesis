@@ -55,7 +55,7 @@ public class TreeImporter {
       System.out.println("\t\tattributes read: " + attributes.getAttributeNames());
       System.out.println("\treading and exporting data...");
       
-      this.exportAttributes(outputDirectory);
+      TreeImporter.exportAttributes(this.attributes, outputDirectory);
 
       try(final BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(new File(outputDirectory, "points.dat")))) {
          readDirectory(this.inputDirectory, fout, 0);
@@ -110,14 +110,14 @@ public class TreeImporter {
       }
    }
    
-   private void exportAttributes(final File outputDirectory) {
+   public static void exportAttributes(final DataAttributes attributes, final File outputDirectory) {
       final long startTime = System.nanoTime();
       System.out.println("exporting flat file attributes to " + outputDirectory + " at attributes.csv");
       
       final StringBuilder sb = new StringBuilder();
       sb.append(Attribute.HEADER);
       
-      for(final Attribute attribute : this.attributes) {
+      for(final Attribute attribute : attributes) {
          sb.append("\n");
          sb.append(attribute.toString());
       }
