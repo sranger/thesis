@@ -169,12 +169,11 @@ public class TreeBuilder {
             
             if(path.isEmpty()) {
                final int[] countStats = this.getPointCountStats();
-               fout.write("\n");
-               fout.write("min: " + Integer.toString(countStats[0]));
-               fout.write("max: " + Integer.toString(countStats[1]));
-               fout.write("avg: " + Integer.toString(countStats[2]));
-               fout.write("cells: " + Integer.toString(countStats[3]));
-               fout.write("maxDepth: " + Integer.toString(countStats[4]));
+               fout.write("\nmin: " + Integer.toString(countStats[0]));
+               fout.write("\nmax: " + Integer.toString(countStats[1]));
+               fout.write("\navg: " + Integer.toString(countStats[2]));
+               fout.write("\ncells: " + Integer.toString(countStats[3]));
+               fout.write("\nmaxDepth: " + Integer.toString(countStats[4]));
             }
          } catch(final IOException e) {
             throw new RuntimeException("Could not write tree cell metadata: " + metaFile.getAbsolutePath(), e);
@@ -222,7 +221,7 @@ public class TreeBuilder {
          maxDepth = Math.max(maxDepth, treeCell.path.length());
       }
       
-      return new int[] { minCount, maxCount, (int) Math.ceil(total / (double) cellCount), cellCount };
+      return new int[] { minCount, maxCount, (int) Math.ceil(total / (double) cellCount), cellCount, maxDepth };
    }
    
    private static List<Attribute> readAttributes(final File attributesFile) {
