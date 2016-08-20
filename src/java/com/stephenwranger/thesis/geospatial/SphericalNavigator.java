@@ -16,6 +16,7 @@ import com.jogamp.opengl.GLDrawable;
 import com.jogamp.opengl.glu.GLU;
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
+import com.stephenwranger.graphics.color.Color4f;
 import com.stephenwranger.graphics.math.CameraUtils;
 import com.stephenwranger.graphics.math.PickingHit;
 import com.stephenwranger.graphics.math.PickingRay;
@@ -32,29 +33,29 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       MOUSE_DRAG_LEFT, MOUSE_DRAG_RIGHT, MOUSE_CLICK;
    }
 
-   public static final double AZIMUTH_NORTH = 0;
-   public static final double AZIMUTH_EAST = -MathUtils.HALF_PI;
-   public static final double AZIMUTH_SOUTH = -Math.PI;
-   public static final double AZIMUTH_WEST = MathUtils.HALF_PI;
-   
-   public static final double ELEVATION_HORIZON = 0;
-   public static final double ELEVATION_ZENITH = MathUtils.HALF_PI;
+   public static final double        AZIMUTH_NORTH     = 0;
+   public static final double        AZIMUTH_EAST      = -MathUtils.HALF_PI;
+   public static final double        AZIMUTH_SOUTH     = -Math.PI;
+   public static final double        AZIMUTH_WEST      = MathUtils.HALF_PI;
 
-   private static final Vector3d     FORWARD_VECTOR     = new Vector3d(0, 0, -1);
+   public static final double        ELEVATION_HORIZON = 0;
+   public static final double        ELEVATION_ZENITH  = MathUtils.HALF_PI;
 
-   private static final Vector3d     UP_VECTOR        = new Vector3d(0, 1, 0);
+   private static final Vector3d     FORWARD_VECTOR    = new Vector3d(0, 0, -1);
 
-   private final DecimalFormat       formatter        = new DecimalFormat("0.000");
+   private static final Vector3d     UP_VECTOR         = new Vector3d(0, 1, 0);
+
+   private final DecimalFormat       formatter         = new DecimalFormat("0.000");
    private final Scene               scene;
    private final TextRenderable      textRenderer;
-   private final Tuple3d             anchor           = WGS84.geodesicToCartesian(new Tuple3d());
-   private final SphericalCoordinate cameraCoordinate = new SphericalCoordinate(AZIMUTH_SOUTH, ELEVATION_ZENITH, 2e7);
+   private final Tuple3d             anchor            = WGS84.geodesicToCartesian(new Tuple3d());
+   private final SphericalCoordinate cameraCoordinate  = new SphericalCoordinate(SphericalNavigator.AZIMUTH_SOUTH, SphericalNavigator.ELEVATION_ZENITH, 2e7);
 
-   private Point                     previousEvent    = null;
-   private Point                     currentEvent     = null;
-   private EventType                 eventType        = null;
-   private boolean                   update           = true;
-   private Earth                     earth            = null;
+   private Point                     previousEvent     = null;
+   private Point                     currentEvent      = null;
+   private EventType                 eventType         = null;
+   private boolean                   update            = true;
+   private Earth                     earth             = null;
 
    public SphericalNavigator(final Scene scene) {
       this.scene = scene;
@@ -64,6 +65,8 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       scene.addMouseWheelListener(this);
 
       this.textRenderer = new TextRenderable(new Font("SansSerif", Font.PLAIN, 32));
+      this.textRenderer.setTextColor(Color4f.white());
+      this.textRenderer.setBackgroundColor(new Color4f(0.2f, 0.2f, 0.2f, 0.8f));
       this.scene.addRenderableOrthographic(this.textRenderer);
    }
 
@@ -77,22 +80,22 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    @Override
    public synchronized void mouseClicked(final MouseEvent event) {
-      if(!event.isControlDown()) {
+      if (!event.isControlDown()) {
          if (event.getClickCount() == 2) {
             this.previousEvent = null;
             this.currentEvent = event.getPoint();
             this.eventType = EventType.MOUSE_CLICK;
-   
+
             this.update = true;
          }
       } else {
-         mouseReleased(null);
+         this.mouseReleased(null);
       }
    }
 
    @Override
    public synchronized void mouseDragged(final MouseEvent event) {
-      if(!event.isControlDown()) {
+      if (!event.isControlDown()) {
          if (SwingUtilities.isLeftMouseButton(event)) {
             this.currentEvent = event.getPoint();
             this.eventType = EventType.MOUSE_DRAG_LEFT;
@@ -104,10 +107,10 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
             this.currentEvent = null;
             this.eventType = null;
          }
-   
+
          this.update = true;
       } else {
-         mouseReleased(null);
+         this.mouseReleased(null);
       }
    }
 
@@ -125,21 +128,21 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    @Override
    public synchronized void mouseMoved(final MouseEvent event) {
-      if(!event.isControlDown()) {
+      if (!event.isControlDown()) {
          this.updateText(event);
       } else {
-         mouseReleased(null);
+         this.mouseReleased(null);
       }
    }
 
    @Override
    public synchronized void mousePressed(final MouseEvent event) {
-      if(!event.isControlDown()) {
+      if (!event.isControlDown()) {
          this.previousEvent = event.getPoint();
          this.currentEvent = null;
          this.eventType = null;
       } else {
-         mouseReleased(null);
+         this.mouseReleased(null);
       }
    }
 
@@ -233,6 +236,13 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
          if (MathUtils.isFinite(cameraPosition) && MathUtils.isFinite(this.anchor) && MathUtils.isFinite(up)) {
             //            System.out.println("cam to origin:    " + cameraPosition.distance(scene.getOrigin()) + ", " + cameraPosition);
             //            System.out.println("anchor to origin: " + this.anchor.distance(scene.getOrigin()) + ", " + this.anchor);
+            final Vector3d viewVector = Vector3d.getVector(cameraPosition, this.anchor, true);
+            final Vector3d rightVector = new Vector3d();
+            rightVector.cross(up, viewVector);
+            up.cross(viewVector, rightVector);
+            System.out.println("view . up:    " + viewVector.angleDegrees(up));
+            System.out.println("view . right: " + viewVector.angleDegrees(rightVector));
+            System.out.println("up . right:   " + up.angleDegrees(rightVector));
             this.scene.setCameraPosition(cameraPosition, this.anchor, up);
          } else {
             System.err.println("scene position not updating; invalid");
@@ -281,7 +291,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    }
 
    private void dragLeft(final GL2 gl, final Scene scene) {
-      if (this.previousEvent != null && this.currentEvent != null) {
+      if ((this.previousEvent != null) && (this.currentEvent != null)) {
          final Tuple3d from = this.getIntersection(this.previousEvent);
          final Tuple3d to = this.getIntersection(this.currentEvent);
 
@@ -316,11 +326,11 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    private Tuple3d getIntersection(final Point point) {
       final Vector3d currentVector = this.getMouseVector(this.scene, point);
 
-      return getIntersection(scene.getCameraPosition(), currentVector);
+      return this.getIntersection(this.scene.getCameraPosition(), currentVector);
    }
-   
+
    private Tuple3d getIntersection(final Tuple3d origin, final Vector3d direction) {
-      if (origin != null && direction != null) {
+      if ((origin != null) && (direction != null)) {
          final PickingRay ray = new PickingRay(origin, direction);
 
          if (this.earth == null) {
@@ -357,15 +367,25 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    }
 
    private void updateText(final MouseEvent event) {
-      final Tuple3d lonLatAltIntersection = this.getIntersection(event.getPoint());
+      final Tuple3d lla = this.getIntersection(event.getPoint());
 
       this.textRenderer.clearText();
 
-      if (lonLatAltIntersection != null) {
-         final Tuple3d xyz = WGS84.geodesicToCartesian(lonLatAltIntersection);
-         this.textRenderer.addText(xyz.toString(), new Point(100, 50));
-         this.textRenderer.addText("lon: " + this.formatter.format(lonLatAltIntersection.x) + ", lat: " + this.formatter.format(lonLatAltIntersection.y) + ", alt: " + this.formatter.format(lonLatAltIntersection.z), new Point(100, 100));
-         this.textRenderer.addText("Expected Altitude: " + DigitalElevationUtils.getElevation(lonLatAltIntersection.x, lonLatAltIntersection.y), new Point(100, 150));
+      if (lla != null) {
+         final Tuple3d xyz = WGS84.geodesicToCartesian(lla);
+         final Tuple3d screen = CameraUtils.gluProject(this.scene, xyz);
+         final Tuple3d world = CameraUtils.gluUnProject(this.scene, screen);
+         this.textRenderer.addText("earth intersection xyz: " + String.format("%.2f, %.2f, %.2f", xyz.x, xyz.y, xyz.z), new Point(10, 10));
+         this.textRenderer.addText("earth intersection lla: " + String.format("%.2f, %.2f, %.2f", lla.x, lla.y, lla.z), new Point(10, 40));
+         this.textRenderer.addText("Expected Altitude:      " + DigitalElevationUtils.getElevation(lla.x, lla.y), new Point(10, 70));
+         this.textRenderer.addText("intersection to screen: " + String.format("%.2f, %.2f, %.2f", screen.x, screen.y, screen.z), new Point(10, 100));
+         this.textRenderer.addText("original to world dist: " + xyz.distance(world), new Point(10, 130));
+         //         final Tuple3d mouseEvent = new Tuple3d(event.getX(), event.getY(), 1.0);
+         //         final Tuple3d mouseWorld = CameraUtils.gluUnProject(this.scene, mouseEvent);
+         //         final Tuple3d mouseScreen = CameraUtils.gluProject(this.scene, mouseWorld);
+         //         this.textRenderer.addText("mouse original: " + String.format("%.2f, %.2f, %.2f", mouseEvent.x, mouseEvent.y, mouseEvent.z), new Point(10, 100));
+         //         this.textRenderer.addText("mouse world:    " + String.format("%.2f, %.2f, %.2f", mouseWorld.x, mouseWorld.y, mouseWorld.z), new Point(10, 130));
+         //         this.textRenderer.addText("mouse screen:   " + String.format("%.2f, %.2f, %.2f", mouseScreen.x, mouseScreen.y, mouseScreen.z), new Point(10, 160));
       }
    }
 }

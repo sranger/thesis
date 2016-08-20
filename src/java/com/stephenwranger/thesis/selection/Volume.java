@@ -75,7 +75,7 @@ public class Volume {
       final List<Tuple2d> screenPoints = new ArrayList<>();
 
       for (final Tuple3d corner : aabb.getCorners()) {
-         final Tuple3d point3dScreen = CameraUtils.gluProject(this.scene, TupleMath.sub(corner, this.scene.getOrigin()));
+         final Tuple3d point3dScreen = CameraUtils.gluProject(this.scene, corner);
 
          if (point3dScreen != null) {
             final Tuple2d pointScreen = new Tuple2d(point3dScreen.x, this.scene.getHeight() - point3dScreen.y);
@@ -101,14 +101,14 @@ public class Volume {
    }
 
    public boolean contains(final Tuple3d point, final double radius) {
-      final Tuple3d point3dScreen = CameraUtils.gluProject(this.scene, TupleMath.sub(point, this.scene.getOrigin()));
+      final Tuple3d point3dScreen = CameraUtils.gluProject(this.scene, point);
 
       if (point3dScreen != null) {
          final Tuple2d pointScreen = new Tuple2d(point3dScreen.x, this.scene.getHeight() - point3dScreen.y);
          final boolean contains = IntersectionUtils.pointInPolygon(pointScreen, this.polygon);
 
          if (!contains) {
-            final Tuple3d right3d = TupleMath.sub(point, this.scene.getOrigin());
+            final Tuple3d right3d = new Tuple3d(point);
             final Vector3d rightVector = this.scene.getRightVector();
             rightVector.scale(radius);
             right3d.add(rightVector);

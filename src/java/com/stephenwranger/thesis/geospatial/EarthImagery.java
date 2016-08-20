@@ -7,7 +7,6 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -537,7 +536,9 @@ public class EarthImagery {
             if (cachedFile.exists()) {
                try {
                   texture = Texture2d.getTexture(new FileInputStream(cachedFile), GL.GL_RGBA);
-               } catch (FileNotFoundException e) {
+               } catch (final Exception e) {
+                  System.err.println("Could not load cache file: " + cachedFile.getAbsolutePath() + "; deleting file");
+                  cachedFile.delete();
                   e.printStackTrace();
                }
             }
