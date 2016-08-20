@@ -10,12 +10,15 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.stat.correlation.Covariance;
 
+import com.mkobos.pca_transform.PCA;
 import com.stephenwranger.graphics.Scene;
 import com.stephenwranger.graphics.collections.Pair;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.utils.MathUtils;
+
+import Jama.Matrix;
 
 public class GridCell {
    private static final int[][]  GRID_OFFSETS = new int[][] { { -1, -1, -1 }, { 1, -1, -1 }, { 1, 1, -1 }, { -1, 1, -1 }, { -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 } };
@@ -217,8 +220,35 @@ public class GridCell {
    }
 
    public static Vector3d getAverageNormal(final Collection<Tuple3d> points) {
-      return GridCell.getAverageNormalCommonsMath3(points);
-      //      return getAverageNormalCommonsMkobos(points);
+      //      return GridCell.getAverageNormalCommonsMath3(points);
+      return GridCell.getAverageNormalCommonsMkobos(points);
+   }
+
+   public static Vector3d getAverageNormalCommonsMkobos(final Collection<Tuple3d> points) {
+      final Tuple3d centroid = Tuple3d.getAverage(points);
+
+      final double[][] samples = new double[points.size()][3];
+      int i = 0;
+
+      for (final Tuple3d point : points) {
+         samples[i][0] = point.x - centroid.x;
+         samples[i][1] = point.y - centroid.y;
+         samples[i][2] = point.z - centroid.z;
+         i++;
+      }
+
+      final Matrix sampleMatrix = new Matrix(samples);
+      final PCA pca = new PCA(sampleMatrix, false);
+      final Matrix eigenMatrix = pca.getEigenvectorsMatrix();
+      final double[][] vectors = eigenMatrix.getArray();
+
+      final Vector3d v1 = new Vector3d(vectors[0][0], vectors[1][0], vectors[2][0]);
+      final Vector3d v2 = new Vector3d(vectors[0][1], vectors[1][1], vectors[2][1]);
+      final Vector3d vCross = new Vector3d();
+      vCross.cross(v1, v2);
+      vCross.normalize();
+
+      return vCross;
    }
 
    public static RealMatrix getCovarianceMatrix(final Collection<Tuple3d> points) {
@@ -239,44 +269,44 @@ public class GridCell {
    }
 
    public static void main(final String[] args) {
-      final Vector3d v1 = new Vector3d(0, 1, 0);
-      final Vector3d v2 = new Vector3d(0.1, 0.8, 0.2);
-      final Vector3d v3 = new Vector3d(-0.1, -0.3, 0.4);
-      final Vector3d v4 = new Vector3d(1, 0, 0);
-
-      System.out.println("(equal)         v1.dot(v1) == " + v1.dot(v1));
-      System.out.println("(same dir)      v1.dot(v2) == " + v1.dot(v2));
-      System.out.println("(opposite dir)  v1.dot(v3) == " + v1.dot(v3));
-      System.out.println("(perpendicular) v1.dot(v4) == " + v1.dot(v4));
-
-      //      final List<Tuple3d> points = new ArrayList<>();
+      //      final Vector3d v1 = new Vector3d(0, 1, 0);
+      //      final Vector3d v2 = new Vector3d(0.1, 0.8, 0.2);
+      //      final Vector3d v3 = new Vector3d(-0.1, -0.3, 0.4);
+      //      final Vector3d v4 = new Vector3d(1, 0, 0);
       //
+      //      System.out.println("(equal)         v1.dot(v1) == " + v1.dot(v1));
+      //      System.out.println("(same dir)      v1.dot(v2) == " + v1.dot(v2));
+      //      System.out.println("(opposite dir)  v1.dot(v3) == " + v1.dot(v3));
+      //      System.out.println("(perpendicular) v1.dot(v4) == " + v1.dot(v4));
+
+      final List<Tuple3d> points = new ArrayList<>();
+
       //      for (int x = -10; x <= 10; x++) {
       //         for (int z = -10; z <= 10; z++) {
       //            points.add(new Tuple3d(x, 0, z));
       //         }
       //      }
-      //
-      //      //    for (int i = 0; i < 1000; i++) {
-      //      //       points.add(new Tuple3d(Math.random() - 0.5, (Math.random() - 0.5) * 0.0, Math.random() - 0.5));
-      //      //    }
-      //
-      //      final Vector3d average = GridCell.getAverageNormal(points);
-      //      System.out.println("\n\naverage: " + average);
-      //      System.out.println("-1,-1,-1: " + new Vector3d(-1, -1, -1).dot(average));
-      //      System.out.println("-1,-1, 1: " + new Vector3d(-1, -1, 1).dot(average));
-      //      System.out.println("-1, 1,-1: " + new Vector3d(-1, 1, -1).dot(average));
-      //      System.out.println("-1, 1, 1: " + new Vector3d(-1, 1, 1).dot(average));
-      //      System.out.println(" 1,-1,-1: " + new Vector3d(1, -1, -1).dot(average));
-      //      System.out.println(" 1,-1, 1: " + new Vector3d(1, -1, 1).dot(average));
-      //      System.out.println(" 1, 1,-1: " + new Vector3d(1, 1, -1).dot(average));
-      //      System.out.println(" 1, 1, 1: " + new Vector3d(1, 1, 1).dot(average));
-      //      System.out.println(" 1, 0, 0: " + new Vector3d(1, 0, 0).dot(average));
-      //      System.out.println(" 0, 1, 0: " + new Vector3d(0, 1, 0).dot(average));
-      //      System.out.println(" 0, 0, 1: " + new Vector3d(0, 0, 1).dot(average));
-      //      System.out.println("-1, 0, 0: " + new Vector3d(-1, 0, 0).dot(average));
-      //      System.out.println(" 0,-1, 0: " + new Vector3d(0, -1, 0).dot(average));
-      //      System.out.println(" 0, 0,-1: " + new Vector3d(0, 0, -1).dot(average));
+
+      for (int i = 0; i < 1000; i++) {
+         points.add(new Tuple3d(Math.random() - 0.5, (Math.random() - 0.5) * 0.1, Math.random() - 0.5));
+      }
+
+      final Vector3d average = GridCell.getAverageNormal(points);
+      System.out.println("\n\naverage: " + average);
+      System.out.println("-1,-1,-1: " + new Vector3d(-1, -1, -1).dot(average));
+      System.out.println("-1,-1, 1: " + new Vector3d(-1, -1, 1).dot(average));
+      System.out.println("-1, 1,-1: " + new Vector3d(-1, 1, -1).dot(average));
+      System.out.println("-1, 1, 1: " + new Vector3d(-1, 1, 1).dot(average));
+      System.out.println(" 1,-1,-1: " + new Vector3d(1, -1, -1).dot(average));
+      System.out.println(" 1,-1, 1: " + new Vector3d(1, -1, 1).dot(average));
+      System.out.println(" 1, 1,-1: " + new Vector3d(1, 1, -1).dot(average));
+      System.out.println(" 1, 1, 1: " + new Vector3d(1, 1, 1).dot(average));
+      System.out.println(" 1, 0, 0: " + new Vector3d(1, 0, 0).dot(average));
+      System.out.println(" 0, 1, 0: " + new Vector3d(0, 1, 0).dot(average));
+      System.out.println(" 0, 0, 1: " + new Vector3d(0, 0, 1).dot(average));
+      System.out.println("-1, 0, 0: " + new Vector3d(-1, 0, 0).dot(average));
+      System.out.println(" 0,-1, 0: " + new Vector3d(0, -1, 0).dot(average));
+      System.out.println(" 0, 0,-1: " + new Vector3d(0, 0, -1).dot(average));
    }
 
    /**

@@ -35,6 +35,7 @@ import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.renderables.PointRenderable;
 import com.stephenwranger.graphics.renderables.PostProcessor;
 import com.stephenwranger.graphics.renderables.TriangleMesh;
+import com.stephenwranger.graphics.utils.MathUtils;
 import com.stephenwranger.graphics.utils.TupleMath;
 import com.stephenwranger.thesis.data.GridCell;
 import com.stephenwranger.thesis.geospatial.WGS84;
@@ -201,9 +202,9 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          this.prune(selectedPoints);
 
          final List<GridCell> cells = new ArrayList<>();
-//         final double averageDensity = this.getAverageDensity(scene, selection, selectedPoints, cells);
+         //         final double averageDensity = this.getAverageDensity(scene, selection, selectedPoints, cells);
          System.out.println("selected points count: " + selectedPoints.size());
-//         System.out.println("average density: " + averageDensity);
+         //         System.out.println("average density: " + averageDensity);
 
          if (!selectedPoints.isEmpty()) {
             if (this.isDrawPoints) {
@@ -216,7 +217,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             }
 
             if (this.isDrawTriangles) {
-//               final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
+               //               final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
                final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(scene, selectedPoints);
 
                if (triangles.length > 0) {
@@ -381,7 +382,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
    private void prune(final Collection<Tuple3d> points) {
       this.pruneOrthonormal(points);
-//      this.pruneByAltitude(points);
+      //      this.pruneByAltitude(points);
    }
 
    private void pruneByAltitude(final Collection<Tuple3d> points) {
@@ -464,86 +465,6 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
       return neighbors;
    }
-   
-   private static Triangle3d[] getTriangles(final Scene scene, final Collection<Tuple3d> points) {
-      final Map<Tuple3d, Tuple3d> projectedPoints = new HashMap<>();
-      final List<Tuple3d> visiblePoints = new ArrayList<>();
-      
-      for(final Tuple3d point : points) {
-         final Tuple3d xyDepth = CameraUtils.gluProject(scene, point);
-         projectedPoints.put(xyDepth, point);
-      }
-      
-      for(final Tuple3d xyDepth : projectedPoints.keySet()) {
-         if(!isOccluded(xyDepth, projectedPoints.keySet())) {
-            visiblePoints.add(xyDepth);
-         }
-      }
-      
-      System.out.println("visible: " + visiblePoints.size());
-      
-      if(visiblePoints.isEmpty()) {
-         return new Triangle3d[0];
-      }
-
-      final Tuple3d min = Tuple3d.getMin(visiblePoints);
-      final Tuple3d max = Tuple3d.getMax(visiblePoints);
-      final double xRange = (max.x - min.x) * 2;
-      final double yRange = (max.y - min.y) * 2;
-      final Tuple2d c1 = new Tuple2d(min.x - 1, min.y - 1);
-      final Tuple2d c2 = new Tuple2d(min.x + xRange + 1, min.y - 1);
-      final Tuple2d c3 = new Tuple2d(min.x - 1, min.y + yRange + 1);
-      final Triangle2d boundingTriangle = new Triangle2d(c1, c2, c3, false);
-      final DelaunayTriangulation dt = new DelaunayTriangulation(boundingTriangle);
-      
-      for(final Tuple3d xyDepth : visiblePoints) {
-         try {
-            dt.addVertex(xyDepth.xy(), false);
-         } catch (final InvalidActivityException e) {
-            e.printStackTrace();
-         }
-      }
-      
-      System.out.println("triangulated count: " + dt.getImmutableTriangles().size());
-      
-      final List<Triangle3d> output = new ArrayList<>();
-      final Vector3d viewVector = scene.getViewVector();
-      
-      for(final Triangle2d triangle : dt.getTriangles()) {
-         final Tuple2d[] corners = triangle.getCorners(false);
-
-         final Tuple3d p1 = projectedPoints.get(corners[0]);
-         final Tuple3d p2 = projectedPoints.get(corners[1]);
-         final Tuple3d p3 = projectedPoints.get(corners[2]);
-
-         if ((p1 != null) && (p2 != null) && (p3 != null)) {
-            Triangle3d tri = new Triangle3d(p1, p2, p3);
-
-            if (tri.getNormal().dot(viewVector) > 0) {
-               tri = new Triangle3d(p2, p1, p3);
-            }
-            output.add(tri);
-         } else {
-            System.err.println("cannot find 3d match: " + p1 + ", " + p2 + ", " + p3);
-         }
-      }
-      
-      System.out.println("triangles: " + output.size());
-      
-      return output.toArray(new Triangle3d[output.size()]);
-   }
-   
-   private static boolean isOccluded(final Tuple3d xyDepth, final Collection<Tuple3d> points) {
-      for(final Tuple3d xyd : points) {
-         if(xyDepth != xyd) {
-            if(xyDepth.z > xyd.z && xyd.xy().distance(xyDepth.xy()) < 1.1) {
-               return true;
-            }
-         }
-      }
-      
-      return false;
-   }
 
    private static Triangle3d[] getTriangles(final List<GridCell> cells) {
       List<Triangle3d> triangles = new ArrayList<>();
@@ -557,5 +478,131 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       triangles = merge.process(false, true);
 
       return triangles.toArray(new Triangle3d[triangles.size()]);
+   }
+
+   private static Triangle3d[] getTriangles(final Scene scene, final Collection<Tuple3d> points) {
+      final Map<Tuple3d, Tuple3d> projectedPoints = new HashMap<>();
+      final List<Tuple3d> visiblePoints = new ArrayList<>();
+
+      for (final Tuple3d point : points) {
+         final Tuple3d xyDepth = CameraUtils.gluProject(scene, point);
+         projectedPoints.put(xyDepth, point);
+      }
+
+      for (final Tuple3d xyDepth : projectedPoints.keySet()) {
+         if (!ContextAwarePointSelection.isOccluded(xyDepth, projectedPoints.keySet())) {
+            visiblePoints.add(xyDepth);
+         }
+      }
+
+      System.out.println("visible: " + visiblePoints.size());
+
+      if (visiblePoints.isEmpty()) {
+         return new Triangle3d[0];
+      }
+
+      final Tuple3d min = Tuple3d.getMin(visiblePoints);
+      final Tuple3d max = Tuple3d.getMax(visiblePoints);
+      final Tuple3d average = Tuple3d.getAverage(visiblePoints);
+      final double xRange = (max.x - min.x) * 2;
+      final double yRange = (max.y - min.y) * 2;
+      final Tuple2d c1 = new Tuple2d(min.x - 1, min.y - 1);
+      final Tuple2d c2 = new Tuple2d(min.x - 1, max.y + yRange + 1);
+      final Tuple2d c3 = new Tuple2d(max.x + xRange + 1, min.y - 1);
+      final Triangle2d boundingTriangle = new Triangle2d(c1, c2, c3, false);
+      final DelaunayTriangulation dt = new DelaunayTriangulation(boundingTriangle);
+      final Map<Tuple2d, Tuple3d> delaunayMap = new HashMap<>();
+
+      for (final Tuple3d xyDepth : visiblePoints) {
+         try {
+            final Tuple2d xy = xyDepth.xy();
+            delaunayMap.put(xy, projectedPoints.get(xyDepth));
+            dt.addVertex(xy, false);
+
+            if (!boundingTriangle.contains(xy)) {
+               System.err.println("bounding triangle too small: " + xy + boundingTriangle.getBarycentricCoordinate(xy));
+            }
+         } catch (final InvalidActivityException e) {
+            e.printStackTrace();
+         }
+      }
+
+      System.out.println("triangulated count: " + dt.getImmutableTriangles().size());
+      System.out.println("average: " + average);
+
+      final List<Triangle3d> output = new ArrayList<>();
+      final Vector3d viewVector = scene.getViewVector();
+      final double averageDepth = MathUtils.clamp(0, 1, average.z);
+
+      for (final Triangle2d triangle : dt.getTriangles()) {
+         final Tuple2d[] corners = triangle.getCorners(false);
+
+         if (ContextAwarePointSelection.isBoundingTriangle(triangle, boundingTriangle)) {
+            continue;
+         }
+
+         Tuple3d p1 = delaunayMap.get(corners[0]);
+         Tuple3d p2 = delaunayMap.get(corners[1]);
+         Tuple3d p3 = delaunayMap.get(corners[2]);
+
+         if (p1 == null) {
+            p1 = CameraUtils.gluUnProject(scene, new Tuple3d(corners[0].x, corners[0].y, averageDepth));
+         }
+
+         if (p2 == null) {
+            p2 = CameraUtils.gluUnProject(scene, new Tuple3d(corners[1].x, corners[1].y, averageDepth));
+         }
+
+         if (p3 == null) {
+            p3 = CameraUtils.gluUnProject(scene, new Tuple3d(corners[2].x, corners[2].y, averageDepth));
+         }
+
+         if ((p1 != null) && (p2 != null) && (p3 != null)) {
+            Triangle3d tri = new Triangle3d(p1, p2, p3);
+
+            if (tri.getNormal().dot(viewVector) > 0) {
+               tri = new Triangle3d(p2, p1, p3);
+            }
+            output.add(tri);
+         }
+
+         if (p1 == null) {
+            System.err.println("cannot find 3d match for p1: " + p1 + " for corner " + corners[0]);
+         }
+         if (p2 == null) {
+            System.err.println("cannot find 3d match for p2: " + p2 + " for corner " + corners[1]);
+         }
+         if (p3 == null) {
+            System.err.println("cannot find 3d match for p3: " + p3 + " for corner " + corners[2]);
+         }
+      }
+
+      System.out.println("triangles: " + output.size());
+
+      return output.toArray(new Triangle3d[output.size()]);
+   }
+
+   private static boolean isBoundingTriangle(final Triangle2d triangle, final Triangle2d boundingTriangle) {
+      for (final Tuple2d corner : triangle.getCorners(false)) {
+         final Tuple3d bary = boundingTriangle.getBarycentricCoordinate(corner);
+
+         if (IntersectionUtils.isEqual(bary.x, 0.0) || IntersectionUtils.isEqual(bary.y, 0.0) || IntersectionUtils.isEqual(bary.z, 0.0)) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   private static boolean isOccluded(final Tuple3d xyDepth, final Collection<Tuple3d> points) {
+      for (final Tuple3d xyd : points) {
+         if (xyDepth != xyd) {
+            if ((xyDepth.z > xyd.z) && (xyd.xy().distance(xyDepth.xy()) < 1.1)) {
+               return true;
+            }
+         }
+      }
+
+      return false;
    }
 }
