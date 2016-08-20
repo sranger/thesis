@@ -6,7 +6,9 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,21 +44,28 @@ import com.stephenwranger.thesis.geospatial.WGS84;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
 
 public class ContextAwarePointSelection implements PostProcessor, MouseListener, MouseMotionListener, MouseWheelListener {
-   private final Scene           scene;
-   private final TreeRenderable  tree;
-   private final PointRenderable pointRenderer;
+   private final Scene            scene;
+   private final TreeRenderable   tree;
+   private final PointRenderable  pointRenderer;
 
-   private TriangleMesh          selectionTriangles  = null;
-   private Volume                selection           = null;
-   private final List<Tuple2d>   mouseSelection      = new ArrayList<>();
+   private TriangleMesh           selectionTriangles   = null;
+   private Volume                 selection            = null;
+   private final List<Tuple2d>    mouseSelection       = new ArrayList<>();
 
-   private double                minDensity          = 0.2;
-   private double                gridSize            = 5.0;
-   private int                   k                   = 25;
-   private boolean               isDrawTriangles     = false;
-   private boolean               isDrawPoints        = true;
-   private double                normalOffset        = 0.98;
-   private double                groundDistanceRatio = 0.1;
+   private double                 minDensity           = 0.2;
+   private double                 gridSize             = 5.0;
+   private int                    k                    = 25;
+   private boolean                isDrawTriangles      = false;
+   private boolean                isDrawPoints         = true;
+   private double                 normalOffset         = 0.98;
+   private double                 groundDistanceRatio  = 0.1;
+   private boolean                isPruningOrthonormal = true;
+   private boolean                isPruningAltitude    = true;
+   private boolean                isPruningEnabled     = true;
+
+   private final List<Tuple3d>    selectedPoints       = new ArrayList<>();
+
+   private final List<Triangle3d> triangulation        = new ArrayList<>();
 
    public ContextAwarePointSelection(final Scene scene, final TreeRenderable tree) {
       this.scene = scene;
@@ -91,12 +100,32 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return this.normalOffset;
    }
 
+   public Collection<Tuple3d> getSelectedPoints() {
+      return Collections.unmodifiableCollection(this.selectedPoints);
+   }
+
+   public Collection<Triangle3d> getTriangulation() {
+      return Collections.unmodifiableCollection(this.triangulation);
+   }
+
    public boolean isDrawPoints() {
       return this.isDrawPoints;
    }
 
    public boolean isDrawTriangles() {
       return this.isDrawTriangles;
+   }
+
+   public boolean isPruningAltitude() {
+      return this.isPruningAltitude;
+   }
+
+   public boolean isPruningEnabled() {
+      return this.isPruningEnabled;
+   }
+
+   public boolean isPruningOrthonormal() {
+      return this.isPruningOrthonormal;
    }
 
    @Override
@@ -201,12 +230,15 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection);
          this.prune(selectedPoints);
 
-         final List<GridCell> cells = new ArrayList<>();
+         //         final List<GridCell> cells = new ArrayList<>();
          //         final double averageDensity = this.getAverageDensity(scene, selection, selectedPoints, cells);
          System.out.println("selected points count: " + selectedPoints.size());
          //         System.out.println("average density: " + averageDensity);
 
          if (!selectedPoints.isEmpty()) {
+            this.selectedPoints.clear();
+            this.selectedPoints.addAll(selectedPoints);
+
             if (this.isDrawPoints) {
                this.pointRenderer.setPoints(selectedPoints);
             }
@@ -219,6 +251,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             if (this.isDrawTriangles) {
                //               final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
                final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(scene, selectedPoints);
+               this.triangulation.clear();
+               this.triangulation.addAll(Arrays.asList(triangles));
 
                if (triangles.length > 0) {
                   this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
@@ -286,6 +320,18 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
    public void setNormalOffset(final double normalOffset) {
       this.normalOffset = normalOffset;
+   }
+
+   public void setPruningAltitude(final boolean isEnabled) {
+      this.isPruningAltitude = isEnabled;
+   }
+
+   public void setPruningEnabled(final boolean isEnabled) {
+      this.isPruningEnabled = isEnabled;
+   }
+
+   public void setPruningOrthonormal(final boolean isEnabled) {
+      this.isPruningOrthonormal = isEnabled;
    }
 
    // TODO: fix grid size
@@ -381,8 +427,15 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    }
 
    private void prune(final Collection<Tuple3d> points) {
-      this.pruneOrthonormal(points);
-      //      this.pruneByAltitude(points);
+      if (this.isPruningEnabled) {
+         if (this.isPruningOrthonormal) {
+            this.pruneOrthonormal(points);
+         }
+
+         if (this.isPruningAltitude) {
+            this.pruneByAltitude(points);
+         }
+      }
    }
 
    private void pruneByAltitude(final Collection<Tuple3d> points) {
@@ -413,6 +466,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private void pruneOrthonormal(final Collection<Tuple3d> points) {
       final int k = Math.max(3, this.k);
       final List<Tuple3d> toRemove = new ArrayList<>();
+      final Vector3d view = this.scene.getViewVector();
 
       for (final Tuple3d point : points) {
          final TreeMap<Double, Tuple3d> neighbors = ContextAwarePointSelection.getNeighbors(point, points, k);
@@ -423,9 +477,15 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             final Tuple3d lla = WGS84.cartesianToGeodesic(point);
             final Vector3d up = Vector3d.getVector(point, WGS84.geodesicToCartesian(new Tuple3d(lla.x, lla.y, lla.z + 1)), true);
             final Vector3d normal = GridCell.getAverageNormal(neighbors.values());
-            normal.normalize();
 
-            if (normal.dot(up) > this.normalOffset) {
+            // if normal vacing away from camera; swap its direction
+            if (normal.dot(view) > 0) {
+               normal.scale(-1);
+            }
+
+            final double dot = normal.dot(up);
+
+            if (dot > this.normalOffset) {
                toRemove.add(point);
             }
          }
