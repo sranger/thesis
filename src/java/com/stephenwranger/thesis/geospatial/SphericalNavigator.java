@@ -7,7 +7,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.text.DecimalFormat;
 
 import javax.swing.SwingUtilities;
 
@@ -45,7 +44,6 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    private static final Vector3d     UP_VECTOR         = new Vector3d(0, 1, 0);
 
-   private final DecimalFormat       formatter         = new DecimalFormat("0.000");
    private final Scene               scene;
    private final TextRenderable      textRenderer;
    private final Tuple3d             anchor            = WGS84.geodesicToCartesian(new Tuple3d());
