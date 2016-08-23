@@ -94,7 +94,6 @@ public class TreeBuilder {
                final Point point = new Point(this.attributes, buffer);
                
                try {
-                  // TODO: not sure why some points don't get added correctly
                   this.tree.addPoint(point);
                } catch(final Exception e) {
                   System.err.println("Could not add point: " + point);
