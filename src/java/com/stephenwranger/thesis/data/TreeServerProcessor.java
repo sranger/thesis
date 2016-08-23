@@ -133,13 +133,12 @@ public class TreeServerProcessor extends Thread {
       int maxPoints = -1;
       
       try(final BufferedReader reader = new BufferedReader(new FileReader(file))) {
-         final String line = reader.readLine();
+         String line = null;
          
-         if(line != null && !line.isEmpty()) {
-            final String pointsLine = reader.readLine();
-            
-            if(pointsLine != null && !pointsLine.isEmpty()) {
-               maxPoints = Integer.parseInt(pointsLine);
+         while((line = reader.readLine()) != null && maxPoints == -1) {
+            if(!line.isEmpty() && line.toLowerCase().startsWith("max:")) {
+               maxPoints = Integer.parseInt(line.replaceAll("[^0-9]", ""));
+               System.out.println("max points: " + maxPoints);
             }
          }
       } catch (final IOException e) {

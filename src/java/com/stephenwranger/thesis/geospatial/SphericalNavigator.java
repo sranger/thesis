@@ -56,6 +56,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
    private EventType                 eventType         = null;
    private boolean                   update            = true;
    private Earth                     earth             = null;
+   private boolean                   isTextInfoEnabled = false;
 
    public SphericalNavigator(final Scene scene) {
       this.scene = scene;
@@ -67,7 +68,20 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
       this.textRenderer = new TextRenderable(new Font("SansSerif", Font.PLAIN, 32));
       this.textRenderer.setTextColor(Color4f.white());
       this.textRenderer.setBackgroundColor(new Color4f(0.2f, 0.2f, 0.2f, 0.8f));
-      this.scene.addRenderableOrthographic(this.textRenderer);
+   }
+   
+   public boolean isTextInfoEnabled() {
+      return this.isTextInfoEnabled;
+   }
+   
+   public void setTextInfoEnabled(final boolean isTextInfoEnabled) {
+      this.isTextInfoEnabled = isTextInfoEnabled;
+      
+      if(this.isTextInfoEnabled) {
+         this.scene.addRenderableOrthographic(this.textRenderer);
+      } else {
+         this.scene.removeRenderableOrthographic(this.textRenderer);
+      }
    }
 
    public Tuple3d getAnchor() {
@@ -240,9 +254,9 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
             final Vector3d rightVector = new Vector3d();
             rightVector.cross(up, viewVector);
             up.cross(viewVector, rightVector);
-            System.out.println("view . up:    " + viewVector.angleDegrees(up));
-            System.out.println("view . right: " + viewVector.angleDegrees(rightVector));
-            System.out.println("up . right:   " + up.angleDegrees(rightVector));
+//            System.out.println("view . up:    " + viewVector.angleDegrees(up));
+//            System.out.println("view . right: " + viewVector.angleDegrees(rightVector));
+//            System.out.println("up . right:   " + up.angleDegrees(rightVector));
             this.scene.setCameraPosition(cameraPosition, this.anchor, up);
          } else {
             System.err.println("scene position not updating; invalid");
@@ -349,8 +363,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
 
    private Vector3d getMouseVector(final Scene scene, final Point point) {
       final Vector3d vector = new Vector3d();
-      final Tuple3d cameraScreen = new Tuple3d(scene.getWidth() / 2.0, scene.getHeight() / 2.0, 0.0);
-      final Tuple3d cameraWorld = CameraUtils.gluUnProject(scene, cameraScreen);
+      final Tuple3d cameraWorld = scene.getCameraPosition();
       final Tuple3d mouseScreen = new Tuple3d(point.x, scene.getHeight() - point.y, 1.0);
       final Tuple3d mouseWorld = CameraUtils.gluUnProject(scene, mouseScreen);
 
