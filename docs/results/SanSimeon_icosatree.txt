@@ -1,37 +1,59 @@
 Build Time
 ----------------------------------------------------------
-subcell size: 		100x100x100
+subcell size: 		50x50x20
 point count: 		163251931
-Elapsed: 		13h 22m
-cells built: 		45552
-export to filesystem: 	18m 22s
-max cell point count:   540946
-depth:                  27
-dir count:              45552
-file count:             91105
-filesize:               11 GiB, 101 MiB
+Elapsed: 		-----
+cells built: 		-----
+export to filesystem: 	-----
+max cell point count:   -----
+depth:                  -----
+dir count:              -----
+file count:             -----
+filesize:               -----
 
+
+
+Build Time
+----------------------------------------------------------
+subcell size: 		100x100x20
+point count: 		163251931
+Elapsed: 		9h 38m
+cells built: 		139099
+export to filesystem: 	15m 48s
+max cell point count:   161778
+depth:                  27
+dir count:              139099
+file count:             278199
+filesize:               11 GiB, 103 MiB
 Reading:-120.87_35.39_to_-120.86_35.40.dat
-[10.42%]: 17022575 of 163251931 completed. Elapsed: 1h 10m, ETA: 10h 6m
+[10.42%]: 17023620 of 163251931 completed. Elapsed: 53m 38s, ETA: 7h 40m
 Reading:-120.86_35.36_to_-120.85_35.37.dat
-[14.47%]: 23636504 of 163251931 completed. Elapsed: 1h 43m, ETA: 10h 11m
+[14.47%]: 23637036 of 163251931 completed. Elapsed: 1h 15m, ETA: 7h 28m
 Reading:-120.88_35.37_to_-120.87_35.38.dat
-[14.59%]: 23819610 of 163251931 completed. Elapsed: 1h 44m, ETA: 10h 11m
+[14.59%]: 23822483 of 163251931 completed. Elapsed: 1h 16m, ETA: 7h 27m
 Reading:-120.88_35.36_to_-120.87_35.37.dat
-[14.7%]: 23998122 of 163251931 completed. Elapsed: 1h 45m, ETA: 10h 11m
+[14.7%]: 23999071 of 163251931 completed. Elapsed: 1h 17m, ETA: 7h 26m
 Reading:-120.87_35.37_to_-120.86_35.38.dat
-[27.88%]: 45526986 of 163251931 completed. Elapsed: 3h 44m, ETA: 9h 41m
+[27.88%]: 45528265 of 163251931 completed. Elapsed: 2h 35m, ETA: 6h 42m
 Reading:-120.86_35.39_to_-120.85_35.40.dat
-[37.43%]: 61115958 of 163251931 completed. Elapsed: 5h 4m, ETA: 8h 29m
+[37.43%]: 61119209 of 163251931 completed. Elapsed: 3h 31m, ETA: 5h 54m
 Reading:-120.85_35.36_to_-120.84_35.37.dat
-[45.93%]: 74988987 of 163251931 completed. Elapsed: 6h 12m, ETA: 7h 18m
+[45.93%]: 74989925 of 163251931 completed. Elapsed: 4h 23m, ETA: 5h 9m
 Reading:-120.86_35.38_to_-120.85_35.39.dat
-[57.05%]: 93141343 of 163251931 completed. Elapsed: 7h 40m, ETA: 5h 46m
+[57.05%]: 93143199 of 163251931 completed. Elapsed: 5h 27m, ETA: 4h 6m
 Reading:-120.87_35.36_to_-120.86_35.37.dat
-[63.78%]: 104128944 of 163251931 completed. Elapsed: 8h 33m, ETA: 4h 51m
+[63.78%]: 104132254 of 163251931 completed. Elapsed: 6h 6m, ETA: 3h 27m
 Reading:-120.87_35.38_to_-120.86_35.39.dat
-[73.82%]: 120522545 of 163251931 completed. Elapsed: 9h 54m, ETA: 3h 30m
+[73.82%]: 120522778 of 163251931 completed. Elapsed: 7h 5m, ETA: 2h 30m
 Reading:-120.86_35.37_to_-120.85_35.38.dat
-[88.04%]: 143730158 of 163251931 completed. Elapsed: 11h 48m, ETA: 1h 36m
+[88.04%]: 143730224 of 163251931 completed. Elapsed: 8h 28m, ETA: 1h 9m
 Reading:-120.85_35.37_to_-120.84_35.38.dat
-[100.0%]: 163251931 of 163251931 completed. Elapsed: 13h 22m, ETA: 0μs
+[100.0%]: 163251931 of 163251931 completed. Elapsed: 9h 38m, ETA: 0μs 0ns
+tree built: 139099
+9h 38m
+exporting tree to /media/data/thesis/SanSimeon_small_100x100x20
+
+exporting flat file attributes to /media/data/thesis/SanSimeon_small_100x100x20 at attributes.csv
+[100.0%]: 139099 of 139099 completed. Elapsed: 15m 48s, ETA: 0μs 0ns
+15m 48s
+

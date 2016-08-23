@@ -88,7 +88,7 @@ public class ThesisVisualization extends JFrame {
 
       final File attributeFile = new File(basePath, "attributes.csv");
       final TreeRenderable tree = (attributeFile.isFile()) ? new TreeRenderable(basePath, connectionType) : null;
-      tree.setLevelOfDetail(3);
+      tree.setLevelOfDetail(1);
       this.scene.addRenderable(tree);
 
       final ContextAwarePointSelection pointSelector = new ContextAwarePointSelection(this.scene, tree);
