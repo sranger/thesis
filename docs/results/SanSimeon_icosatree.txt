@@ -1,30 +1,65 @@
 Build Time
 ----------------------------------------------------------
-subcell size: 		50x50x20
-point count: 		163251931
-Elapsed: 		-----
-cells built: 		-----
-export to filesystem: 	-----
-max cell point count:   -----
-depth:                  -----
-dir count:              -----
-file count:             -----
-filesize:               -----
+subcell size: 		      50x50x20
+point count: 		      163251931
+Elapsed: 		         11h 45m
+cells built: 		      412626
+export to filesystem: 	26m 50s
+max cell point count:   53363
+avg cell point count:   396
+depth:                  29
+dir count:              412626
+file count:             825253
+filesize:               11 GiB, 107 MiB
+
+Reading:-120.87_35.39_to_-120.86_35.40.dat
+[10.42%]: 17023620 of 163251931 completed. Elapsed: 53m 58s, ETA: 7h 43m
+Reading:-120.86_35.36_to_-120.85_35.37.dat
+[14.47%]: 23637036 of 163251931 completed. Elapsed: 1h 16m, ETA: 7h 29m
+Reading:-120.88_35.37_to_-120.87_35.38.dat
+[14.59%]: 23822483 of 163251931 completed. Elapsed: 1h 16m, ETA: 7h 29m
+Reading:-120.88_35.36_to_-120.87_35.37.dat
+[14.7%]: 23999071 of 163251931 completed. Elapsed: 1h 17m, ETA: 7h 28m
+Reading:-120.87_35.37_to_-120.86_35.38.dat
+[27.88%]: 45528265 of 163251931 completed. Elapsed: 2h 37m, ETA: 6h 47m
+Reading:-120.86_35.39_to_-120.85_35.40.dat
+[37.43%]: 61119209 of 163251931 completed. Elapsed: 3h 36m, ETA: 6h 1m
+Reading:-120.85_35.36_to_-120.84_35.37.dat
+[45.93%]: 74989925 of 163251931 completed. Elapsed: 4h 29m, ETA: 5h 16m
+Reading:-120.86_35.38_to_-120.85_35.39.dat
+[57.05%]: 93143199 of 163251931 completed. Elapsed: 5h 36m, ETA: 4h 13m
+Reading:-120.87_35.36_to_-120.86_35.37.dat
+[63.78%]: 104132254 of 163251931 completed. Elapsed: 6h 18m, ETA: 3h 34m
+Reading:-120.87_35.38_to_-120.86_35.39.dat
+[73.82%]: 120522778 of 163251931 completed. Elapsed: 7h 19m, ETA: 2h 35m
+Reading:-120.86_35.37_to_-120.85_35.38.dat
+[88.04%]: 143730224 of 163251931 completed. Elapsed: 9h 11m, ETA: 1h 14m
+Reading:-120.85_35.37_to_-120.84_35.38.dat
+[100.0%]: 163251931 of 163251931 completed. Elapsed: 11h 45m, ETA: 0μs 0ns
+tree built: 412626
+11h 45m
+exporting tree to /media/data/thesis/SanSimeon_small_50x50x20
+
+exporting flat file attributes to /media/data/thesis/SanSimeon_small_50x50x20 at attributes.csv
+[100.0%]: 412626 of 412626 completed. Elapsed: 26m 50s, ETA: 0μs 0ns
+26m 50s
 
 
 
 Build Time
 ----------------------------------------------------------
-subcell size: 		100x100x20
-point count: 		163251931
-Elapsed: 		9h 38m
-cells built: 		139099
+subcell size: 		      100x100x20
+point count: 		      163251931
+Elapsed: 		         9h 38m
+cells built: 		      139099
 export to filesystem: 	15m 48s
 max cell point count:   161778
+avg cell point count:   1174
 depth:                  27
 dir count:              139099
 file count:             278199
 filesize:               11 GiB, 103 MiB
+
 Reading:-120.87_35.39_to_-120.86_35.40.dat
 [10.42%]: 17023620 of 163251931 completed. Elapsed: 53m 38s, ETA: 7h 40m
 Reading:-120.86_35.36_to_-120.85_35.37.dat
