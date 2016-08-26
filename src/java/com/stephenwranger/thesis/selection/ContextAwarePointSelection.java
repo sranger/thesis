@@ -48,24 +48,26 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private final TreeRenderable   tree;
    private final PointRenderable  pointRenderer;
 
-   private TriangleMesh           selectionTriangles   = null;
-   private Volume                 selection            = null;
-   private final List<Tuple2d>    mouseSelection       = new ArrayList<>();
+   private TriangleMesh           selectionTriangles       = null;
+   private Volume                 selection                = null;
+   private final List<Tuple2d>    mouseSelection           = new ArrayList<>();
 
-   private double                 minDensity           = 0.2;
-   private double                 gridSize             = 5.0;
-   private int                    k                    = 25;
-   private boolean                isDrawTriangles      = false;
-   private boolean                isDrawPoints         = true;
-   private double                 normalOffset         = 0.98;
-   private double                 groundDistanceRatio  = 0.1;
-   private boolean                isPruningOrthonormal = true;
-   private boolean                isPruningAltitude    = true;
-   private boolean                isPruningEnabled     = true;
+   private double                 minDensity               = 0.2;
+   private double                 gridSize                 = 5.0;
+   private int                    k                        = 25;
+   private boolean                isDrawTriangles          = false;
+   private boolean                isDrawPoints             = true;
+   private double                 normalOffset             = 0.98;
+   private double                 groundDistanceRatio      = 0.1;
+   private int                    obstructionOrder         = 0;
+   private int                    orthonormalOrder         = 1;
+   private int                    altitudeOrder            = -1;
+   private boolean                isPruningEnabled         = true;
+   private double                 obstructedAngleThreshold = 0.1;
 
-   private final List<Tuple3d>    selectedPoints       = new ArrayList<>();
+   private final List<Tuple3d>    selectedPoints           = new ArrayList<>();
 
-   private final List<Triangle3d> triangulation        = new ArrayList<>();
+   private final List<Triangle3d> triangulation            = new ArrayList<>();
 
    public ContextAwarePointSelection(final Scene scene, final TreeRenderable tree) {
       this.scene = scene;
@@ -116,16 +118,24 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return this.isDrawTriangles;
    }
 
-   public boolean isPruningAltitude() {
-      return this.isPruningAltitude;
+   public int getPruningAltitudeOrder() {
+      return this.altitudeOrder;
    }
 
    public boolean isPruningEnabled() {
       return this.isPruningEnabled;
    }
 
-   public boolean isPruningOrthonormal() {
-      return this.isPruningOrthonormal;
+   public int getPruningOrthonormalOrder() {
+      return this.orthonormalOrder;
+   }
+
+   public int getPruningObstructionOrder() {
+      return this.obstructionOrder;
+   }
+   
+   public double getPruningObstructionThreshold() {
+      return this.obstructedAngleThreshold;
    }
 
    @Override
@@ -322,16 +332,24 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.normalOffset = normalOffset;
    }
 
-   public void setPruningAltitude(final boolean isEnabled) {
-      this.isPruningAltitude = isEnabled;
+   public void setPruningAltitudeOrder(final int index) {
+      this.altitudeOrder = index;
    }
 
    public void setPruningEnabled(final boolean isEnabled) {
       this.isPruningEnabled = isEnabled;
    }
 
-   public void setPruningOrthonormal(final boolean isEnabled) {
-      this.isPruningOrthonormal = isEnabled;
+   public void setPruningOrthonormalOrder(final int index) {
+      this.orthonormalOrder = index;
+   }
+
+   public void setPruningObstructionOrder(final int index) {
+      this.obstructionOrder = index;
+   }
+   
+   public void setPruningObstructionThreshold(final double obstructionThresholdDegrees) {
+      this.obstructedAngleThreshold = obstructionThresholdDegrees;
    }
 
    // TODO: fix grid size
@@ -428,12 +446,18 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
 
    private void prune(final Collection<Tuple3d> points) {
       if (this.isPruningEnabled) {
-         if (this.isPruningOrthonormal) {
-            this.pruneOrthonormal(points);
-         }
+         for (int i = 0; i < 2; i++) {
+            if (this.orthonormalOrder == i) {
+               this.pruneOrthonormal(points);
+            }
 
-         if (this.isPruningAltitude) {
-            this.pruneByAltitude(points);
+            if (this.obstructionOrder == i) {
+               this.pruneObstructed(points);
+            }
+
+            if (this.altitudeOrder == i) {
+               this.pruneByAltitude(points);
+            }
          }
       }
    }
@@ -461,6 +485,36 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          }
       }
       System.out.println("after: " + points.size());
+   }
+
+   private void pruneObstructed(final Collection<Tuple3d> points) {
+      final List<Tuple3d> pass = new ArrayList<>();
+
+      for (final Tuple3d point : points) {
+         if (!isObstructed(point, points)) {
+            pass.add(point);
+         }
+      }
+
+      points.clear();
+      points.addAll(pass);
+   }
+
+   private boolean isObstructed(final Tuple3d point, final Collection<Tuple3d> points) {
+      final Tuple3d cameraPosition = this.scene.getCameraPosition();
+      final Vector3d toCamera = Vector3d.getVector(point, cameraPosition, false);
+
+      for (final Tuple3d other : points) {
+         if (point != other && point.distanceSquared(cameraPosition) > other.distanceSquared(cameraPosition)) {
+            final Vector3d otherToCamera = Vector3d.getVector(other, cameraPosition, false);
+
+            if (toCamera.angleDegrees(otherToCamera) < this.obstructedAngleThreshold) {
+               return true;
+            }
+         }
+      }
+
+      return false;
    }
 
    private void pruneOrthonormal(final Collection<Tuple3d> points) {

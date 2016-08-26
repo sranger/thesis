@@ -73,7 +73,7 @@ public class ThesisVisualization extends JFrame {
       this.earth.setLoadFactor(0.75);
       this.earth.setAltitudeOffset(-100);
 
-      this.scene = new Scene(new Dimension(1200, 750));
+      this.scene = new Scene(new Dimension(1200, 900));
       this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(true);
 
@@ -138,8 +138,18 @@ public class ThesisVisualization extends JFrame {
       });
 
       this.addCheckBox(options, "Enable Point Pruning", pointSelector.isPruningEnabled(), pointSelector::setPruningEnabled);
-      this.addCheckBox(options, "Pruning Orthonormal", pointSelector.isPruningOrthonormal(), pointSelector::setPruningOrthonormal);
-      this.addCheckBox(options, "Pruning Altitude", pointSelector.isPruningAltitude(), pointSelector::setPruningAltitude);
+      this.addSpinner(options, "Pruning Orthonormal Index", pointSelector.getPruningOrthonormalOrder(), -1, 2, 1, (value) -> {
+         pointSelector.setPruningOrthonormalOrder(value.intValue());
+      });
+      this.addSpinner(options, "Pruning Obstruction Index", pointSelector.getPruningObstructionOrder(), -1, 2, 1, (value) -> {
+         pointSelector.setPruningObstructionOrder(value.intValue());
+      });
+      this.addSpinner(options, "Obstruction Threshold (Degrees)", pointSelector.getPruningObstructionThreshold(), 0.0, 30.0, 1.0, (value) -> {
+         pointSelector.setPruningObstructionThreshold(value.doubleValue());
+      });
+      this.addSpinner(options, "Pruning Altitude Index", pointSelector.getPruningAltitudeOrder(), -1, 2, 1, (value) -> {
+         pointSelector.setPruningAltitudeOrder(value.intValue());
+      });
       this.addSpinner(options, "Altitude ratio removal", pointSelector.getGroundDistanceRatio(), 0.0, 1.0, 0.1, (value) -> {
          pointSelector.setGroundDistanceRatio(value.doubleValue());
       });
@@ -215,7 +225,7 @@ public class ThesisVisualization extends JFrame {
          this.scene.addPostProcessor((gl, glu, scene) -> {
             final long time = System.nanoTime();
 
-            if ((last[0] + 1000000000) > time) {
+            if ((last[0]) < time - 1000000000) {
                last[0] = time;
                timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
             }

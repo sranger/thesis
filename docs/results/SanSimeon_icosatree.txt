@@ -1,3 +1,52 @@
+Build Time (AABB cells)
+----------------------------------------------------------
+subcell size: 		      100x100x100
+point count: 		      163251931
+Elapsed: 		         5h 25m
+cells built: 		      725672
+export to filesystem: 	26m 41s
+max cell point count:   17123
+avg cell point count:   225
+depth:                  32
+dir count:              725672
+file count:             1451345
+filesize:               11 GiB, 115 MiB
+
+Reading:-120.87_35.39_to_-120.86_35.40.dat
+[10.42%]: 17023620 of 163251931 completed. Elapsed: 27m 22s, ETA: 3h 55m
+Reading:-120.86_35.36_to_-120.85_35.37.dat
+[14.47%]: 23637036 of 163251931 completed. Elapsed: 39m 52s, ETA: 3h 55m
+Reading:-120.88_35.37_to_-120.87_35.38.dat
+[14.59%]: 23822483 of 163251931 completed. Elapsed: 40m 11s, ETA: 3h 55m
+Reading:-120.88_35.36_to_-120.87_35.37.dat
+[14.7%]: 23999071 of 163251931 completed. Elapsed: 40m 32s, ETA: 3h 55m
+Reading:-120.87_35.37_to_-120.86_35.38.dat
+[27.88%]: 45528265 of 163251931 completed. Elapsed: 1h 25m, ETA: 3h 39m
+Reading:-120.86_35.39_to_-120.85_35.40.dat
+[37.43%]: 61119209 of 163251931 completed. Elapsed: 1h 57m, ETA: 3h 17m
+Reading:-120.85_35.36_to_-120.84_35.37.dat
+[45.93%]: 74989925 of 163251931 completed. Elapsed: 2h 26m, ETA: 2h 52m
+Reading:-120.86_35.38_to_-120.85_35.39.dat
+[57.05%]: 93143199 of 163251931 completed. Elapsed: 3h 4m, ETA: 2h 18m
+Reading:-120.87_35.36_to_-120.86_35.37.dat
+[63.78%]: 104132254 of 163251931 completed. Elapsed: 3h 26m, ETA: 1h 57m
+Reading:-120.87_35.38_to_-120.86_35.39.dat
+[73.82%]: 120522778 of 163251931 completed. Elapsed: 3h 59m, ETA: 1h 25m
+Reading:-120.86_35.37_to_-120.85_35.38.dat
+[88.04%]: 143730224 of 163251931 completed. Elapsed: 4h 46m, ETA: 38m 51s
+Reading:-120.85_35.37_to_-120.84_35.38.dat
+[100.0%]: 163251931 of 163251931 completed. Elapsed: 5h 25m, ETA: 0μs 0ns
+tree built: 725672
+5h 25m
+exporting tree to /media/data/thesis/SanSimeon_small_icosatree_octreeCellStyle_100x100x100
+
+exporting flat file attributes to /media/data/thesis/SanSimeon_small_icosatree_octreeCellStyle_100x100x100 at attributes.csv
+[100.0%]: 725672 of 725672 completed. Elapsed: 26m 41s, ETA: 0μs 0ns
+26m 41s
+
+
+
+
 Build Time
 ----------------------------------------------------------
 subcell size: 		      50x50x20
