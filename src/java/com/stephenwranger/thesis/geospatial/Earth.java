@@ -45,6 +45,7 @@ public class Earth extends Renderable {
    private boolean                     isLightingEnabled = false;
    private double                      loadFactor        = 0.75;
    private double                      altitudeOffset    = 0;
+   private float                       lineWidth         = 2f;
 
    public Earth(final ImageryType imageryType) {
       super(new Tuple3d(), new Quat4d());
@@ -68,6 +69,10 @@ public class Earth extends Renderable {
    @Override
    public PickingHit getIntersection(final PickingRay ray) {
       return (this.geometry == null) ? PickingRay.NO_HIT : this.geometry.getIntersection(ray);
+   }
+   
+   public float getLineWidth() {
+      return this.lineWidth;
    }
 
    public double getLoadFactor() {
@@ -119,12 +124,14 @@ public class Earth extends Renderable {
          this.geometry.setLoadFactor(this.loadFactor);
       }
 
-      gl.glPushAttrib(GL2.GL_POLYGON_BIT);
+      gl.glPushAttrib(GL2.GL_POLYGON_BIT | GL2.GL_LINE_BIT);
       gl.glPolygonMode(GL.GL_FRONT_AND_BACK, (this.isWireframe) ? GL2GL3.GL_LINE : GL2GL3.GL_FILL);
+      gl.glLineWidth(this.lineWidth);
 
       this.shader.enable(gl);
       this.geometry.render(gl, glu, glDrawable, scene);
       this.shader.disable(gl);
+      
       gl.glPopAttrib();
    }
 
@@ -151,6 +158,10 @@ public class Earth extends Renderable {
 
    public void setWireframe(final boolean isWireframe) {
       this.isWireframe = isWireframe;
+   }
+   
+   public void setLineWidth(final float lineWidth) {
+      this.lineWidth = lineWidth;
    }
 
    private double getAltitude(final double longitudeDegrees, final double latitudeDegrees) {
