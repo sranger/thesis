@@ -1,27 +1,231 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN" "http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><!--This file was converted to xhtml by LibreOffice - see http://cgit.freedesktop.org/libreoffice/core/tree/filter/source/xslt for the code.--><head profile="http://dublincore.org/documents/dcmi-terms/"><meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8"/><title xml:lang="en-US">- no title specified</title><meta name="DCTERMS.title" content="" xml:lang="en-US"/><meta name="DCTERMS.language" content="en-US" scheme="DCTERMS.RFC4646"/><meta name="DCTERMS.source" content="http://xml.openoffice.org/odf2xhtml"/><meta name="DCTERMS.creator" content="rangers "/><meta name="DCTERMS.issued" content="2016-07-08T08:01:01.757687082" scheme="DCTERMS.W3CDTF"/><meta name="DCTERMS.modified" content="2016-08-29T09:43:42.953793672" scheme="DCTERMS.W3CDTF"/><meta name="DCTERMS.provenance" content="" xml:lang="en-US"/><meta name="DCTERMS.subject" content="," xml:lang="en-US"/><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/" hreflang="en"/><link rel="schema.DCTERMS" href="http://purl.org/dc/terms/" hreflang="en"/><link rel="schema.DCTYPE" href="http://purl.org/dc/dcmitype/" hreflang="en"/><link rel="schema.DCAM" href="http://purl.org/dc/dcam/" hreflang="en"/><style type="text/css">
-	@page {  }
-	table { border-collapse:collapse; border-spacing:0; empty-cells:show }
-	td, th { vertical-align:top; font-size:12pt;}
-	h1, h2, h3, h4, h5, h6 { clear:both }
-	ol, ul { margin:0; padding:0;}
-	li { list-style: none; margin:0; padding:0;}
-	<!-- "li span.odfLiEnd" - IE 7 issue-->
-	li span. { clear: both; line-height:0; width:0; height:0; margin:0; padding:0; }
-	span.footnodeNumber { padding-right:1em; }
-	span.annotation_style_by_filter { font-size:95%; font-family:Arial; background-color:#fff000;  margin:0; border:0; padding:0;  }
-	* { margin:0;}
-	.Heading_20_3 { font-size:101%; margin-bottom:0.0835in; margin-top:0.0972in; font-family:Liberation Sans; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; font-weight:bold; }
-	.P1 { font-size:9pt; font-family:arial, sans-serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P2 { font-size:9pt; line-height:120%; margin-bottom:0.0972in; margin-top:0in; font-family:arial, sans-serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P3 { font-size:9pt; font-family:arial, sans-serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:bold; }
-	.P4 { font-size:9pt; font-family:Liberation Serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P5 { font-size:9pt; font-family:Liberation Serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P6 { font-size:9pt; font-family:Liberation Serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P7 { font-size:9pt; font-family:Liberation Serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P8 { font-size:9pt; font-family:Liberation Serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.P9 { font-size:9pt; font-family:Liberation Serif; writing-mode:page; margin-left:0in; margin-right:0in; text-indent:0in; color:#222222; letter-spacing:normal; font-style:normal; font-weight:normal; }
-	.Text_20_body { font-size:12pt; font-family:Liberation Serif; writing-mode:page; margin-top:0in; margin-bottom:0.0972in; line-height:120%; }
-	<!-- ODF styles with no properties representable as CSS -->
-	.T1 .T2 .T3 .T4 .T5  { }
-	</style></head><body dir="ltr" style="max-width:8.5in;margin-top:0.7874in; margin-bottom:0.7874in; margin-left:0.7874in; margin-right:0.7874in; "><p class="P2">Stephen Ranger</p><p class="Text_20_body">Thesis Update #<span class="T1">2</span></p><p class="P1"> </p><p class="P1"> </p><h3 class="Heading_20_3"><a id="a__Data_Structure_Implementation_and_Processing"><span/></a>Data Structure Implementation <span class="T5">and </span>Processing</h3><p class="P3"> </p><p class="P3"> </p><p class="P4">The Data Structures used for this thesis are the common Octree and a variation on the same theme based on the structure of an Icosahedron, a spherical structure defined by twenty equilateral triangles. The main reason behind the Icosatree implementation was to define a three-dimensional data structure that aligned itself better to the datasets being used; in this case, a LiDAR point cloud along the surface of the Earth (a WGS84 surface projection will be used).</p><p class="P4"> </p><p class="P5">The data structures will be defined in code by a common TreeStructure implementation and two extending classes, Octree and Icosatree, <span class="T2">which handle creating cells, creating bounding volumes for cells, and building cell path strings</span>. The TreeStructure will also make use of a common TreeCell implementation with two extending classes, Octet and Icosatet, defining <span class="T2">type specific functionality such as cell index calculations, point insert and swapping, and max number of child nodes.</span></p><p class="P5"> </p><p class="P6">Internally, the TreeStructure class stores a collection of TreeCells, the DataAttributes for the point data (containing byte location, name, strides, etc for the binary data),  and handles external interfacing when adding or accessing cells and points. <span class="T3">The TreeCells themselves control how cells are inserted (in build mode only as in rendering mode they are only given a binary chunk of pre-computed point data) and processing GPU rendering requests which includes storing cell state (Empty, Pending, and Complete), Vertex Buffer pool index locations and inserting data into the buffers with a camera locale offset. The cell state is used when loading point data from an external binary source. When the cell is created it only contains a bounding volume and its state is set to empty. After its point data is requested by the rendering system it is set to pending so its contents aren’t requested again. Once the point data is fetched and stored in the cell, it is set to complete and ready for rendering.</span></p><p class="P6"> </p><p class="P6"> </p><h3 class="Heading_20_3"><a id="a__Rendering"><span/></a>Rendering</h3><p class="P6"> </p><p class="P7">Once the renderer decided what cells to render using the camera frustum, all cells are compiled into a list. Those that are empty have their point data put into a request queue and set to pending, cells that are already pending are ignored, those that are complete but with no GPU pool index set are queued for upload to the GPU (cells that have a camera locale offset that is stale are also queued), and those that are complete and already uploaded are added to the rendering stack. The complete cells that need uploading to the GPU are given vertex buffer pool indices and uploaded to the GPU until a time threshold is met (to reduce per-frame time) and any finished are added to the rendering stack.</p><p class="P7"> </p><p class="P7">The SegmentedVertexBufferPool class is a specialized VertexBufferObject implementation that stores a number of VertexBufferObject sets internally. The pool is initially given a maximum segment size and a byte size per segment object. In terms of the Octree/Icosatree, this is defined by the maximum number of points any single tree cell will ever contain (which is stored in the root.txt file in the file structure of the tree). The initial VBO is set to this maximum size times the number of bytes per point (which is defined in the attributes.csv file in the root of the tree file system) times one hundred. This will allow the VBO to hold one hundred cells’ point data. However, since not all cells will contain the same number of points, a number of other VBO’s are created. The maximum segment size is halved and a new VBO for another hundred cells is created until the maximum segment size drops below one hundred points. This allows any cell with more than fifty points to fill at least one half of a VBO segment and limit empty, unused space in the VBO pools. <span class="T4">For example, if the maximum point count for a dataset was 1000 points, the segmented pool class would create an initial set of VBO’s for 1000, 500, 250, 125, and 63 points. If, at any time, a VBO contains the maximum number of segments, a new VBO is created and appended to the end of the previous. Internally, they are two separate VBO’s but the pool class handles them as a contiguous buffer and hands out index values as if they were as one. When the renderer requests a new VBO location for a new cell it received a pool index and a segment index; the pool index indicates which sized pool is being used (the maximum number of segment points is used for the pool index) and the segment index is the global index into that list of vertex buffers. If at any time the last buffer in a pool is emptied (cells outside the frustum are removed from the pool) it is removed from the pool to limit GPU space utilized.</span></p><p class="P7"> </p><p class="P7"> </p><h3 class="Heading_20_3"><a id="a__Building_the_Tree"><span/></a>Building the Tree</h3><p class="P8"> </p><p class="P8">When building the tree structure, points are inserted into the tree one-by-one. Each point is given a cell index which is computed using a subcell grid structure within that cell. If a subcell is empty, the point is inserted into that cell. If a subcell already contains a point, the point closest to the center of that point is either left there or swapped with the previous point stored there and the other is sent to a child cell; this continues until an unoccupied cell is found to insert the remaining point.</p><p class="P8"> </p><p class="P8">The building application stores the tree structure either in memory or in a MapDB temp file (defined with the mapdb.enable JVM flag and stored in the temp directory defined by the java.io.tmpdir JVM flag). This allows the user to use RAM for speed or the filesystem for storage depending on how much RAM is available and how large the dataset is.</p><p class="P8"> </p><p class="P8">Once the tree is built, it is exported to the filesystem as a directory tree of cell path names containing a directory for every child cell containing points, a binary file with point data, and a text file containing a list of the valid child paths. The root node also contains an attributes.csv file that contains the point data binary format.</p><p class="P8"> </p><p class="P9">The tree is built based on a number of binary files containing point data packed in no particular order. These can be built from a number of different sources but for this work a pre-processed dataset was acquired by the author. However, publicly available sources can be found online at sites such as OpenTopography.org. </p></body></html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN" "http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!--This file was converted to xhtml by LibreOffice - see 
+		http://cgit.freedesktop.org/libreoffice/core/tree/filter/source/xslt for 
+		the code. -->
+	<head profile="http://dublincore.org/documents/dcmi-terms/">
+		<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+		<title xml:lang="en-US">Stephen Ranger - Thesis Update #2: Data Structure Implementation and Processing</title>
+		<meta name="DCTERMS.title" content="" xml:lang="en-US" />
+		<meta name="DCTERMS.language" content="en-US" scheme="DCTERMS.RFC4646" />
+		<meta name="DCTERMS.source" content="http://xml.openoffice.org/odf2xhtml" />
+		<meta name="DCTERMS.creator" content="rangers " />
+		<meta name="DCTERMS.issued" content="2016-07-08T08:01:01.757687082"
+			scheme="DCTERMS.W3CDTF" />
+		<meta name="DCTERMS.modified" content="2016-08-29T09:43:42.953793672"
+			scheme="DCTERMS.W3CDTF" />
+		<meta name="DCTERMS.provenance" content="" xml:lang="en-US" />
+		<meta name="DCTERMS.subject" content="," xml:lang="en-US" />
+		<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"
+			hreflang="en" />
+		<link rel="schema.DCTERMS" href="http://purl.org/dc/terms/"
+			hreflang="en" />
+		<link rel="schema.DCTYPE" href="http://purl.org/dc/dcmitype/"
+			hreflang="en" />
+		<link rel="schema.DCAM" href="http://purl.org/dc/dcam/" hreflang="en" />
+		<style type="text/css">
+			@page { }
+			table { border-collapse:collapse; border-spacing:0; empty-cells:show }
+			td, th { vertical-align:top; font-size:12pt;}
+			h1, h2, h3, h4, h5, h6 { clear:both }
+			ol, ul { margin:0; padding:0;}
+			li { list-style: none; margin:0; padding:0;}
+			<!-- "li span.odfLiEnd" - IE 7 issue -->
+			li span. { clear: both; line-height:0; width:0; height:0; margin:0;
+			padding:0; }
+			span.footnodeNumber { padding-right:1em; }
+			span.annotation_style_by_filter { font-size:95%; font-family:Arial; background-color:#fff000;
+			margin:0; border:0; padding:0; }
+			* { margin:0;}
+			.Heading_20_3 { font-size:101%; margin-bottom:0.0835in; margin-top:0.0972in;
+			font-family:Liberation Sans; writing-mode:page; margin-left:0in;
+			margin-right:0in; text-indent:0in; font-weight:bold; }
+			.P1 { font-size:9pt; font-family:arial, sans-serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P2 { font-size:9pt; line-height:120%; margin-bottom:0.0972in;
+			margin-top:0in; font-family:arial, sans-serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P3 { font-size:9pt; font-family:arial, sans-serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:bold; }
+			.P4 { font-size:9pt; font-family:Liberation Serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P5 { font-size:9pt; font-family:Liberation Serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P6 { font-size:9pt; font-family:Liberation Serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P7 { font-size:9pt; font-family:Liberation Serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P8 { font-size:9pt; font-family:Liberation Serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.P9 { font-size:9pt; font-family:Liberation Serif; writing-mode:page;
+			margin-left:0in; margin-right:0in; text-indent:0in; color:#222222;
+			letter-spacing:normal; font-style:normal; font-weight:normal; }
+			.Text_20_body { font-size:12pt; font-family:Liberation Serif;
+			writing-mode:page; margin-top:0in; margin-bottom:0.0972in;
+			line-height:120%; }
+			<!-- ODF styles with no properties representable as CSS -->
+			.T1 .T2 .T3 .T4 .T5 { }
+		</style>
+	</head>
+	<body dir="ltr"
+		style="max-width:8.5in;margin-top:0.7874in; margin-bottom:0.7874in; margin-left:0.7874in; margin-right:0.7874in; ">
+		<p class="P2">Stephen Ranger</p>
+		<p class="Text_20_body">
+			Thesis Update #
+			<span class="T1">2</span>
+		</p>
+		<p class="P1"> </p>
+		<p class="P1"> </p>
+		<h3 class="Heading_20_3">
+			<a id="a__Data_Structure_Implementation_and_Processing">
+				<span />
+			</a>
+			Data Structure Implementation
+			<span class="T5">and </span>
+			Processing
+		</h3>
+		<p class="P3"> </p>
+		<p class="P3"> </p>
+		<p class="P4">The Data Structures used for this thesis are the common
+			Octree and a variation on the same theme based on the structure of an
+			Icosahedron, a spherical structure defined by twenty equilateral
+			triangles. The main reason behind the Icosatree implementation was to
+			define a three-dimensional data structure that aligned itself better
+			to the datasets being used; in this case, a LiDAR point cloud along
+			the surface of the Earth (a WGS84 surface projection will be used).
+		</p>
+		<p class="P4"> </p>
+		<p class="P5">
+			The data structures will be defined in code by a common TreeStructure
+			implementation and two extending classes, Octree and Icosatree,
+			<span class="T2">which handle creating cells, creating bounding
+				volumes for cells, and building cell path strings</span>
+			. The TreeStructure will also make use of a common TreeCell
+			implementation with two extending classes, Octet and Icosatet,
+			defining
+			<span class="T2">type specific functionality such as cell index
+				calculations, point insert and swapping, and max number of child
+				nodes.</span>
+		</p>
+		<p class="P5"> </p>
+		<p class="P6">
+			Internally, the TreeStructure class stores a collection of TreeCells,
+			the DataAttributes for the point data (containing byte location,
+			name, strides, etc for the binary data),  and handles external
+			interfacing when adding or accessing cells and points.
+			<span class="T3">The TreeCells themselves control how cells are
+				inserted (in build mode only as in rendering mode they are only
+				given a binary chunk of pre-computed point data) and processing GPU
+				rendering requests which includes storing cell state (Empty,
+				Pending, and Complete), Vertex Buffer pool index locations and
+				inserting data into the buffers with a camera locale offset. The
+				cell state is used when loading point data from an external binary
+				source. When the cell is created it only contains a bounding volume
+				and its state is set to empty. After its point data is requested by
+				the rendering system it is set to pending so its contents aren’t
+				requested again. Once the point data is fetched and stored in the
+				cell, it is set to complete and ready for rendering.</span>
+		</p>
+		<p class="P6"> </p>
+		<p class="P6"> </p>
+		<h3 class="Heading_20_3">
+			<a id="a__Rendering">
+				<span />
+			</a>
+			Rendering
+		</h3>
+		<p class="P6"> </p>
+		<p class="P7">Once the renderer decided what cells to render using the
+			camera frustum, all cells are compiled into a list. Those that are
+			empty have their point data put into a request queue and set to
+			pending, cells that are already pending are ignored, those that are
+			complete but with no GPU pool index set are queued for upload to the
+			GPU (cells that have a camera locale offset that is stale are also
+			queued), and those that are complete and already uploaded are added
+			to the rendering stack. The complete cells that need uploading to the
+			GPU are given vertex buffer pool indices and uploaded to the GPU
+			until a time threshold is met (to reduce per-frame time) and any
+			finished are added to the rendering stack.</p>
+		<p class="P7"> </p>
+		<p class="P7">
+			The SegmentedVertexBufferPool class is a specialized
+			VertexBufferObject implementation that stores a number of
+			VertexBufferObject sets internally. The pool is initially given a
+			maximum segment size and a byte size per segment object. In terms of
+			the Octree/Icosatree, this is defined by the maximum number of points
+			any single tree cell will ever contain (which is stored in the
+			root.txt file in the file structure of the tree). The initial VBO is
+			set to this maximum size times the number of bytes per point (which
+			is defined in the attributes.csv file in the root of the tree file
+			system) times one hundred. This will allow the VBO to hold one
+			hundred cells’ point data. However, since not all cells will contain
+			the same number of points, a number of other VBO’s are created. The
+			maximum segment size is halved and a new VBO for another hundred
+			cells is created until the maximum segment size drops below one
+			hundred points. This allows any cell with more than fifty points to
+			fill at least one half of a VBO segment and limit empty, unused space
+			in the VBO pools.
+			<span class="T4">For example, if the maximum point count for a
+				dataset was 1000 points, the segmented pool class would create an
+				initial set of VBO’s for 1000, 500, 250, 125, and 63 points. If, at
+				any time, a VBO contains the maximum number of segments, a new VBO
+				is created and appended to the end of the previous. Internally, they
+				are two separate VBO’s but the pool class handles them as a
+				contiguous buffer and hands out index values as if they were as one.
+				When the renderer requests a new VBO location for a new cell it
+				received a pool index and a segment index; the pool index indicates
+				which sized pool is being used (the maximum number of segment points
+				is used for the pool index) and the segment index is the global
+				index into that list of vertex buffers. If at any time the last
+				buffer in a pool is emptied (cells outside the frustum are removed
+				from the pool) it is removed from the pool to limit GPU space
+				utilized.</span>
+		</p>
+		<p class="P7"> </p>
+		<p class="P7"> </p>
+		<h3 class="Heading_20_3">
+			<a id="a__Building_the_Tree">
+				<span />
+			</a>
+			Building the Tree
+		</h3>
+		<p class="P8"> </p>
+		<p class="P8">When building the tree structure, points are inserted into
+			the tree one-by-one. Each point is given a cell index which is
+			computed using a subcell grid structure within that cell. If a
+			subcell is empty, the point is inserted into that cell. If a subcell
+			already contains a point, the point closest to the center of that
+			point is either left there or swapped with the previous point stored
+			there and the other is sent to a child cell; this continues until an
+			unoccupied cell is found to insert the remaining point.</p>
+		<p class="P8"> </p>
+		<p class="P8">The building application stores the tree structure either
+			in memory or in a MapDB temp file (defined with the mapdb.enable JVM
+			flag and stored in the temp directory defined by the java.io.tmpdir
+			JVM flag). This allows the user to use RAM for speed or the
+			filesystem for storage depending on how much RAM is available and how
+			large the dataset is.</p>
+		<p class="P8"> </p>
+		<p class="P8">Once the tree is built, it is exported to the filesystem as
+			a directory tree of cell path names containing a directory for every
+			child cell containing points, a binary file with point data, and a
+			text file containing a list of the valid child paths. The root node
+			also contains an attributes.csv file that contains the point data
+			binary format.</p>
+		<p class="P8"> </p>
+		<p class="P9">The tree is built based on a number of binary files
+			containing point data packed in no particular order. These can be
+			built from a number of different sources but for this work a
+			pre-processed dataset was acquired by the author. However, publicly
+			available sources can be found online at sites such as
+			OpenTopography.org. </p>
+	</body>
+</html>
