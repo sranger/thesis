@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedWriter;
@@ -80,7 +82,7 @@ public class ThesisVisualization extends JFrame {
       //      this.addFrustumRenderable();
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
-      navigator.moveTo(-120.8643, 35.371, 0, SphericalNavigator.AZIMUTH_SOUTH, SphericalNavigator.ELEVATION_ZENITH, 2000);
+      navigator.moveTo(-120.8566862, 35.3721688, 0, SphericalNavigator.AZIMUTH_EAST, SphericalNavigator.ELEVATION_ZENITH / 2.0, 400);
       navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
@@ -218,6 +220,12 @@ public class ThesisVisualization extends JFrame {
          final JScrollPane timingsScroll = new JScrollPane(timingsArea);
          timingsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
          timingsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+         
+         this.addButton(options, "Copy Statistics", () -> {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(timingsArea.getText()), null);
+         });
+         
          options.add(timingsScroll);
 
          final long[] last = new long[] { 0 };
@@ -227,7 +235,8 @@ public class ThesisVisualization extends JFrame {
 
             if ((last[0]) < time - 1000000000) {
                last[0] = time;
-               timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\n" + timings.toString());
+               timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\nCells Rendered: " + tree.getCellsRendered() + "\n" + timings.toString());
+               timingsArea.setCaretPosition(0);
             }
          });
       }
