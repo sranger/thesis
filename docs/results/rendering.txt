@@ -1,0 +1,106 @@
+Icosatree (AABB Cells)
+------------------------
+Point Count: 2879771
+Cells Rendered: 1272
+Pending Upload
+	avg: 401μs 215ns
+	min: 150μs 233ns
+	max: 1ms 198μs
+Frustum Culling.Cell
+	avg: 1μs 872ns
+	min: 0μs 52ns
+	max: 11μs 161ns
+Rendering
+	avg: 1ms 261μs
+	min: 836μs 861ns
+	max: 1ms 628μs
+Frustum Culling
+	avg: 225ms 275μs
+	min: 149ms 301μs
+	max: 307ms 428μs
+Frustum Culling.Children
+	avg: 2μs 313ns
+	min: 0μs 80ns
+	max: 97μs 116ns
+Upload Cells
+	avg: 808μs 207ns
+	min: 423μs 697ns
+	max: 1ms 590μs
+Building Bounds
+	avg: 184μs 890ns
+	min: 108μs 424ns
+	max: 319μs 418ns
+
+
+	
+
+Icosatree (Oriented Cells)
+------------------------
+Point Count: 5852824
+Cells Rendered: 371
+Pending Upload
+	avg: 1ms 567μs
+	min: 47μs 971ns
+	max: 23ms 117μs
+Frustum Culling.Cell
+	avg: 3μs 921ns
+	min: 0μs 60ns
+	max: 9μs 565ns
+Rendering
+	avg: 658μs 912ns
+	min: 414μs 688ns
+	max: 3ms 62μs
+Frustum Culling
+	avg: 56ms 331μs
+	min: 34ms 205μs
+	max: 91ms 28μs
+Frustum Culling.Children
+	avg: 1μs 815ns
+	min: 0μs 92ns
+	max: 109μs 277ns
+Upload Cells
+	avg: 8ms 533μs
+	min: 194μs 317ns
+	max: 55ms 707μs
+Building Bounds
+	avg: 117μs 988ns
+	min: 31μs 356ns
+	max: 1ms 314μs
+
+
+
+
+Octree
+------------------------
+Point Count: 3692901
+Cells Rendered: 630
+Pending Upload
+	avg: 785μs 446ns
+	min: 64μs 265ns
+	max: 8ms 659μs
+Frustum Culling.Cell
+	avg: 0μs 840ns
+	min: 0μs 69ns
+	max: 5μs 957ns
+Rendering
+	avg: 754μs 980ns
+	min: 423μs 286ns
+	max: 9ms 631μs
+Frustum Culling
+	avg: 103ms 197μs
+	min: 71ms 752μs
+	max: 134ms 615μs
+Frustum Culling.Children
+	avg: 4μs 423ns
+	min: 0μs 92ns
+	max: 100μs 55ns
+Upload Cells
+	avg: 2ms 799μs
+	min: 206μs 658ns
+	max: 11ms 76μs
+Building Bounds
+	avg: 90μs 706ns
+	min: 48μs 646ns
+	max: 246μs 512ns
+
+

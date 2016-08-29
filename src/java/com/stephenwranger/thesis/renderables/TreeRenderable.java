@@ -136,6 +136,10 @@ public class TreeRenderable extends Renderable {
 
       return count;
    }
+   
+   public int getCellsRendered() {
+      return this.segments.size();
+   }
 
    public Timings getTimings() {
       return this.timings;
