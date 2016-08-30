@@ -15,6 +15,7 @@ import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.BoundingVolume;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
+import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.graphics.utils.buffers.BufferUtils;
 import com.stephenwranger.graphics.utils.buffers.SegmentObject;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
@@ -366,35 +367,32 @@ public abstract class TreeCell implements Iterable<Point>, SegmentObject {
 
             if (this.bounds instanceof TrianglePrismVolume) {
                final TrianglePrismVolume tpv = (TrianglePrismVolume) this.bounds;
-               final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
-               final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
+               final Triangle3d top = tpv.getTopFace();
+               final Triangle3d bottom = tpv.getBottomFace();
 
-               for (final Tuple3d corner : topCorners) {
-                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",this.bounds.top");
-               }
-
-               for (final Tuple3d corner : botCorners) {
-                  sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",this.bounds.bottom");
-               }
+               final Tuple3d topBary = top.getBarycentricCoordinate(point);
+               final Tuple3d bottomBary = bottom.getBarycentricCoordinate(point);
+               sb.append(String.format("%.5f, %.5f, %.5f (%.5f)", topBary.x, topBary.y, topBary.z, topBary.x + topBary.y + topBary.z));
+               sb.append(String.format("\n%.5f, %.5f, %.5f (%.5f)", bottomBary.x, bottomBary.y, bottomBary.z, bottomBary.x + bottomBary.y + bottomBary.z));
             }
 
             for (final Entry<Integer, BoundingVolume> entry : this.childBounds.entrySet()) {
                if (entry.getValue() instanceof TrianglePrismVolume) {
                   final TrianglePrismVolume tpv = (TrianglePrismVolume) entry.getValue();
-                  final Tuple3d[] topCorners = tpv.getTopFace().getCorners();
-                  final Tuple3d[] botCorners = tpv.getBottomFace().getCorners();
+                  final Triangle3d top = tpv.getTopFace();
+                  final Triangle3d bottom = tpv.getBottomFace();
 
-                  for (final Tuple3d corner : topCorners) {
-                     sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append("child #" + entry.getKey() + " top");
-                  }
-
-                  for (final Tuple3d corner : botCorners) {
-                     sb.append("\n").append(corner.x).append(",").append(corner.y).append(",").append(corner.z).append(",").append("child #" + entry.getKey() + " bottom");
-                  }
+                  final Tuple3d topBary = top.getBarycentricCoordinate(point);
+                  final Tuple3d bottomBary = bottom.getBarycentricCoordinate(point);
+                  sb.append(String.format("%.5f, %.5f, %.5f (%.5f)", topBary.x, topBary.y, topBary.z, topBary.x + topBary.y + topBary.z));
+                  sb.append(String.format("\n%.5f, %.5f, %.5f (%.5f)", bottomBary.x, bottomBary.y, bottomBary.z, bottomBary.x + bottomBary.y + bottomBary.z));
                }
             }
-            throw new RuntimeException("Cannot find child node in parent '" + this.path + "' for point\n" + point.x + "," + point.y + "," + point.z + ",the point\n" + sb.toString() + "\nthis.bounds: " + this.bounds + "\nchild bounds: "
-                  + this.childBounds.size());
+            throw new RuntimeException("Cannot find child node in parent '" + this.path + "'"
+                  + "\nthe point" + point.x + "," + point.y + "," + point.z + ","
+                  + "\nbounds: " + sb.toString()
+                  + "\nthis.bounds: " + this.bounds
+                  + "\nchild bounds: " + this.childBounds.size());
          }
       }
 

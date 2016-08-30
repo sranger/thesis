@@ -7,11 +7,11 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import com.stephenwranger.graphics.bounds.BoundingBox;
 import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple2d;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.intersection.Triangle2d;
+import com.stephenwranger.graphics.math.intersection.Triangle3d;
 import com.stephenwranger.thesis.data.Point;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
@@ -44,35 +44,29 @@ public class Icosatet extends TreeCell {
       } else {
          point.getXYZ(tree, this.pending);
          final TrianglePrismVolume bounds = (TrianglePrismVolume) this.getBoundingVolume();
-         final Tuple3d min = bounds.getMin();
-         final int[] cellSplit = this.getCellSplit();
-         final Tuple3d dimensions = bounds.getDimensions();
-         final double xStep = dimensions.x / cellSplit[0];
-         final double yStep = dimensions.y / cellSplit[1];
-         final double zStep = dimensions.z / cellSplit[2];
+         final Triangle3d top = bounds.getTopFace();
+         final Tuple3d dimensions = top.getTriangularCoordinatesRange();
+         final Tuple3d stu = top.getTriangularCoordinates(this.pending);
+         final double depth = top.distanceToPoint(this.pending) / bounds.getDepth();
+//         System.out.println("stu: " + stu + ", depth = " + depth);
+         final int[] cellSplit = tree.getCellSplit();
+         int index = -1;
          
-         final int xIndex = (int)Math.floor((this.pending.x - min.x) / xStep);
-         final int yIndex = (int)Math.floor((this.pending.y - min.y) / yStep);
-         final int zIndex = (int)Math.floor((this.pending.z - min.z) / zStep);
-         final int index = xIndex + yIndex * cellSplit[0] + zIndex * cellSplit[0] * cellSplit[1];
+         if(stu != null) {
+            final double maxDepth = bounds.getDepth();
+            final double xStep = dimensions.x / cellSplit[0];
+            final double yStep = dimensions.y / cellSplit[0];
+            final double zStep = dimensions.z / cellSplit[0];
+            final double wStep = maxDepth / cellSplit[2];
+            final int xIndex = (int) Math.floor(stu.x / xStep);
+            final int yIndex = (int) Math.floor(stu.y / yStep);
+            final int zIndex = (int) Math.floor(stu.z / zStep);
+            final int wIndex = (int) Math.floor(depth / wStep);
+//            System.out.println("index: " + xIndex + ", " + yIndex + ", " + zIndex);
+            index = xIndex * cellSplit[0] * cellSplit[0] * cellSplit[0] + yIndex * cellSplit[0] * cellSplit[0] + zIndex * cellSplit[0] + wIndex;
+         }
          
          return index;
-         
-         
-//         final TrianglePrismVolume bounds = (TrianglePrismVolume) this.getBoundingVolume();
-//         final double[] uvwDepth = bounds.getBarycentricCoordinate(point.getXYZ(tree, this.current));
-//         final int[] splits = this.getCellSplit();
-//         
-//         // index along u
-//         final int u = (int)Math.floor(uvwDepth[0] * splits[0]);
-//         
-//         // index along v
-//         final int v = (int)Math.floor(uvwDepth[1] * splits[0]);
-//         
-//         // index along depth
-//         final int d = (int)Math.floor(uvwDepth[3] / (1.0 / splits[2]));
-//         
-//         return u * splits[0] * splits[0] + v * splits[0] + d;
       }
    }
    
@@ -81,19 +75,17 @@ public class Icosatet extends TreeCell {
       if(this.path.length() == 0) {
          return false;
       } else {
-         final BoundingBox bounds = (BoundingBox) this.getBoundingVolume();
+         final TrianglePrismVolume bounds = (TrianglePrismVolume) this.getBoundingVolume();
+         final Triangle3d top = bounds.getTopFace();
+         final Tuple3d dimensions = top.getTriangularCoordinatesRange();
          final int[] cellSplit = this.getCellSplit();
-   
-         final Tuple3d min = bounds.getMin();
-         final Tuple3d dimensions = bounds.getDimensions();
-         final double xStep = dimensions.x / cellSplit[0];
-         final double yStep = dimensions.y / cellSplit[1];
-         final double zStep = dimensions.z / cellSplit[2];
          
-         final Tuple3d pendingLocal = pending.getXYZ(tree, this.pending);
-         pendingLocal.subtract(min);
-         final Tuple3d currentLocal = current.getXYZ(tree, this.current);
-         currentLocal.subtract(min);
+         final double xStep = dimensions.x / cellSplit[0];
+         final double yStep = dimensions.y / cellSplit[0];
+         final double zStep = dimensions.z / cellSplit[0];
+
+         final Tuple3d pendingLocal = top.getTriangularCoordinates(pending.getXYZ(tree, this.pending));
+         final Tuple3d currentLocal = top.getTriangularCoordinates(current.getXYZ(tree, this.current));
          
          final int xIndex = (int)Math.floor((pendingLocal.x) / xStep);
          final int yIndex = (int)Math.floor((pendingLocal.y) / yStep);
@@ -102,23 +94,10 @@ public class Icosatet extends TreeCell {
          final Tuple3d center = new Tuple3d(xIndex * xStep + xStep * 0.5, yIndex * yStep + yStep * 0.5, zIndex * zStep + zStep * 0.5);
          
          // if new point is closer to cell center than old point, swap them then pass point to child
-         return center.distance(pendingLocal) < center.distance(currentLocal);
+         // we can ignore the depth at this point as they're both in the same indexed cell already
+         return center.distanceSquared(pendingLocal) < center.distanceSquared(currentLocal);
       }
    }
-   
-//   @Override
-//   protected boolean swapPointCheck(final TreeStructure tree, final Point current, final Point pending) {
-//      if(this.path.length() == 0) {
-//         return false;
-//      } else {
-//         final TrianglePrismVolume bounds = (TrianglePrismVolume) this.getBoundingVolume();
-//         final Tuple3d boundsCenter = bounds.getCenter();
-//         final Tuple3d currentXYZ = current.getXYZ(tree, this.current);
-//         final Tuple3d pendingXYZ = pending.getXYZ(tree, this.pending);
-//         
-//         return pendingXYZ.distanceSquared(boundsCenter) < currentXYZ.distanceSquared(boundsCenter);
-//      }
-//   }
    
    @Override
    protected Class<? extends TreeStructure> getTreeType() {
