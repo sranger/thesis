@@ -95,6 +95,102 @@ exporting flat file attributes to /media/data/thesis/SanSimeon_small_icosatree_t
 
 
 
+Build Time (Triangular Coordinates)
+----------------------------------------------------------
+subcell size: 		      150x100
+point count: 		      163251931
+Elapsed: 		         6h 14m
+cells built: 		      340758
+export to filesystem: 	23m 54s
+max cell point count:   22618
+avg cell point count:   480
+depth:                  30
+dir count:              340758
+file count:             681517
+filesize:               11 GiB, 107 MiB
+
+Reading:-120.87_35.39_to_-120.86_35.40.dat
+[10.42%]: 17023620 of 163251931 completed. Elapsed: 31m 18s, ETA: 4h 28m
+Reading:-120.86_35.36_to_-120.85_35.37.dat
+[14.47%]: 23637036 of 163251931 completed. Elapsed: 44m 59s, ETA: 4h 25m
+Reading:-120.88_35.37_to_-120.87_35.38.dat
+[14.59%]: 23822483 of 163251931 completed. Elapsed: 45m 23s, ETA: 4h 25m
+Reading:-120.88_35.36_to_-120.87_35.37.dat
+[14.7%]: 23999071 of 163251931 completed. Elapsed: 45m 47s, ETA: 4h 25m
+Reading:-120.87_35.37_to_-120.86_35.38.dat
+[27.88%]: 45528265 of 163251931 completed. Elapsed: 1h 34m, ETA: 4h 4m
+Reading:-120.86_35.39_to_-120.85_35.40.dat
+[37.43%]: 61119209 of 163251931 completed. Elapsed: 2h 9m, ETA: 3h 37m
+Reading:-120.85_35.36_to_-120.84_35.37.dat
+[45.93%]: 74989925 of 163251931 completed. Elapsed: 2h 42m, ETA: 3h 11m
+Reading:-120.86_35.38_to_-120.85_35.39.dat
+[57.05%]: 93143199 of 163251931 completed. Elapsed: 3h 23m, ETA: 2h 33m
+Reading:-120.87_35.36_to_-120.86_35.37.dat
+[63.78%]: 104132254 of 163251931 completed. Elapsed: 3h 50m, ETA: 2h 10m
+Reading:-120.87_35.38_to_-120.86_35.39.dat
+[73.82%]: 120522778 of 163251931 completed. Elapsed: 4h 27m, ETA: 1h 34m
+Reading:-120.86_35.37_to_-120.85_35.38.dat
+[88.04%]: 143730224 of 163251931 completed. Elapsed: 5h 22m, ETA: 43m 48s
+Reading:-120.85_35.37_to_-120.84_35.38.dat
+[100.0%]: 163251931 of 163251931 completed. Elapsed: 6h 14m, ETA: 0μs 0ns
+tree built: 340758
+6h 14m
+exporting tree to /media/data/thesis/SanSimeon_small_icosatree_triangularCoordinates_150x100
+
+exporting flat file attributes to /media/data/thesis/SanSimeon_small_icosatree_triangularCoordinates_150x100 at attributes.csv
+[100.0%]: 340758 of 340758 completed. Elapsed: 23m 54s, ETA: 0μs 0ns
+23m 54s
+
+
+
+Build Time (Triangular Coordinates)
+----------------------------------------------------------
+subcell size: 		      200x100
+point count: 		      163251931
+Elapsed: 		         5h 49m
+cells built: 		      235156
+export to filesystem: 	20m 4s
+max cell point count:   38081
+avg cell point count:   695
+depth:                  29
+dir count:              235156
+file count:             470313
+filesize:               11 GiB, 105 MiB
+
+Reading:-120.87_35.39_to_-120.86_35.40.dat
+[10.42%]: 17023620 of 163251931 completed. Elapsed: 29m 58s, ETA: 4h 17m
+Reading:-120.86_35.36_to_-120.85_35.37.dat
+[14.47%]: 23637036 of 163251931 completed. Elapsed: 42m 51s, ETA: 4h 13m
+Reading:-120.88_35.37_to_-120.87_35.38.dat
+[14.59%]: 23822483 of 163251931 completed. Elapsed: 43m 13s, ETA: 4h 12m
+Reading:-120.88_35.36_to_-120.87_35.37.dat
+[14.7%]: 23999071 of 163251931 completed. Elapsed: 43m 34s, ETA: 4h 12m
+Reading:-120.87_35.37_to_-120.86_35.38.dat
+[27.88%]: 45528265 of 163251931 completed. Elapsed: 1h 32m, ETA: 3h 58m
+Reading:-120.86_35.39_to_-120.85_35.40.dat
+[37.43%]: 61119209 of 163251931 completed. Elapsed: 2h 6m, ETA: 3h 31m
+Reading:-120.85_35.36_to_-120.84_35.37.dat
+[45.93%]: 74989925 of 163251931 completed. Elapsed: 2h 37m, ETA: 3h 4m
+Reading:-120.86_35.38_to_-120.85_35.39.dat
+[57.05%]: 93143199 of 163251931 completed. Elapsed: 3h 16m, ETA: 2h 27m
+Reading:-120.87_35.36_to_-120.86_35.37.dat
+[63.78%]: 104132254 of 163251931 completed. Elapsed: 3h 40m, ETA: 2h 5m
+Reading:-120.87_35.38_to_-120.86_35.39.dat
+[73.82%]: 120522778 of 163251931 completed. Elapsed: 4h 15m, ETA: 1h 30m
+Reading:-120.86_35.37_to_-120.85_35.38.dat
+[88.04%]: 143730224 of 163251931 completed. Elapsed: 5h 6m, ETA: 41m 38s
+Reading:-120.85_35.37_to_-120.84_35.38.dat
+[100.0%]: 163251931 of 163251931 completed. Elapsed: 5h 49m, ETA: 0μs 0ns
+tree built: 235156
+5h 49m
+exporting tree to /media/data/thesis/SanSimeon_small_icosatree_triangularCoordinates_200x100
+
+exporting flat file attributes to /media/data/thesis/SanSimeon_small_icosatree_triangularCoordinates_200x100 at attributes.csv
+[100.0%]: 235156 of 235156 completed. Elapsed: 20m 4s, ETA: 0μs 0ns
+20m 4s
+
+
+
 
 Build Time (AABB cells)
 ----------------------------------------------------------
