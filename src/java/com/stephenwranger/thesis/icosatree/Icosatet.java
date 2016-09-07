@@ -18,7 +18,8 @@ import com.stephenwranger.thesis.data.TreeStructure;
 
 public class Icosatet extends TreeCell {
    private static final int MAX_CHILDREN_ROOT = 20;
-   private static final int MAX_CHILDREN_OTHER = 8;
+   private static final int MAX_CHILDREN_BISECT = 8;
+   private static final int MAX_CHILDREN_SHORT = 4;
 
    private final Tuple3d pending = new Tuple3d();
    private final Tuple3d current = new Tuple3d();
@@ -33,7 +34,14 @@ public class Icosatet extends TreeCell {
       // after that, each face is split into 4 triangles and 2 layers
       // TODO: is two layers sufficient?
       // TODO: should I split into regular three-dimensional shapes?
-      return (this.path.isEmpty()) ? MAX_CHILDREN_ROOT : MAX_CHILDREN_OTHER;
+      
+      if(this.path.isEmpty()) {
+         return MAX_CHILDREN_ROOT;
+      } else if(Icosatree.USE_ALTERNATING_BISECTION) {
+         return this.path.length() % Icosatree.ALTERNATE_BISECTION_MODULUS_INDEX != 0 ? MAX_CHILDREN_BISECT : MAX_CHILDREN_SHORT;
+      } else {
+         return MAX_CHILDREN_BISECT;
+      }
    }
 
    @Override

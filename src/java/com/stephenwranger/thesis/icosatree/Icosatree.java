@@ -27,6 +27,8 @@ import com.stephenwranger.thesis.data.TreeStructure;
  *
  */
 public class Icosatree extends TreeStructure {
+   public static final boolean USE_ALTERNATING_BISECTION = Boolean.getBoolean("useAlternatingBisection");
+   public static final int ALTERNATE_BISECTION_MODULUS_INDEX = Integer.getInteger("alternateBisectionModulusIndex", 5);
    private static final int ASCII_A = 65;
    // andreaskahler.com
    private static final double T = (1.0 + Math.sqrt(5.0)) / 2.0;
@@ -128,13 +130,19 @@ public class Icosatree extends TreeStructure {
             } else {
                final Triangle3d topFaceSplit = top.split()[index % 4];
                final Triangle3d bottomFaceSplit = bottom.split()[index % 4];
-               final Triangle3d midFaceSplit = Triangle3d.getMidFace(topFaceSplit, bottomFaceSplit);
                
-               if(index < 4) {
-                  top = topFaceSplit;
-                  bottom = midFaceSplit;
+               if(!USE_ALTERNATING_BISECTION || (i+1) % ALTERNATE_BISECTION_MODULUS_INDEX != 0) {
+                  final Triangle3d midFaceSplit = Triangle3d.getMidFace(topFaceSplit, bottomFaceSplit);
+                  
+                  if(index < 4) {
+                     top = topFaceSplit;
+                     bottom = midFaceSplit;
+                  } else {
+                     top = midFaceSplit;
+                     bottom = bottomFaceSplit;
+                  }
                } else {
-                  top = midFaceSplit;
+                  top = topFaceSplit;
                   bottom = bottomFaceSplit;
                }
             }
@@ -255,9 +263,9 @@ public class Icosatree extends TreeStructure {
    }
    
    public static void main(final String[] args) {
-      String path = "";
+      String path = "A00000000000000000000000000";
       
-      for(int i = 0; i < 50; i++) {
+      for(int i = 0; i < 5; i++) {
          final BoundingVolume bounds = Icosatree.getCellBoundingVolume(path);
          System.out.println();
          System.out.println("path depth:     " + path.length());

@@ -207,6 +207,7 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
                   this.dragRight(gl, scene);
                   break;
             }
+            this.eventType = null;
          }
 
          // get geodesic coordinate of anchor
@@ -299,6 +300,8 @@ public class SphericalNavigator implements PreRenderable, MouseListener, MouseMo
                this.anchor.set(WGS84.geodesicToCartesian(lla));
             }
          }
+         
+         this.currentEvent = null;
       }
    }
 
