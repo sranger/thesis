@@ -1,0 +1,8 @@
+Anticipated Defense: Week of December 5th
+30-35 minute presentation
+Convert to latex
+
+Add introduction and take credit for Icosatree concept
+Add future work section
+Add definitions section
+Fix icosatree outline picture (lines too thin)
