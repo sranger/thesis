@@ -1,8 +1,61 @@
 \chapter{Design}
+Previous work in the field of massive point cloud creation and processing has
+moved toward data systems
+\cite{6_krishnan_crosby_nandigam_phan_cowart_baru_arrowsmith_2011} such as
+OpenTopography.org as well as research in leveraging Octree and K-D Tree data
+structures for taking massive point cloud data and partitioning it into
+manageable pieces for the visualization system.
+Separate work in selection and surface generation have increased the user
+interaction and utility of these types of datasets. However, tree structures in
+Cartesian or geodesic coordinate systems each have their own drawbacks and
+limiting the user to visualization alone gives them a powerful tool with nothing
+to use it for.
 
-%% Obviously you need to delete these lines when you have written up your text
-\begin{itemize}
-\item{} How you designed your solution
-\item{} Rationale for decisions
-\item{} Compare and contrast design with other approaches (related work) 
-\end{itemize}
+The first hurdle is to look at the state of data partitioning and access.
+Currently, Octrees and K-D Trees work in a Cartesian coordinate system. With
+point cloud data that is relatively limited in size and scope, using an
+arbitrary coordinate system can work well. Moving towards larger data sets and
+rendering them on a geospatial projected surface causes the data to no longer
+follow an axis-aligned format. This causes more issues with rendering such as
+data structures that clip the projected surface and do not fill the partitioned
+sections well. The first goal of this research is to modify the data structure
+used to store the massive point cloud data from an Octree/K-D Tree structure
+where the XYZ Cartesian grid doesn't align well with a geospatial projected
+surface (WGS84) into an icosahedral grid using previous work in spherical self
+organizing grids \cite{7_wutakatsuka_2006} and traversal of triangle mesh
+elements \cite{8_lee1998traversing} \cite{9_white_2000}.
+Allowing the data to be split into surface aligned data structures should look
+more pleasing to the end user as the level of detail is modified on-the-fly
+compared to an Octree/K-D Tree structure without the need of overdrawing or
+forcing the user to wait until all data is available before rendering.
+
+The second hurdle is to add functionality to the system instead of just being a
+visualization system. Previous work in the area consisted of interacting with
+unstructured point clouds \cite{2_yu:hal-01178051} by allowing the user the
+ability to select more-dense regions of data using a screen-space masking
+system. However, this implementation is limited by requiring the data be
+unstructured, or containing a very heterogeneous density throughout.
+Unfortunately, LiDAR data is rarely sparse; it is rarely pruned or processed at
+all before being accessed by researchers. In another area, on-the-fly surface
+creation has been applied to point cloud data in order to show physical
+structures \cite{1_VAST:VAST11:105-112} in the input data; this shows off actual
+objects in the virtual world without having extensive up-front processing of the
+data. This surface modeling can be leveraged against the context-aware selection
+algorithm in a uniformly dense point cloud to allow the user to select via
+screen-space masking controls objects in the LiDAR point cloud data. From this,
+the point data can be displayed separately for further study or exported for use
+in other applications.
+
+In order to evaluate these assumptions, a number of utility applications have
+been developed as well as a simple visualization. The visualization has been
+designed to load a point cloud and allow the end user to modify the rendering
+settings, use a screen-selection lasso for object selection, and display and
+export the selected points and resulting triangulation. The utilities developed
+consist of command line applications that will access a binary file of point
+data along with a CSV file of point attributes. The application then partitions
+and exports the data as either an Octree or Icosatree for use with the
+visualization application. A command line application was also created to
+partition the binary input file into smaller portions for ease of use and
+testing. Lastly, the visualization system was developed using a number of
+previously developed graphics and computation libraries developed by the author
+for previous work as well as a number of third party, open source, libraries.

@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Tue Nov 15 08:11:59 EST 2016
+markTmpDer=true
+builderNum=2
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=Thesis.tex
+outputFile=thesis_stephen_ranger.pdf
+langSpell=en
+markDer=true
+srcDir=

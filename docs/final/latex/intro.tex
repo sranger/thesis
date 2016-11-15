@@ -1,53 +1,49 @@
 \chapter{Introduction}
 
-%% Obviously you need to delete these lines when you have written up your text
+% % Obviously you need to delete these lines when you have written up your text
 
+Massive point cloud datasets are becoming more prevalent as technology becomes
+cheaper and storage and rendering power grow leaps and bounds. This thesis
+attempts to demonstrate a novel partitioning structure called an Icosatree as
+well as a three dimensional triangular coordinate used for positioning values
+inside the data structure. This icosahedron-based three dimensional data
+partitioning structure was developed in order to address a few failings seem
+with common data structures used for these types of datasets, such as the
+Octree. The algorithm itself is explained further in Chapter 3.
 
-\begin{itemize}
-\item{} Background: should be sufficient for the reader understand the rest of the report, but 
-perhaps not too long to put the reader to sleep.
-\item{} Basic problem definition and motivation
-\item{} Approaches used to solve the problem (related work)
-\item{} Hypothesis: what you think the problem is and how your solution 
-approach will address the problem
-\item{} Roadmap: how the rest of your report is laid out 
-\end{itemize}
+First, the Octree being axis-aligned is poorly suited to the projected surface
+the data is displayed in. This causes the cells in the tree to look asymmetrical
+and as each subsequent layer of the tree is displayed the asymmetrical nature of
+the visualization becomes more apparent. With the Icosatree, each cell is more
+closely aligned with the projected geospatial surface and each cell appears as a
+triangular area to the user. In the final visualization, the cells are added as
+they are accessed from the data source (local file system or HTTP requests) and
+as they are added to the rendering element it does indeed look much more
+uniform.
 
-And yes, this is how you cite a book by Silberschatz~\cite{Silberschatz05-text} or a paper by Dumont~\cite{Dumont2007-robots}.
+Second, with the Icosatree being much closer to the projected geospatial surface
+the hope is that less cells would be required in the output dataset and would
+more efficiently fill our rendering data structure. This has been seen to be the
+case, however, with limited resources on commodity graphics hardware a sweet
+spot between performance and data utilization was more difficult to determine
+automatically by the system and needs improvement. This will be covered in more
+depth in the future work section at the end of this paper.
 
-And here are examples of how to include figures and tables in the text. Please note that the captions go below for figures and above for tables.
+The Icosatree also uses a new triangular coordinate system in order to position
+points into the Icosatree cells, or Icosatet. The Icosatet is a triangular prism
+that is used as the basic sub-structure in the Icosatree. The initial Icosatree
+is split into twenty Icosatets and each subsequent level in the tree splits each
+Icosatet into eight smaller Icosatets. The triangular coordinates used allow the
+points in each level of the Icosatree to be as uniformly distributed as
+possible. This new coordinate system is explained in Chapter 4.
 
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[width=3.0in]{cs-logo.jpg}
-\end{center}
-\caption{The CS Logo is Above}
-\label{fig:lab}
-\end{figure}
-
-
-\begin{table}[h]
-\caption{The Dog Table is Below}
-  \begin{tabular}{ | l | c | r | }
-    \hline
-    tag & breed & age \\
-    \hline \hline
-    13 & Fido & 2 \\
-    \hline
-    14 & Fifi & 4 \\
-    \hline
-  \end{tabular}
-\end{table}
-
-For both tables and figures, the optional argument controls
-placement as shown:
-\begin{itemize}
-  \item{} h is Here, i.e., the position in the text where the table environment appears.
-  \item{} t is Top, i.e., the top of a text page.
-  \item{} b is Bottom, i.e., at the bottom of a text page.
-  \item{} p is Page of floats, i.e., on a separate float page,
-    which is a page containing no text, only floats.
-\end{itemize}
-
-Anyway, you can find some easy tutorials on \LaTeX{}.
+The resulting visualization was then used to test a hybrid user-definable
+triangulation algorithm loosely based on the work found in two separate papers
+[1,2]. The general idea behind this augmented algorithm is that the user selects
+a region of the screen and any points within that area are selected. This set of
+points will then be pruned using a combination of nearest neighbor density
+values, eigenvector comparisons between the entire selection and nearest
+neighbors, and altitude thresholds which are all definable by the user. Next,
+the set can be limited further by removing any points hidden by others based on
+a ray casting and occlusion test. Finally, the resulting set of points are fed
+into a Delaunay triangulation algorithm in order to create a triangle mesh.
