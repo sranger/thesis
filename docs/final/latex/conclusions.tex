@@ -8,17 +8,110 @@ The conclusions chapter usually includes the following sections.
 
 \section{Current Status}
 
+The algorithms and data structures are in place and are able to build and
+visualize point cloud datasets from raw point data. The data requires values for
+X, Y, Z, Red, Green, Blue, Altitude, and Intensity. There is support for custom
+sets of attributes for the input point data but it has not been implemented at
+this time.
+
+The visualization supports a camera navigation control based on an anchor
+location on the Earth's surface as well as a spherical coordinate offset from
+the defined anchor. This allows the user to set the point along the surface that
+the camera is bound to but gives them the freedom to rotate around it and move
+closer to or further from it.
+
+The Earth rendering component supports level of detail so the geometry will
+progressively become more or less detailed as the distance from it changes.
+Digital Elevation Model data is used to define the altitude about the ellipsoid
+for each vertex and Slippy map tiles are supported for imagery (such as
+OpenStreetMap or Stamen).
+
+The point selection and triangulation algorithms have been implemented such that
+the user can define a number of toggles and thresholds from the visualization
+user interface. Then, the user can select a portion of the screen where a lasso
+will draw on screen and select any points within its bounds. Next, any pruning
+functions will be applied and any triangulation steps will be executed.
+
+The visualization also supports exporting the selected points or resulting
+triangulation in the PLY model format.
+
 \section{Future Work}
 
-The initial testing of the Icosatree data structure turned out promising. However, when building the initial Icosatree dataset and deciding what cell split values to use there were a few glaring issues. 
+The visualization and data creation softare currently supports a very specific
+set of input data in order to build the tree data structures and the
+visualization assumes specific point attributes will be available (as stated in
+the previous section). However, support to allow the user to define what
+attributes are applied to the visualization and support for other coordinate
+systems, such as longitude, latitude, and altitude instead of XYZ would be
+helpful. Also, reading a set of LAS/LAZ files directly would be convenient.
 
-First, more time needs to be taken in selecting proper sub-cell split values for the Icosatree. Selecting the same values as used with the Octree creation does not yield comparable results. The Octree cell split values determines an exact X-Y-Z cell index such that multiplying the split values together give the total number of cells. Another issue here is that the Octree cells are 90% unused in the majority of instances so creating a more dense sub-cell structure is less likely to cause issues with memory management in the long run; this is not the case with the Icosatree. The Icosatree cell split values are used to determine two separate split coordinates; the first is based on the triangular cell face and the second is based on the depth of the volume. Therefore, the split value for the the Icosatree’s depth is only loosely based on the same data as the Octree; the Octree is axis-aligned so there is no “depth” in the same way there is with the Icosatree which is pseudo-surface-aligned (the center points of the faces are aligned with the surface directly below them but the further from the center the less aligned they become). The depth split for each still separates the sub-cells in a similar way; the distance along the axis of separation creates the same number of new sub-cells. For the top face split value, however, is used as an index along its edges. The surface of this face is also much less area than the Octree cells. An Octet and Icosatet of comparable size with split values of six for each dimension will both turn into 216 sub-cells but the Octet will take up more than twice the volume so the Icosatet will store many more point instances in a much smaller volume, not to mention the higher sub-cell utilization from being more surface-aligned than the Octet.
+The initial testing of the Icosatree data structure turned out promising.
+However, when building the initial Icosatree dataset and deciding what cell
+split values to use there were a few glaring issues.
 
-Second, the dataset creation tool needs to be streamlined, multi-threaded, and updated to run on a cached file storage system. Storing the working copy of the tree building data in memory is infeasible for even a moderately-sized dataset. When testing, the initial dataset was a few gigabytes which fit in memory without much issue. However, once a larger dataset was selected, an order of magnitude larger than the original dataset, the in-memory limitations of the original dataset creation tool were very apparent. The tool was then updated to use a memory-mapped database for storing the point data (MapDB) but even that has its limitations. It was not able to create a mapped database for all the Tree cells being created (could not keep all files mapped at once) so a single mapped database was used for all the points. This causes some synchronization slowdowns the larger the dataset becomes. Adding support for in-place file caching and multi-threading could greatly increase performance of the dataset creation tool. Unfortunately, the projected completion time for the larger dataset with the current iteration of the dataset creation tool precluded the testing of the visualization with a larger point cloud.
+First, more time needs to be taken in selecting proper sub-cell split values for
+the Icosatree. Selecting the same values as used with the Octree creation does
+not yield comparable results. The Octree cell split values determines an exact
+X-Y-Z cell index such that multiplying the split values together give the total
+number of cells. Another issue here is that the Octree cells are 90\% unused in
+the majority of instances so creating a more dense sub-cell structure is less
+likely to cause issues with memory management in the long run; this is not the
+case with the Icosatree. The Icosatree cell split values are used to determine
+two separate split coordinates; the first is based on the triangular cell face
+and the second is based on the depth of the volume. Therefore, the split value
+for the the Icosatree’s depth is only loosely based on the same data as the
+Octree; the Octree is axis-aligned so there is no “depth” in the same way there
+is with the Icosatree which is pseudo-surface-aligned (the center points of the
+faces are aligned with the surface directly below them but the further from the
+center the less aligned they become). The depth split for each still separates
+the sub-cells in a similar way; the distance along the axis of separation
+creates the same number of new sub-cells. For the top face split value, however,
+is used as an index along its edges. The surface of this face is also much less
+area than the Octree cells. An Octet and Icosatet of comparable size with split
+values of six for each dimension will both turn into 216 sub-cells but the Octet
+will take up more than twice the volume so the Icosatet will store many more
+point instances in a much smaller volume, not to mention the higher sub-cell
+utilization from being more surface-aligned than the Octet.
 
-Next, the point selection and triangulation portion of the paper could be optimized further, adding a more real-time option to the visualization. As the various pieces of the algorithms were developed they were added ad-hoc to the visualization system. This allowed the pieces to be tested in a modular fashion, however, it is very likely that much of the calculations done could be consolidated or simplified. Also, moving many of these calculations off to a general purpose processing engine such as OpenCL or CUDA, much of the time taken to calculate output could be sped up considerably.
+Second, the dataset creation tool needs to be streamlined, multi-threaded, and
+updated to run on a cached file storage system. Storing the working copy of the
+tree building data in memory is infeasible for even a moderately-sized dataset.
+When testing, the initial dataset was a few gigabytes which fit in memory
+without much issue. However, once a larger dataset was selected, an order of
+magnitude larger than the original dataset, the in-memory limitations of the
+original dataset creation tool were very apparent. The tool was then updated to
+use a memory-mapped database for storing the point data (MapDB) but even that
+has its limitations. It was not able to create a mapped database for all the
+Tree cells being created (could not keep all files mapped at once) so a single
+mapped database was used for all the points. This causes some synchronization
+slowdowns the larger the dataset becomes. Adding support for in-place file
+caching and multi-threading could greatly increase performance of the dataset
+creation tool. Unfortunately, the projected completion time for the larger
+dataset with the current iteration of the dataset creation tool precluded the
+testing of the visualization with a larger point cloud.
 
-Last, the visualization tool was not the focus of the work for this paper but was necessary in order to display and test the results. However, it is a bit rough around the edges and needs some work. Fixing the graphics pipeline issues in the current graphics engine would be preferable but replacing it with an Open Source alternative might be a viable option depending on the time required to port the current code base to the new platform.
+Next, the point selection and triangulation portion of the paper could be
+optimized further, adding a more real-time option to the visualization. As the
+various pieces of the algorithms were developed they were added ad-hoc to the
+visualization system. This allowed the pieces to be tested in a modular fashion,
+however, it is very likely that much of the calculations done could be
+consolidated or simplified. Also, moving many of these calculations off to a
+general purpose processing engine such as OpenCL or CUDA, much of the time taken
+to calculate output could be sped up considerably.
 
-\section{Lessons Learned}
+Last, the visualization tool was not the focus of the work for this paper but
+was necessary in order to display and test the results. However, it is a bit
+rough around the edges and needs some work. Fixing the graphics pipeline issues
+in the current graphics engine would be preferable but replacing it with an Open
+Source alternative might be a viable option depending on the time required to
+port the current code base to the new platform.
 
+The visualization itself was built on top of a rendering library written by the
+author but not intended to support direct manipulation of the camera. For this
+paper it was updated to support mouse interaction and a navigation class was
+written for intuitive and easy to use controls for moving around an elliptical
+surface; in this case, a WGS84 projected Earth. However, the interaction with
+these two systems is not perfect and needs some fine tuning, debugging, and
+various improvements. Such improvements include support for camera movement
+based on velocity and acceleration, frustum to bounding volume intersection
+validation, and world-screen coordinate conversion validation.
