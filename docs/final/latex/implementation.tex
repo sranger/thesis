@@ -199,6 +199,31 @@ rendering component is only required to render around three million points.
 \end{center}
 \end{figure}
 
+The TreeRenderable itself controls how the point data is
+displayed in the visualization application. It creates a custom-built vertex
+buffer object pool which is then used to store and render the point data. The
+buffer pool contains a set of smaller pools internally that are defined by a set
+segment size (number of points available in a block) and a number of available
+segments. Each of these smaller pools is able to append itself with as many
+vertex buffer objects as it needs and uses a global index to find the specific
+segment location that is bound to each tree cell. When a segment is cleared, any
+empty vertex buffer objects on a segment pool will also be removed in order to
+free up memory. When the Tree Cells are uploaded to the GPU, the segment pool
+with the smallest segment size that will fit the tree cell's point count will be
+selected. Then, the first available index in that cell will be requested and the
+tree cell will store this pool index and segment index for rendering later. The
+number of internal segment pools is defined by the maximum number of points any
+given tree cell will contain in the point cloud collection. \ref{fig:flowchart}
+is a flow chart that goes through the steps in the rendering pass for the TreeRenderable.
+
+\begin{figure}[htp]
+\begin{center}
+  \includegraphics[width=.9\linewidth]{images/TreeRenderer_flowchart.png}
+  \caption{TreeRenderer Flow Chart}
+  \label{fig:flowchart}
+\end{center}
+\end{figure}
+
 \section{Selection Algorithm}
 
 The selection algorithm attempts to apply portions of two separate point cloud
@@ -240,7 +265,45 @@ plane and a Delaunay triangulation algorithm is used to triangulate them. A map
 of the 2D projected point to the original 3D point is used to convert this
 triangulation back into a useful triangle mesh. The lasso (\ref{fig:lasso}),
 point selection (\ref{fig:pointSelection}), and triangle mesh
-(\ref{fig:triangulation}) can be seen below.
+(\ref{fig:triangulation}) can be seen below. The follwing is pseudocode for the
+Selection Algorithm:
+
+\begin{enumerate}
+  \item User Selects Area Of Screen
+  \item Create closed polygon from set of screen coordinates
+  \item Create projected 3D volume from 2D polygon
+  \item Get volume intersection on visible point data
+  \item If Pruning enabled, prune points based on user settings
+  \begin{enumerate}
+    \item Apply the following in User Order
+    \begin{itemize}
+      \item Orthonormal Pruning
+      \begin{enumerate}
+        \item Compute global eigenvector for plane normal vector
+        \item For-each point, compute engenvector using k-nearest neighbors
+        \item if point eigenvector is within user-defined angle of global normal, discard
+      \end{enumerate}
+      \item Obstruction Pruning
+      \begin{enumerate}
+        \item For-each point, if any other point is closer to the camera and the angle between the two points is within a user-defined threshold, discard
+      \end{enumerate}
+      \item Altitude Pruning
+      \begin{enumerate}
+        \item Compute min/max altitude of all input points
+        \item For-each point, if altitude is within user-defined threshold of min value, discard
+      \end{enumerate}
+    \end{itemize}
+  \end{enumerate}
+  \item If user enabled, Draw Points
+  \item If user enabled, Compute Triangle Mesh
+    \begin{enumerate}
+      \item Project points to Screen Space
+      \item Remove any occluded points
+      \item Compute Mesh using Delaunay Triangulation
+      \item Project triangulation to World Space
+      \item Render Triangle Mesh
+    \end{enumerate}
+\end{enumerate}
 
 \begin{figure}[htp]
 \begin{center}
