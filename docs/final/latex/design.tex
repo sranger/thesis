@@ -2,31 +2,32 @@
 Previous work in the field of massive point cloud creation and processing has
 moved toward data systems
 \cite{6_krishnan_crosby_nandigam_phan_cowart_baru_arrowsmith_2011} such as
-OpenTopography.org as well as research in leveraging Octree and K-D Tree data
+OpenTopography.org as well as research in leveraging Octree and k-d tree data
 structures for taking massive point cloud data and partitioning it into
 manageable pieces for the visualization system.
 Separate work in selection and surface generation have increased the user
 interaction and utility of these types of datasets. However, tree structures in
 Cartesian or geodesic coordinate systems each have their own drawbacks and
-limiting the user to visualization alone gives them a powerful tool with nothing
-to use it for.
+limiting the user to visualization alone gives them a powerful tool that does
+not allow the user to analyze the information further or export portions of the
+data for use in more specialized software packages.
 
 The first hurdle is to look at the state of data partitioning and access.
-Currently, Octrees and K-D Trees work in a Cartesian coordinate system. With
+Currently, Octrees and k-d trees work in a Cartesian coordinate system. With
 point cloud data that is relatively limited in size and scope, using an
 arbitrary coordinate system can work well. Moving towards larger data sets and
 rendering them on a geospatial projected surface causes the data to no longer
 follow an axis-aligned format. This causes more issues with rendering such as
 data structures that clip the projected surface and do not fill the partitioned
 sections well. The first goal of this research is to modify the data structure
-used to store the massive point cloud data from an Octree/K-D Tree structure
+used to store the massive point cloud data from an Octree/k-d tree structure
 where the XYZ Cartesian grid doesn't align well with a geospatial projected
 surface (WGS84) into an icosahedral grid using previous work in spherical self
 organizing grids \cite{7_wutakatsuka_2006} and traversal of triangle mesh
 elements \cite{8_lee1998traversing} \cite{9_white_2000}.
 Allowing the data to be split into surface aligned data structures should look
 more pleasing to the end user as the level of detail is modified on-the-fly
-compared to an Octree/K-D Tree structure without the need of overdrawing or
+compared to an Octree/k-d tree structure without the need of overdrawing or
 forcing the user to wait until all data is available before rendering.
 
 The second hurdle is to add functionality to the system instead of just being a
