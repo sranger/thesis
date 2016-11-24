@@ -32,10 +32,11 @@ offset, data type, size in bytes, min, max, mean, and variance.
 The Octree and Icosatree structures are identical except for the fact that each
 Octree cell contains, at most, eight child cells. The Icosatree root node can
 contain up to twenty child cells and each cell after that can contain at most
-eight. The Octree structure is split along the XYZ axes as in Figure 2. However,
-the Icosatree is split into twenty triangular prism cells at the root as in
-Figure 5. Below that, each cell is split into eight additional triangular prisms
-as seen in Figure 6 and Figure 7.
+eight. The Octree structure is split along the XYZ axes as in Figure
+\ref{fig:octree}. However, the Icosatree is split into twenty triangular prism
+cells at the root as in Figure \ref{fig:tpv}. Below that, each cell is split
+into eight additional triangular prisms as seen in Figure \ref{fig:tpvSplit} and
+Figure \ref{fig:icosatreeCells}.
 
 \begin{figure}[htp]
 \begin{center}
@@ -71,8 +72,8 @@ closest to its centroid is left there and the remaining point is sent to one of
 the cells' child cells. This continues until all points have been added to the
 tree. Once that is complete, the command line tool writes the tree structure as
 a set of directories and binary or ASCII files. A subset of this file structure
-can be seen in \ref{fig:fileStructure}. The DAT file contains the binary point data and the
-text file contains the child cell index values which contain point data of their
+can be seen in Figure \ref{fig:fileStructure}. The DAT file contains the binary
+point data and the text file contains the child cell index values which contain point data of their
 own. These child cells also have a sub-directory within that nodes’ directory
 which continues to the leaves of the tree.
 
@@ -103,17 +104,19 @@ the scene component's local coordinate system for floating point precision
 reasons and each scene element will update its own position based on this local
 origin.
 
-There was also the need for a renderable Earth scene element \ref{fig:earth}.
-This was developed by creating a GeodesicCoordinate to base the geometry from. The first level of
-detail consists of a number of rectangular sections each thirty degrees on a
-side. Then, as the camera moves closer to the surface, each portion splits into
-smaller sections \ref{fig:earthWire}. In order to display accurate elevation
-data, support for Digital Elevation Model data was added and used as a lookup
-dataset for elevation values at each vertex \ref{fig:earthDEM}. Initially, a
-single high resolution texture was used for the imagery but even an 8k image did
-not add enough fidelity as the user zoomed close enough into the terrain so
-support was also added for the Slippy Map Tile URL protocol; specifically,
-OpenStreetMap and Stamen Terrain imagery \ref{fig:earthTiles}. The Digital
+There was also the need for a renderable Earth scene element as shown in Figure
+\ref{fig:earth}. This was developed by creating a GeodesicCoordinate to base the
+geometry from. The first level of detail consists of a number of rectangular
+sections each thirty degrees on a side. Then, as the camera moves closer to the
+surface, each portion splits into smaller sections which can be seen in Figure
+\ref{fig:earthWire}. In order to display accurate elevation data, support for
+Digital Elevation Model data was added and used as a lookup dataset for
+elevation values at each vertex; an example of the DEM data being used on a
+wireframe view can be found in Figure \ref{fig:earthDEM}. Initially, a single
+high resolution texture was used for the imagery but even an 8k image did not
+add enough fidelity as the user zoomed close enough into the terrain so support
+was also added for the Slippy Map Tile URL protocol; specifically, OpenStreetMap
+and Stamen Terrain imagery as shown in Figure \ref{fig:earthTiles}. The Digital
 Elevation Model data is downloadable manually and is indexed the first time the
 Visualization application is run whereas the imagery is accessed via HTTP
 requests as it is needed.
@@ -186,8 +189,8 @@ less than 100 points long. This allows a number of different sized cells to be
 inserted into a buffer that, at least, fills half of its total capacity but also
 allows the rendering system to intelligently add, remove, and update cells in
 the tree without having to pack or rearrange data on the graphics card every
-frame. Below, in \ref{fig:visualization}, is a screenshot of Morro Bay in California; this
-is a subset of the San Simeon, CA point cloud dataset and, in total, contains
+frame. Below, in Figure \ref{fig:visualization}, is a screenshot of Morro Bay in
+California; this is a subset of the San Simeon, CA point cloud dataset and, in total, contains
 13,725,592 points. At the current zoom distance and level of detail the
 rendering component is only required to render around three million points.
 
@@ -199,22 +202,23 @@ rendering component is only required to render around three million points.
 \end{center}
 \end{figure}
 
-The TreeRenderable itself controls how the point data is
-displayed in the visualization application. It creates a custom-built vertex
-buffer object pool which is then used to store and render the point data. The
-buffer pool contains a set of smaller pools internally that are defined by a set
-segment size (number of points available in a block) and a number of available
-segments. Each of these smaller pools is able to append itself with as many
-vertex buffer objects as it needs and uses a global index to find the specific
-segment location that is bound to each tree cell. When a segment is cleared, any
-empty vertex buffer objects on a segment pool will also be removed in order to
-free up memory. When the Tree Cells are uploaded to the GPU, the segment pool
-with the smallest segment size that will fit the tree cell's point count will be
-selected. Then, the first available index in that cell will be requested and the
-tree cell will store this pool index and segment index for rendering later. The
-number of internal segment pools is defined by the maximum number of points any
-given tree cell will contain in the point cloud collection. \ref{fig:flowchart}
-is a flow chart that goes through the steps in the rendering pass for the TreeRenderable.
+The TreeRenderable itself controls how the point data is displayed in the
+visualization application. It creates a custom-built vertex buffer object pool
+which is then used to store and render the point data. The buffer pool contains
+a set of smaller pools internally that are defined by a set segment size (number
+of points available in a block) and a number of available segments. Each of
+these smaller pools is able to append itself with as many vertex buffer objects
+as it needs and uses a global index to find the specific segment location that
+is bound to each tree cell. When a segment is cleared, any empty vertex buffer
+objects on a segment pool will also be removed in order to free up memory. When
+the Tree Cells are uploaded to the GPU, the segment pool with the smallest
+segment size that will fit the tree cell's point count will be selected. Then,
+the first available index in that cell will be requested and the tree cell will
+store this pool index and segment index for rendering later. The number of
+internal segment pools is defined by the maximum number of points any given tree
+cell will contain in the point cloud collection. Figure \ref{fig:flowchart} is a
+flow chart that goes through the steps in the rendering pass for the
+TreeRenderable.
 
 \begin{figure}[htp]
 \begin{center}
@@ -233,10 +237,11 @@ point cloud; this is useful for visualizing the walls of buildings and such.
 However, the algorithm itself doesn't handle selection of objects. The CAST
 algorithm \cite{2_yu:hal-01178051} allows selection of more dense portions of a
 point cloud via two-dimensional mouse selection but it requires a dense cloud of
-points to handle selection. I have attempted to apply the screen-space lasso and
-point density techniques from the CAST algorithm and apply the surface creation
-and triangulation algorithm to the resulting selection in order to give a user
-more utility when analyzing a point cloud dataset.
+points to handle selection. The selection algorithm developed for this thesis
+attempts to apply the screen-space lasso and point density techniques from the
+CAST algorithm and apply the surface creation and triangulation algorithm to the
+resulting selection in order to give a user more utility when analyzing a point
+cloud dataset.
 
 The first step of the algorithm is for the user to define the search area. This
 is done in the visualization by holding the control key and holding the left
@@ -263,19 +268,19 @@ within a specified angular distance and closer to the camera than the tested
 point, it is removed. These points are then converted into a two-dimensional
 plane and a Delaunay triangulation algorithm is used to triangulate them. A map
 of the 2D projected point to the original 3D point is used to convert this
-triangulation back into a useful triangle mesh. The lasso (\ref{fig:lasso}),
-point selection (\ref{fig:pointSelection}), and triangle mesh
-(\ref{fig:triangulation}) can be seen below. The follwing is pseudocode for the
-Selection Algorithm:
+triangulation back into a useful triangle mesh. The lasso
+(Figure \ref{fig:lasso}), point selection (Figure \ref{fig:pointSelection}), and
+triangle mesh (Figure \ref{fig:triangulation}) can be seen below. The follwing
+is pseudocode for the Selection Algorithm:
 
 \begin{enumerate}
-  \item User Selects Area Of Screen
+  \item User selects area of screen
   \item Create closed polygon from set of screen coordinates
   \item Create projected 3D volume from 2D polygon
   \item Get volume intersection on visible point data
   \item If Pruning enabled, prune points based on user settings
   \begin{enumerate}
-    \item Apply the following in User Order
+    \item Apply the following in user order
     \begin{itemize}
       \item Orthonormal Pruning
       \begin{enumerate}
@@ -294,14 +299,14 @@ Selection Algorithm:
       \end{enumerate}
     \end{itemize}
   \end{enumerate}
-  \item If user enabled, Draw Points
-  \item If user enabled, Compute Triangle Mesh
+  \item If user enabled, draw points
+  \item If user enabled, compute triangle mesh
     \begin{enumerate}
-      \item Project points to Screen Space
+      \item Project points to screen space
       \item Remove any occluded points
-      \item Compute Mesh using Delaunay Triangulation
-      \item Project triangulation to World Space
-      \item Render Triangle Mesh
+      \item Compute mesh using Delaunay Triangulation
+      \item Project triangulation to world space
+      \item Render triangle mesh
     \end{enumerate}
 \end{enumerate}
 

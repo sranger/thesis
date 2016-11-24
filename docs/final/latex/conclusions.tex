@@ -29,9 +29,21 @@ functions will be applied and any triangulation steps will be executed.
 The visualization also supports exporting the selected points or resulting
 triangulation in the PLY model format.
 
+The performance of the Icosatree was overall promising. The surface-aligned
+nature of the tree cells was much more visually pleasing as data was updated in
+the visualization and the tree cells were filled more efficiently for better
+use of hardware resources. However, sub-optimal tree partitioning values limited
+the performance of the system overall as the initialization parameters for the
+Tree data structure are much more important to the functionality of the
+visualization system with the Icosatree than they are with the Octree. Also, the
+triangular prism bounding volume requires more calculations than the
+axis-aligned bounding volume and the sub-optimal tree parameters requires more
+tree cells to be rendered for the Icosatree so the added complexity was not
+offset by limiting the number of required tree cells.
+
 \section{Future Work}
 
-The visualization and data creation softare currently supports a very specific
+The visualization and data creation software currently supports a very specific
 set of input data in order to build the tree data structures and the
 visualization assumes specific point attributes will be available (as stated in
 the previous section). However, support to allow the user to define what
@@ -53,8 +65,8 @@ likely to cause issues with memory management in the long run; this is not the
 case with the Icosatree. The Icosatree cell split values are used to determine
 two separate split coordinates; the first is based on the triangular cell face
 and the second is based on the depth of the volume. Therefore, the split value
-for the the Icosatree’s depth is only loosely based on the same data as the
-Octree; the Octree is axis-aligned so there is no “depth” in the same way there
+for the Icosatree's depth is only loosely based on the same data as the
+Octree; the Octree is axis-aligned so there is no depth in the same way there
 is with the Icosatree which is pseudo-surface-aligned (the center points of the
 faces are aligned with the surface directly below them but the further from the
 center the less aligned they become). The depth split for each still separates

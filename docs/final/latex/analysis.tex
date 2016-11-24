@@ -17,7 +17,7 @@ It contains a total of 163,251,931 points.
 
 The Octree building statistics were run with a few different sub-cell sizes. A
 Table of sub-cell size, elapsed times, max and average points per cell, max tree
-depth, directory and file count, and total file size can be found in
+depth, directory and file count, and total file size can be found in Tables
 \ref{table:octreeStats} and \ref{table:icosatreeStats}. With the Icosatree,
 attempts were made initially using barycentric coordinates as the basis of the
 indexing system but because barycentric coordinates are a weighted average
@@ -33,7 +33,7 @@ left-to-right and right-to-left. Then, each sub-cell is numbered with a triple
 coordinate index. A point is inserted into a sub-cell along the top face of the
 triangular prism volume and then offset by depth into the volume by splitting
 the depth by m-sections. A diagram of the triangular coordinates can be seen in
-\ref{fig:triCoords}.
+Figure \ref{fig:triCoords}.
 
 \begin{figure}[htp]
 \begin{center}
@@ -116,7 +116,7 @@ position pair. The local-space vertices were then sent through a Delaunay
 triangulation algorithm pass and all triangles exported are then converted back
 into world coordinates using the local-to-world coordinate mappings.
 
-A few point selection and triangulation examples can be found in figures
+A few point selection and triangulation examples can be found in Figures
 \ref{fig:pointSelection2}, \ref{fig:triangulation2}, \ref{fig:triangulation3},
 and \ref{fig:triangulation4}.
 
@@ -211,24 +211,25 @@ As can be seen from the tables above, The dimensions and volumes of the two tree
 variations are comparable in absolute Cartesian bounds but their internal
 volumes are much different. With the Icosatree cells being smaller but aligned
 with the projected surface of the dataset they are filled more efficiently as
-seen in \ref{table:octreeStats} and \ref{table:icosatreeStats}. This allows the
-rendering system to display fewer cells in order to render the same amount of
-data while only adding a small amount of processing time when computing frustum
-culling per cell which, overall, is still comparable by per cell time (0.16
-ms/cell vs. 0.19 ms/cell) as seen in \ref{table:renderStats10}. However, it also
-adds a bit of point overdraw where the cells that fill the frustum contain more
-points outside the viewable area but are still drawn as their parent cell
-intersects the frustum and contains some points within this area. Since the cell
-fits better with the dataset projection, points will tend to fill the larger,
-less deep, cells in the tree. The oriented axis cells perform better than the
-axis-aligned cells as seen by comparing the Octree performance and the Icosatree
-with axis-aligned cells compared to the Icosatree with oriented cells. The test
-performed below was on the 100x100x100 sub-cell datasets with the
-level-of-detail set to maximum; this requires a higher-than-normal per-frame
-time but was used to show the tree rendering between each type as close to
-comparable as possible. The camera was set at a specific location before
-starting the application so that each run was consistent. An example of the
-rendering result can be seen in \ref{fig:rendering10}.
+seen in Tables \ref{table:octreeStats} and \ref{table:icosatreeStats}. This
+allows the rendering system to display fewer cells in order to render the same
+amount of data while only adding a small amount of processing time when
+computing frustum culling per cell which, overall, is still comparable by per
+cell time (0.16 ms/cell vs. 0.19 ms/cell) as seen in Table
+\ref{table:renderStats10}. However, it also adds a bit of point overdraw where
+the cells that fill the frustum contain more points outside the viewable area
+but are still drawn as their parent cell intersects the frustum and contains
+some points within this area. Since the cell fits better with the dataset
+projection, points will tend to fill the larger, less deep, cells in the tree.
+The oriented axis cells perform better than the axis-aligned cells as seen by
+comparing the Octree performance and the Icosatree with axis-aligned cells
+compared to the Icosatree with oriented cells. The test performed below was on
+the 100x100x100 sub-cell datasets with the level-of-detail set to maximum; this
+requires a higher-than-normal per-frame time but was used to show the tree
+rendering between each type as close to comparable as possible. The camera was
+set at a specific location before starting the application so that each run was
+consistent. An example of the rendering result can be seen in Figure
+\ref{fig:rendering10}.
 
 \begin{table}[htp]
 \resizebox{\textwidth}{!}{%
@@ -256,11 +257,12 @@ rendering result can be seen in \ref{fig:rendering10}.
 
 If the depth ratio is reduced to a more reasonable use-case, the comparisons
 between using the Octree and Icosatree become less pronounced and more
-manageable as seen in \ref{table:renderStats3} and \ref{table:renderStats6}. The
-number of points rendered is slightly higher in the Icosatree implementation
+manageable as seen in Tables \ref{table:renderStats3} and
+\ref{table:renderStats6}.
+The number of points rendered is slightly higher in the Icosatree implementation
 than with the Octree, and per-frame times are increased as well. This is due in
 part to the smaller altitude component of the icosahedron cell handling less
-point data than the much more massive Octree cells. As seen in table
+point data than the much more massive Octree cells. As seen in Tables
 \ref{table:octreeCellStats} and \ref{table:icosatreeCellStats}, the depth of the
 icosahedron cells limits the amount of data the cells can handle vertically
 along the projected surface when compared to the Octree cells. In future
