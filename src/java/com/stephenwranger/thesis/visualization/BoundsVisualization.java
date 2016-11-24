@@ -33,15 +33,18 @@ public class BoundsVisualization extends JFrame {
       this.earth.setLoadFactor(0.75);
 
       this.scene = new Scene(new Dimension(1200, 900));
-//      this.scene.addRenderable(this.earth);
+      //      this.scene.addRenderable(this.earth);
       this.scene.setOriginEnabled(false);
 
       final SphericalNavigator navigator = new SphericalNavigator(this.scene);
       navigator.moveTo(-120.8566862, 35.3721688, 0, SphericalNavigator.AZIMUTH_EAST, SphericalNavigator.ELEVATION_ZENITH / 2.0, 1e7);
-//      navigator.setEarth(this.earth);
+      //      navigator.setEarth(this.earth);
       this.scene.addPreRenderable(navigator);
 
-      this.loadIcosatreeBounds("A", 1);
+      for (int i = 0; i < 1; i++) {
+         final String path = Icosatree.getCellPath("", i);
+         this.loadIcosatreeBounds(path, 0);
+      }
 
       this.getContentPane().setLayout(new BorderLayout());
       this.getContentPane().add(this.scene, BorderLayout.CENTER);
@@ -56,14 +59,19 @@ public class BoundsVisualization extends JFrame {
    }
 
    public void loadIcosatreeBounds(final String path, final int maxDepth) {
-      for(int i = 0; i < 20; i++) {
-         final String childPath = Icosatree.getCellPath(path, i);
-         final TrianglePrismVolume bounds = (TrianglePrismVolume) Icosatree.getCellBoundingVolume(childPath);
-         
-         addRenderables(bounds);
-         
-         if(maxDepth > childPath.length()) {
-            loadIcosatreeBounds(childPath, maxDepth);
+      final TrianglePrismVolume bounds = (TrianglePrismVolume) Icosatree.getCellBoundingVolume(path);
+      this.addRenderables(bounds);
+
+      if (maxDepth > path.length()) {
+         for (int i = 0; i < 20; i++) {
+            final String childPath = Icosatree.getCellPath(path, i);
+            final TrianglePrismVolume childbounds = (TrianglePrismVolume) Icosatree.getCellBoundingVolume(childPath);
+
+            this.addRenderables(childbounds);
+
+            if (maxDepth > childPath.length()) {
+               this.loadIcosatreeBounds(childPath, maxDepth);
+            }
          }
       }
    }
@@ -90,7 +98,7 @@ public class BoundsVisualization extends JFrame {
       this.scene.addRenderable(side1);
       this.scene.addRenderable(side2);
       this.scene.addRenderable(side3);
-      
+
       for(int i = 0; i < topCorners.length; i++) {
          final Line topEdge = new Line(topCorners[i], topCorners[(i+1) % topCorners.length]);
          final Line bottomEdge = new Line(bottomCorners[i], bottomCorners[(i+1) % bottomCorners.length]);
