@@ -6,9 +6,11 @@ import com.stephenwranger.graphics.bounds.TrianglePrismVolume;
 import com.stephenwranger.graphics.math.Tuple3d;
 import com.stephenwranger.graphics.math.Vector3d;
 import com.stephenwranger.graphics.math.intersection.Triangle3d;
+import com.stephenwranger.graphics.utils.TupleMath;
 import com.stephenwranger.thesis.data.DataAttributes;
 import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeStructure;
+import com.stephenwranger.thesis.geospatial.WGS84;
 
 /**
  * Icosahedron structure based on icosahedron stellar grid from Stellarium (http://www.stellarium.org/).<br/>
@@ -263,32 +265,64 @@ public class Icosatree extends TreeStructure {
    }
    
    public static void main(final String[] args) {
-      String path = "A00000000000000000000000000";
+//      String path = "A00000000000000000000000000";
+//      
+//      for(int i = 0; i < 5; i++) {
+//         final BoundingVolume bounds = Icosatree.getCellBoundingVolume(path);
+//         System.out.println();
+//         System.out.println("path depth:     " + path.length());
+//         System.out.println("   type:        " + bounds.getClass().getSimpleName());
+//         System.out.println("   axis bounds: " + bounds.getDimensions());
+//         
+//         if(bounds instanceof TrianglePrismVolume) {
+//            final TrianglePrismVolume tpv = (TrianglePrismVolume) bounds;
+//            final double topArea = tpv.getTopFace().getArea();
+//            final double bottomArea = tpv.getBottomFace().getArea();
+//            System.out.println("   depth:       " + tpv.getDepth() + " m");
+//            System.out.println("   top area:    " + topArea + " m^2");
+//            System.out.println("   bottom area: " + bottomArea + " m^2");
+//            System.out.println("   volume:      " + tpv.getVolume() + " m^3");
+//         } else if(bounds instanceof BoundingBox) {
+//            final BoundingBox bb = (BoundingBox) bounds;
+//            System.out.println("   X-Y area:    " + bb.getXYSideArea() + " m^2");
+//            System.out.println("   X-Z area:    " + bb.getXZSideArea() + " m^2");
+//            System.out.println("   Y-Z area:    " + bb.getYZSideArea() + " m^2");
+//            System.out.println("   volume:      " + bb.getVolume() + " m^3");
+//         }
+//         
+//         path = Icosatree.getCellPath(path, 0);
+//      }
+      double minAlt = 0;
+      double maxAlt = 0;
       
-      for(int i = 0; i < 5; i++) {
-         final BoundingVolume bounds = Icosatree.getCellBoundingVolume(path);
-         System.out.println();
-         System.out.println("path depth:     " + path.length());
-         System.out.println("   type:        " + bounds.getClass().getSimpleName());
-         System.out.println("   axis bounds: " + bounds.getDimensions());
+      for(int i = 0; i < 20; i++) {
+         final String path = Icosatree.getCellPath("", i);
+         final TrianglePrismVolume tpv = (TrianglePrismVolume) Icosatree.getCellBoundingVolume(path);
+         final double[] centers = getFaceAltitudes(tpv);
          
-         if(bounds instanceof TrianglePrismVolume) {
-            final TrianglePrismVolume tpv = (TrianglePrismVolume) bounds;
-            final double topArea = tpv.getTopFace().getArea();
-            final double bottomArea = tpv.getBottomFace().getArea();
-            System.out.println("   depth:       " + tpv.getDepth() + " m");
-            System.out.println("   top area:    " + topArea + " m^2");
-            System.out.println("   bottom area: " + bottomArea + " m^2");
-            System.out.println("   volume:      " + tpv.getVolume() + " m^3");
-         } else if(bounds instanceof BoundingBox) {
-            final BoundingBox bb = (BoundingBox) bounds;
-            System.out.println("   X-Y area:    " + bb.getXYSideArea() + " m^2");
-            System.out.println("   X-Z area:    " + bb.getXZSideArea() + " m^2");
-            System.out.println("   Y-Z area:    " + bb.getYZSideArea() + " m^2");
-            System.out.println("   volume:      " + bb.getVolume() + " m^3");
-         }
-         
-         path = Icosatree.getCellPath(path, 0);
+         System.out.println(path + ": " + centers[0] + ", " + centers[1]);
+         maxAlt += centers[0];
+         minAlt += centers[1];
       }
+
+      minAlt /= 20.0;
+      maxAlt /= 20.0;
+      System.out.println("min: " + minAlt);
+      System.out.println("max: " + maxAlt);
+   }
+   
+   private static double[] getFaceAltitudes(final TrianglePrismVolume tpv) {
+      final Tuple3d topCenter = TupleMath.average(tpv.getTopFace().getCorners());
+      System.out.println("top distance: " + TupleMath.length(topCenter));
+      final Tuple3d topLLA = WGS84.cartesianToGeodesic(topCenter);
+      
+      double bottomAlt = -Double.MAX_VALUE;
+      
+      for(final Tuple3d corner : tpv.getBottomFace().getCorners()) {
+         final Tuple3d bottomLLA = WGS84.cartesianToGeodesic(corner);
+         bottomAlt = Math.max(bottomAlt, bottomLLA.z);
+      }
+      
+      return new double[] {topLLA.z, bottomAlt};
    }
 }

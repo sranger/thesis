@@ -62,6 +62,7 @@ import com.stephenwranger.thesis.selection.ContextAwarePointSelection;
 public class ThesisVisualization extends JFrame {
    private static final long   serialVersionUID = 545923577250987084L;
    private static final String USAGE            = "java ThesisVisualization <tree_path> <FILESYSTEM|HTTP>";
+   private static final int    OPTIONS_WIDTH    = 500;
 
    private final Earth         earth;
    private final Scene         scene;
@@ -100,7 +101,7 @@ public class ThesisVisualization extends JFrame {
 
       final JPanel options = new JPanel();
       options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-      options.setPreferredSize(new Dimension(300, 500));
+      options.setPreferredSize(new Dimension(OPTIONS_WIDTH, 500));
 
       if (tree != null) {
          this.addSpinner(options, "Split Ratio (screen area)", tree.getLevelOfDetail(), 0.1, Double.MAX_VALUE, 0.1, (value) -> {
@@ -326,7 +327,7 @@ public class ThesisVisualization extends JFrame {
       final JButton button = new JButton(label);
       final JPanel panel = new JPanel(new GridLayout(1, 1));
       panel.add(button);
-      panel.setMaximumSize(new Dimension(300, 30));
+      panel.setMaximumSize(new Dimension(OPTIONS_WIDTH, 30));
       panel.add(button);
       parent.add(panel);
 
@@ -343,7 +344,7 @@ public class ThesisVisualization extends JFrame {
       checkBox.setSelected(initialValue);
       final JPanel panel = new JPanel();
       panel.setLayout(new GridLayout(1, 2));
-      panel.setMaximumSize(new Dimension(300, 30));
+      panel.setMaximumSize(new Dimension(OPTIONS_WIDTH, 30));
       panel.add(label);
       panel.add(checkBox);
       parent.add(panel);
@@ -397,7 +398,7 @@ public class ThesisVisualization extends JFrame {
       final JSpinner spinner = new JSpinner(new SpinnerNumberModel(initialValue, min, max, step));
       final JPanel panel = new JPanel();
       panel.setLayout(new GridLayout(1, 2));
-      panel.setMaximumSize(new Dimension(300, 30));
+      panel.setMaximumSize(new Dimension(OPTIONS_WIDTH, 30));
       panel.add(label);
       panel.add(spinner);
       parent.add(panel);
