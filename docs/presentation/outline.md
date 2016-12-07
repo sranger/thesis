@@ -96,7 +96,7 @@ Applying Icosatree Data Structure and Adding Analysis Tools to Point Clouds
 -- Text file listing available child cells
 - Accessible from local file system or over http connection
 
-## Visualization Application
+## Visualization Application Slide
 - OpenGL / Java based (JOGL)
 - Geospatial Navigation
 - WGS84 based Earth
@@ -165,37 +165,76 @@ Applying Icosatree Data Structure and Adding Analysis Tools to Point Clouds
 
 
 # Results
-## Results Slide 1
+## Results Slide 1: Point Cloud Dataset
 - Morro Bay, San Simeon, CA
 -- Geodesic Bounds: (-120.88, 35.36), (-120.84, 35.40)
 -- 163,251,931 total points
 
-## Results Slide 2
+## Results Slide 2: Dataset Analysis
+- Dataset construction
+-- Octree Building Statistics Image
+-- Icosatree Building Statistics Image
+-- Octree Cell Statistics Image
+-- Icosatree Cell Statistics Image
 
-## Results Slide 3
+## Results Slide 3: Rendering with Level of Detail Analysis
+- Rendering with level of detail
+-- Depth 10 Image
+-- Depth 6 Image
+-- Depth 3 Image
 
-## Results Slide 4
+## Results Slide 4: Point Selection Output
+- Point Selection Results
+-- Point Selection Example Images
 
-## Results Slide 5
-
-## Results Slide 6
-
-## Results Slide 7
-
-## Results Slide 8
-
-
+## Results Slide 5: Triangulation Output
+- Triangulation Results
+-- Triangulation Example Images
 
 
 # Discussion
+# Discussion: Current Status Slide 1
+- Octree/Icosatree dataset creation and rendering
+-- X, Y, Z, Red, Green, Blue, Altitude, Intensity attributes
+- Geospatial camera navigation
+-- Geodesic anchor
+-- Spherical offset
+- Earth scene element
+-- WGS84 ellipsoid
+-- Digital Elevation Model for altitude
+-- Slippy Map Tiles for imagery
+-- Tessellated level of detail
+
+# Discussion: Current Status Slide 2
+- Point Selection with lasso
+- Point pruning
+-- Orthonormal surface
+-- Obstruction
+-- Altitude
+- Triangulation using Delaunay algorithm
+- Export using PLY format
 
 
+# Conclusion Slide
+- Performance overall promising
+-- Icosatree cells visually pleasing
+-- Cell point allocation more efficient 
+-- Difficult to determine optimal sub-cell sizes
+--- Cells can end up too large for GPU
+--- Requires more cells to be rendered
+-- Triangular Prism Bounds computationally intensive compared to axis-aligned bounds
+-- Point Selection fairly quick
+-- Pruning and Tessellation are slow
 
-# Conclusion
 
-
-
-# Future Work
+# Future Work Slide
+- Custom point attribute mappings
+- Import LAS/LAZ files directly
+- Icosatree cell and sub-cell size optimization
+- Updated dataset creation tool (threading, in-place file caching)
+- Pruning and triangulation optimizations
+- OpenCL or CUDA support
+- Various rendering engine fixes
 
 
 
@@ -205,16 +244,51 @@ Applying Icosatree Data Structure and Adding Analysis Tools to Point Clouds
 
 # Additional Information
 ## Geospatial Navigation Slide
+- WGS84 Surface navigation
+-- Geospatial anchor
+-- Spherical coordinate offset
+-- Left mouse intersects navigation surface (ellipsoid) to set anchor
+-- Right mouse modifies elevation and azimuth offset
+-- Middle mouse scroll modifies range
 
 
 ## WGS84 based Earth Slide
+- Tessellated ellipsoid
+-- level of detail based on distance of camera from geometry
+-- Digital Elevation Model data used for ellipsoid elevation
+-- Slippy map tiles used for imagery
 
 
 ## Digital Elevation Model Slide
+- Digital Elevation Model
+-- Creates index of all available DEM files
+-- Location set with JVM flag -Ddem3.directory
+-- Recursively searches directory for .hgt files
+-- Stores lookup using lon/lat integer index
+-- File random access for runtime value lookup  
 
 
 ## Slippy map tiles Slide
+- Slippy map tiles
+-- Support for OpenStreetMap and Stamen
+--- -Dosm.server=<base_url>
+--- -Dstamen.server=<base_url>
+--- -Dimage.cache=<filesystem_path>
+-- URL format for geospatial tile imagery
+-- Quadtree based tiling system
+-- <base_url>/zoom/x/y.png (or .jpg for Stamen)
+-- 256px images
 
 
 ## Dynamic Vertex Buffer Pool Slide
+- Dynamic Vertex Buffer Object Pool
+-- Actually pool of pools
+-- Defines max segment size and number of segments per VBO
+-- Pools created for max segment size and below
+--- Loops until segment pool is less than 100 points
+--- ie. max = 1000, pools = {1000, 500, 250, 125, 62}
+-- Pool starts with one VBO and adds/removes additional as necessary
+-- Each pool stores global index so number of VBO's seamless
+-- Tree Cells store pool index and segment index for rendering
+-- Allows tree cells to be at least 50% space efficient
 
