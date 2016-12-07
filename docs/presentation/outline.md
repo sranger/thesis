@@ -161,10 +161,29 @@ Applying Icosatree Data Structure and Adding Analysis Tools to Point Clouds
 -- Convert XYZ coordinates into XY-depth along global surface plane
 -- Use Delaunay triangulation algorithm to compute triangle mesh
 -- Project XY-depth mesh back to XYZ coordinates
+-- Send list of triangles to rendering component
 
 
-# Results Slide
-- 
+# Results
+## Results Slide 1
+- Morro Bay, San Simeon, CA
+-- Geodesic Bounds: (-120.88, 35.36), (-120.84, 35.40)
+-- 163,251,931 total points
+
+## Results Slide 2
+
+## Results Slide 3
+
+## Results Slide 4
+
+## Results Slide 5
+
+## Results Slide 6
+
+## Results Slide 7
+
+## Results Slide 8
+
 
 
 
