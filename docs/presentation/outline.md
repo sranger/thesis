@@ -80,11 +80,11 @@ Applying Icosatree Data Structure and Adding Analysis Tools to Point Clouds
 - Tree insert
 -- Find child of root containing point
 -- Insert into child
---- Compute triangular coordinate index
---- If sub-cell empty: insert point
---- Else:
----- If new point closer to sub-cell center: swap point
----- Insert remaining point into child cell
+-- Compute triangular coordinate index
+-- If sub-cell empty: insert point
+-- Else:
+--- If new point closer to sub-cell center: swap point
+--- Insert remaining point into child cell
 
 ## Icosatree Slide 4
 - Data structure built separately from visualization

@@ -228,6 +228,18 @@ public class EarthImagery {
       }
    }
 
+   public static boolean isOpenStreetMapAvailable() {
+      final String osmProperty = System.getProperty(EarthImagery.OPEN_STREET_MAP_PROPERTY);
+
+      return (osmProperty != null) && !osmProperty.isEmpty();
+   }
+
+   public static boolean isStamenAvailable() {
+      final String stamenProperty = System.getProperty(EarthImagery.STAMEN_PROPERTY);
+
+      return (stamenProperty != null) && !stamenProperty.isEmpty();
+   }
+
    public static void main(final String[] args) {
       final Tuple3d minLonLatAlt = new Tuple3d(-120.0, 30.0, 0.0);
       final Tuple3d maxLonLatAlt = new Tuple3d(-115.0, 40.0, 0.0);

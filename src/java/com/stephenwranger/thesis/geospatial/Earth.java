@@ -47,6 +47,10 @@ public class Earth extends Renderable {
    private double                      altitudeOffset    = 0;
    private float                       lineWidth         = 2f;
 
+   public Earth() {
+      this(Earth.getImageryType());
+   }
+
    public Earth(final ImageryType imageryType) {
       super(new Tuple3d(), new Quat4d());
 
@@ -70,7 +74,7 @@ public class Earth extends Renderable {
    public PickingHit getIntersection(final PickingRay ray) {
       return (this.geometry == null) ? PickingRay.NO_HIT : this.geometry.getIntersection(ray);
    }
-   
+
    public float getLineWidth() {
       return this.lineWidth;
    }
@@ -131,7 +135,7 @@ public class Earth extends Renderable {
       this.shader.enable(gl);
       this.geometry.render(gl, glu, glDrawable, scene);
       this.shader.disable(gl);
-      
+
       gl.glPopAttrib();
    }
 
@@ -148,6 +152,10 @@ public class Earth extends Renderable {
       }
    }
 
+   public void setLineWidth(final float lineWidth) {
+      this.lineWidth = lineWidth;
+   }
+
    public void setLoadFactor(final double loadFactor) {
       this.loadFactor = loadFactor;
 
@@ -158,10 +166,6 @@ public class Earth extends Renderable {
 
    public void setWireframe(final boolean isWireframe) {
       this.isWireframe = isWireframe;
-   }
-   
-   public void setLineWidth(final float lineWidth) {
-      this.lineWidth = lineWidth;
    }
 
    private double getAltitude(final double longitudeDegrees, final double latitudeDegrees) {
@@ -224,5 +228,13 @@ public class Earth extends Renderable {
 
    private void setImagery(final EllipticalSegment segment) {
       EarthImagery.setImagery(segment, this.imageryType);
+   }
+
+   private static ImageryType getImageryType() {
+      final boolean isOSM = EarthImagery.isOpenStreetMapAvailable();
+      final boolean isStamen = EarthImagery.isStamenAvailable();
+      final ImageryType imageryType = (isOSM) ? ImageryType.OPEN_STREET_MAP : (isStamen) ? ImageryType.STAMEN_TERRAIN : null;
+
+      return imageryType;
    }
 }

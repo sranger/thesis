@@ -53,7 +53,6 @@ import com.stephenwranger.thesis.data.TreeCell;
 import com.stephenwranger.thesis.data.TreeServerProcessor.ConnectionType;
 import com.stephenwranger.thesis.data.TreeStructure;
 import com.stephenwranger.thesis.geospatial.Earth;
-import com.stephenwranger.thesis.geospatial.EarthImagery.ImageryType;
 import com.stephenwranger.thesis.geospatial.SphericalNavigator;
 import com.stephenwranger.thesis.icosatree.Icosatree;
 import com.stephenwranger.thesis.renderables.TreeRenderable;
@@ -70,7 +69,7 @@ public class ThesisVisualization extends JFrame {
    public ThesisVisualization(final String basePath, final ConnectionType connectionType) {
       super("Thesis Visualization");
 
-      this.earth = new Earth(ImageryType.OPEN_STREET_MAP);
+      this.earth = new Earth();
       this.earth.setWireframe(false);
       this.earth.setLightingEnabled(false);
       this.earth.setLoadFactor(0.75);
@@ -101,7 +100,7 @@ public class ThesisVisualization extends JFrame {
 
       final JPanel options = new JPanel();
       options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-      options.setPreferredSize(new Dimension(OPTIONS_WIDTH, 500));
+      options.setPreferredSize(new Dimension(ThesisVisualization.OPTIONS_WIDTH, 500));
 
       if (tree != null) {
          this.addSpinner(options, "Split Ratio (screen area)", tree.getLevelOfDetail(), 0.1, Double.MAX_VALUE, 0.1, (value) -> {
@@ -222,11 +221,10 @@ public class ThesisVisualization extends JFrame {
          timingsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
          timingsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-         
          this.addButton(options, "Copy Statistics", () -> {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(timingsArea.getText()), null);
          });
-         
+
          options.add(timingsScroll);
 
          final long[] last = new long[] { 0 };
@@ -234,7 +232,7 @@ public class ThesisVisualization extends JFrame {
          this.scene.addPostProcessor((gl, glu, scene) -> {
             final long time = System.nanoTime();
 
-            if ((last[0]) < time - 1000000000) {
+            if ((last[0]) < (time - 1000000000)) {
                last[0] = time;
                timingsArea.setText("Point Count: " + tree.getPointsRendered() + "\nCells Rendered: " + tree.getCellsRendered() + "\n" + timings.toString());
                timingsArea.setCaretPosition(0);
@@ -327,7 +325,7 @@ public class ThesisVisualization extends JFrame {
       final JButton button = new JButton(label);
       final JPanel panel = new JPanel(new GridLayout(1, 1));
       panel.add(button);
-      panel.setMaximumSize(new Dimension(OPTIONS_WIDTH, 30));
+      panel.setMaximumSize(new Dimension(ThesisVisualization.OPTIONS_WIDTH, 30));
       panel.add(button);
       parent.add(panel);
 
@@ -344,7 +342,7 @@ public class ThesisVisualization extends JFrame {
       checkBox.setSelected(initialValue);
       final JPanel panel = new JPanel();
       panel.setLayout(new GridLayout(1, 2));
-      panel.setMaximumSize(new Dimension(OPTIONS_WIDTH, 30));
+      panel.setMaximumSize(new Dimension(ThesisVisualization.OPTIONS_WIDTH, 30));
       panel.add(label);
       panel.add(checkBox);
       parent.add(panel);
@@ -398,7 +396,7 @@ public class ThesisVisualization extends JFrame {
       final JSpinner spinner = new JSpinner(new SpinnerNumberModel(initialValue, min, max, step));
       final JPanel panel = new JPanel();
       panel.setLayout(new GridLayout(1, 2));
-      panel.setMaximumSize(new Dimension(OPTIONS_WIDTH, 30));
+      panel.setMaximumSize(new Dimension(ThesisVisualization.OPTIONS_WIDTH, 30));
       panel.add(label);
       panel.add(spinner);
       parent.add(panel);
