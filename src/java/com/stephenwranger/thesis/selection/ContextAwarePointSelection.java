@@ -247,9 +247,9 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          processing = true;
          new Thread(() -> {
             final JDialog dialog = new JDialog();
-            dialog.setLocation(this.scene.getX() + this.scene.getWidth() / 2 - 200, this.scene.getY() + this.scene.getHeight() / 2 - 75);
+            dialog.setLocation(this.scene.getX() + this.scene.getWidth() / 2 - 200, this.scene.getY() + this.scene.getHeight() / 2 - 45);
             final JProgressBar progress = new JProgressBar();
-            progress.setPreferredSize(new Dimension(400, 100));
+            progress.setPreferredSize(new Dimension(400, 30));
             final JLabel label = new JLabel("");
             label.setPreferredSize(new Dimension(400, 30));
             dialog.getContentPane().add(progress, BorderLayout.CENTER);
