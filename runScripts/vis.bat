@@ -13,9 +13,11 @@ REM set PATH=%PATH%;%ANT_HOME%;%JAVA_HOME%
 set DEM_DIRECTORY="D:/GISData/dem/viewfinderpanoramas.org/"
 set ICOSATREE_DIRECTORY="D:/GISData/point_cloud/SanSimeon_small_icosatree_triangularCoordinates_100x100/"
 set IMAGE_CACHE="D:/GISData/imageCache"
-set STAMEN_SERVER="http://{a,b,c,d}.tile.stamen.com/terrain"
+set OSM_SERVER="-Dosm.server=http://{a,b,c}.tile.openstreetmap.org"
+REM set STAMEN_SERVER="-Dstamen.server=http://{a,b,c,d}.tile.stamen.com/terrain"
+REM set DEBUG_SSL="-Djavax.net.debug=all"
 
-java -Ddem3.directory=%DEM_DIRECTORY% -Dimage.cache=%IMAGE_CACHE% -Dstamen.server=%STAMEN_SERVER% -Djava.net.useSystemProxies=true -Xmx6g com.stephenwranger.thesis.visualization.ThesisVisualization %ICOSATREE_DIRECTORY% FILESYSTEM %*
+java -Ddem3.directory=%DEM_DIRECTORY% -Dimage.cache=%IMAGE_CACHE% %OSM_SERVER% %STAMEN_SERVER% %DEBUG_SSL% -Djava.net.useSystemProxies=true -Xmx6g com.stephenwranger.thesis.visualization.ThesisVisualization %ICOSATREE_DIRECTORY% FILESYSTEM %*
 
 REM Do not process the subroutines underneath - the program is finished.
 GOTO :eof

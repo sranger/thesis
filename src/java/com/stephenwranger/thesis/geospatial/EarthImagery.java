@@ -41,6 +41,31 @@ import com.stephenwranger.graphics.utils.TupleMath;
 import com.stephenwranger.graphics.utils.textures.Texture2d;
 
 public class EarthImagery {
+
+   private static final Map<String, Texture2d> CACHED_TEXTURES                 = EarthImagery.createLeastRecentlyUsedMap(10000);
+   private static String                       IMAGE_CACHE_PROPERTY            = "image.cache";
+   // OpenStreetMap Map Tiles
+   private static String                       OPEN_STREET_MAP_PROPERTY        = "osm.server";
+
+   private static String[]                     OPEN_STREET_MAP_URL             = EarthImagery.getOpenStreetMapServers();
+   private static final File                   OPEN_STREET_MAP_CACHE_DIRECTORY = EarthImagery.getOpenStreetMapCacheDirectory();
+   // Stamen Terrain Tiles
+   private static String                       STAMEN_PROPERTY                 = "stamen.server";
+
+   private static String[]                     STAMEN_URL                      = EarthImagery.getStamenServers();
+   private static final File                   STAMEN_CACHE_DIRECTORY          = EarthImagery.getStamenCacheDirectory();
+
+   private static final Texture2d              BASE_EARTH_TEXTURE              = EarthImagery.getBaseTexture();
+   private static final TextureServer          TEXTURE_SERVER                  = new TextureServer();
+
+   private static int                          OPEN_STREET_MAP_URL_INDEX       = 0;
+
+   private static int                          STAMEN_URL_INDEX                = 0;
+
+   static {
+      EarthImagery.disableSslValidation();
+   }
+   
    public enum ImageryType {
       OPEN_STREET_MAP, STAMEN_TERRAIN;
 
@@ -83,114 +108,6 @@ public class EarthImagery {
                return EarthImagery.STAMEN_URL != null;
          }
       }
-   }
-
-   static class TextureServer extends Thread {
-      private final Map<EllipticalSegment, ImageryType> pending = new ConcurrentHashMap<>();
-
-      public TextureServer() {
-         this.start();
-      }
-
-      public synchronized void addPending(final EllipticalSegment segment, final ImageryType imageryType) {
-         this.pending.put(segment, imageryType);
-         this.notify();
-      }
-
-      @Override
-      public void run() {
-         EllipticalSegment segment = null;
-         ImageryType imageryType = null;
-
-         while (true) {
-            segment = null;
-            imageryType = null;
-            synchronized (this) {
-               try {
-                  if (this.pending.isEmpty()) {
-                     this.wait();
-                  }
-               } catch (final InterruptedException e) {
-                  e.printStackTrace();
-               }
-
-               for (final Entry<EllipticalSegment, ImageryType> pair : this.pending.entrySet()) {
-                  final EllipticalSegment es = pair.getKey();
-                  if ((segment == null) || (segment.getDepth() > es.getDepth())) {
-                     segment = es;
-                     imageryType = pair.getValue();
-                  }
-               }
-            }
-
-            if (segment != null) {
-               // TODO: pull from open street map (no free high res satellite imagery i can find, unfortunately)
-               // maybe this? http://mike.teczno.com/notes/osm-us-terrain-layer/background.html
-               final int[][] tiles = EarthImagery.computeZoomTile(segment);
-               final Texture2d[] textures = new Texture2d[tiles.length];
-               final Tuple2d[][] texCoords = new Tuple2d[tiles.length][];
-
-               for (int i = 0; i < tiles.length; i++) {
-                  final int[] tile = tiles[i];
-
-                  final String urlString = imageryType.getUrl(tile);
-                  final Texture2d texture = EarthImagery.getTexture(urlString, imageryType, tile);
-
-                  if (texture == null) {
-                     textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
-                     texCoords[i] = null;
-                  } else {
-                     final GeodesicVertex[] vertices = segment.getVertices();
-                     textures[i] = texture;
-                     texCoords[i] = new Tuple2d[vertices.length];
-
-                     for (int j = 0; j < vertices.length; j++) {
-                        final Tuple3d lonLatAlt = vertices[j].getGeodesicVertex();
-                        final double[] tileDouble = EarthImagery.tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
-
-                        final Tuple2d texCoord = new Tuple2d();
-                        texCoord.x = tileDouble[0] - tile[0];
-                        texCoord.y = 1.0 - (tileDouble[1] - tile[1]);
-
-                        texCoords[i][j] = texCoord;
-                     }
-                  }
-               }
-
-               segment.setTexture(textures, texCoords);
-
-               synchronized (this) {
-                  if (segment != null) {
-                     this.pending.remove(segment);
-                  }
-               }
-            }
-         }
-      }
-   }
-
-   private static final Map<String, Texture2d> CACHED_TEXTURES                 = EarthImagery.createLeastRecentlyUsedMap(10000);
-   private static String                       IMAGE_CACHE_PROPERTY            = "image.cache";
-   // OpenStreetMap Map Tiles
-   private static String                       OPEN_STREET_MAP_PROPERTY        = "osm.server";
-
-   private static String[]                     OPEN_STREET_MAP_URL             = EarthImagery.getOpenStreetMapServers();
-   private static final File                   OPEN_STREET_MAP_CACHE_DIRECTORY = EarthImagery.getOpenStreetMapCacheDirectory();
-   // Stamen Terrain Tiles
-   private static String                       STAMEN_PROPERTY                 = "stamen.server";
-
-   private static String[]                     STAMEN_URL                      = EarthImagery.getStamenServers();
-   private static final File                   STAMEN_CACHE_DIRECTORY          = EarthImagery.getStamenCacheDirectory();
-
-   private static final Texture2d              BASE_EARTH_TEXTURE              = EarthImagery.getBaseTexture();
-   private static final TextureServer          TEXTURE_SERVER                  = new TextureServer();
-
-   private static int                          OPEN_STREET_MAP_URL_INDEX       = 0;
-
-   private static int                          STAMEN_URL_INDEX                = 0;
-
-   static {
-      EarthImagery.disableSslValidation();
    }
 
    private EarthImagery() {
@@ -672,5 +589,89 @@ public class EarthImagery {
       final double lat_rad = Math.atan(Math.sinh(Math.PI * (1 - ((2 * y) / n))));
       final double lat_deg = Math.toDegrees(lat_rad);
       return new double[] { lon_deg, lat_deg };
+   }
+
+   static class TextureServer extends Thread {
+      private final Map<EllipticalSegment, ImageryType> pending = new ConcurrentHashMap<>();
+
+      public TextureServer() {
+         this.start();
+      }
+
+      public synchronized void addPending(final EllipticalSegment segment, final ImageryType imageryType) {
+         this.pending.put(segment, imageryType);
+         this.notify();
+      }
+
+      @Override
+      public void run() {
+         EllipticalSegment segment = null;
+         ImageryType imageryType = null;
+
+         while (true) {
+            segment = null;
+            imageryType = null;
+            synchronized (this) {
+               try {
+                  if (this.pending.isEmpty()) {
+                     this.wait();
+                  }
+               } catch (final InterruptedException e) {
+                  e.printStackTrace();
+               }
+
+               for (final Entry<EllipticalSegment, ImageryType> pair : this.pending.entrySet()) {
+                  final EllipticalSegment es = pair.getKey();
+                  if ((segment == null) || (segment.getDepth() > es.getDepth())) {
+                     segment = es;
+                     imageryType = pair.getValue();
+                  }
+               }
+            }
+
+            if (segment != null) {
+               // TODO: pull from open street map (no free high res satellite imagery i can find, unfortunately)
+               // maybe this? http://mike.teczno.com/notes/osm-us-terrain-layer/background.html
+               final int[][] tiles = EarthImagery.computeZoomTile(segment);
+               final Texture2d[] textures = new Texture2d[tiles.length];
+               final Tuple2d[][] texCoords = new Tuple2d[tiles.length][];
+
+               for (int i = 0; i < tiles.length; i++) {
+                  final int[] tile = tiles[i];
+
+                  final String urlString = imageryType.getUrl(tile);
+                  final Texture2d texture = EarthImagery.getTexture(urlString, imageryType, tile);
+
+                  if (texture == null) {
+                     textures[i] = EarthImagery.BASE_EARTH_TEXTURE;
+                     texCoords[i] = null;
+                  } else {
+                     final GeodesicVertex[] vertices = segment.getVertices();
+                     textures[i] = texture;
+                     texCoords[i] = new Tuple2d[vertices.length];
+
+                     for (int j = 0; j < vertices.length; j++) {
+                        final Tuple3d lonLatAlt = vertices[j].getGeodesicVertex();
+                        final double[] tileDouble = EarthImagery.tileXYZDouble(lonLatAlt.x, lonLatAlt.y, tile[2]);
+
+                        final Tuple2d texCoord = new Tuple2d();
+                        texCoord.x = tileDouble[0] - tile[0];
+                        texCoord.y = 1.0 - (tileDouble[1] - tile[1]);
+
+                        texCoords[i][j] = texCoord;
+                     }
+                  }
+               }
+
+               segment.setTexture(textures, texCoords);
+
+               synchronized (this) {
+                  if (segment != null) {
+                     this.pending.remove(segment);
+                  }
+               }
+            }
+         }
+      }
    }
 }

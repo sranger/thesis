@@ -108,6 +108,7 @@ public class ThesisVisualization extends JFrame {
          });
       }
 
+      // used for orthonormal check to prune any outliers
       this.addSpinner(options, "Grid Size (meters)", pointSelector.getMinDensity(), 0.1, Double.MAX_VALUE, 0.1, (value) -> {
          pointSelector.setGridSizeMeters(value.doubleValue());
       });
@@ -120,9 +121,9 @@ public class ThesisVisualization extends JFrame {
          pointSelector.setNormalOffset(value.doubleValue());
       });
 
-      this.addSpinner(options, "Min Density", pointSelector.getMinDensity(), 0.0, Double.MAX_VALUE, 0.1, (value) -> {
-         pointSelector.setMinDensity(value.doubleValue());
-      });
+//      this.addSpinner(options, "Min Density", pointSelector.getMinDensity(), 0.0, Double.MAX_VALUE, 0.1, (value) -> {
+//         pointSelector.setMinDensity(value.doubleValue());
+//      });
 
       this.addCheckBox(options, "Draw Points", pointSelector.isDrawPoints(), pointSelector::setDrawPoints);
       this.addCheckBox(options, "Draw Triangles", pointSelector.isDrawTriangles(), pointSelector::setDrawTriangles);
