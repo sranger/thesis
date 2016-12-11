@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import javax.swing.JLabel;
+import javax.swing.JProgressBar;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
@@ -76,7 +80,7 @@ public class TreeRenderable extends Renderable {
    private final TreeStructure               tree;
    private final TreeServerConnection        connection;
    private final SegmentedVertexBufferPool   vboPool;
-   private final Set<TreeCell>               segments                        = new HashSet<>();
+   private final Set<TreeCell>               segments                        = Collections.synchronizedSet(new HashSet<>());
    private final Set<TreeCell>               pending                         = new TreeSet<>(TreeRenderable.DEPTH_COMPARATOR);
    private final Timings                     timings                         = new Timings(100);
    private final Tuple3d                     currentOrigin                   = new Tuple3d(0, 0, 0);
@@ -145,11 +149,17 @@ public class TreeRenderable extends Renderable {
       return this.timings;
    }
 
-   public Collection<Tuple3d> getVolumeIntersection(final Volume volume) {
+   public Collection<Tuple3d> getVolumeIntersection(final Volume volume, final JProgressBar progress, final JLabel label) {
+      final List<TreeCell> segments = new ArrayList<>(this.segments);
       final List<Tuple3d> points = new ArrayList<>();
+      progress.setMinimum(0);
+      progress.setMaximum(segments.size());
+      progress.setValue(0);
+      label.setText("Computing Volume Intersection...");
+      int i = 0;
 
       // TODO: go through tree structure to cull portions early
-      for (final TreeCell cell : this.segments) {
+      for (final TreeCell cell : segments) {
          final BoundingVolume bounds = cell.getBoundingVolume();
 
          if (volume.contains(bounds)) {
@@ -161,6 +171,8 @@ public class TreeRenderable extends Renderable {
                }
             });
          }
+         
+         progress.setValue(i++);
       }
 
       return points;

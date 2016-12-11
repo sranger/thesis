@@ -1,5 +1,7 @@
 package com.stephenwranger.thesis.selection;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -16,6 +18,9 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import javax.activity.InvalidActivityException;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 
 import com.jogamp.opengl.GL;
@@ -231,48 +236,64 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       this.mouseSelection.clear();
    }
 
+   private boolean processing = false;
+   
    @Override
    public void process(final GL2 gl, final GLU glu, final Scene scene) {
       final Volume selection = this.selection;
       this.selection = null;
 
-      if (selection != null) {
-         final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection);
-         this.prune(selectedPoints);
+      if (!this.processing && selection != null) {
+         processing = true;
+         new Thread(() -> {
+            final JDialog dialog = new JDialog();
+            dialog.setLocation(this.scene.getX() + this.scene.getWidth() / 2 - 200, this.scene.getY() + this.scene.getHeight() / 2 - 75);
+            final JProgressBar progress = new JProgressBar();
+            progress.setPreferredSize(new Dimension(400, 100));
+            final JLabel label = new JLabel("");
+            label.setPreferredSize(new Dimension(400, 30));
+            dialog.getContentPane().add(progress, BorderLayout.CENTER);
+            dialog.getContentPane().add(label, BorderLayout.SOUTH);
+            dialog.pack();
+            dialog.setAlwaysOnTop(true);
+            dialog.setVisible(true);
+            
+            final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection, progress, label);
+            this.prune(selectedPoints, progress, label);
 
-         //         final List<GridCell> cells = new ArrayList<>();
-         //         final double averageDensity = this.getAverageDensity(scene, selection, selectedPoints, cells);
-         System.out.println("selected points count: " + selectedPoints.size());
-         //         System.out.println("average density: " + averageDensity);
+            System.out.println("selected points count: " + selectedPoints.size());
 
-         if (!selectedPoints.isEmpty()) {
-            this.selectedPoints.clear();
-            this.selectedPoints.addAll(selectedPoints);
+            if (!selectedPoints.isEmpty()) {
+               this.selectedPoints.clear();
+               this.selectedPoints.addAll(selectedPoints);
 
-            if (this.isDrawPoints) {
-               this.pointRenderer.setPoints(selectedPoints);
-            }
+               if (this.isDrawPoints) {
+                  this.pointRenderer.setPoints(selectedPoints);
+               }
 
-            if (this.selectionTriangles != null) {
-               this.selectionTriangles.remove();
-               this.selectionTriangles = null;
-            }
+               if (this.selectionTriangles != null) {
+                  this.selectionTriangles.remove();
+                  this.selectionTriangles = null;
+               }
 
-            if (this.isDrawTriangles) {
-               //               final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(cells);
-               final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(scene, selectedPoints);
-               this.triangulation.clear();
-               this.triangulation.addAll(Arrays.asList(triangles));
+               if (this.isDrawTriangles) {
+                  final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(scene, selectedPoints, progress, label);
+                  this.triangulation.clear();
+                  this.triangulation.addAll(Arrays.asList(triangles));
 
-               if (triangles.length > 0) {
-                  this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
-                  this.selectionTriangles.setPolygonMode(GL.GL_FRONT_AND_BACK);
-                  this.selectionTriangles.setDrawNormals(false);
-                  this.selectionTriangles.setCullFace(false);
-                  this.scene.addRenderable(this.selectionTriangles);
+                  if (triangles.length > 0) {
+                     this.selectionTriangles = new TriangleMesh(triangles, Color4f.red());
+                     this.selectionTriangles.setPolygonMode(GL.GL_FRONT_AND_BACK);
+                     this.selectionTriangles.setDrawNormals(false);
+                     this.selectionTriangles.setCullFace(false);
+                     this.scene.addRenderable(this.selectionTriangles);
+                  }
                }
             }
-         }
+            
+            dialog.setVisible(false);
+            processing = false;
+         }).start();
       } else if (!this.mouseSelection.isEmpty()) {
          final int size = this.mouseSelection.size();
          gl.glPushMatrix();
@@ -444,34 +465,45 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return pointCount / (nodeCount * Math.pow(this.gridSize, 3));
    }
 
-   private void prune(final Collection<Tuple3d> points) {
+   private void prune(final Collection<Tuple3d> points, final JProgressBar progress, final JLabel label) {
+      progress.setMinimum(0);
+      progress.setMaximum(points.size());
+      
       if (this.isPruningEnabled) {
          for (int i = 0; i < 2; i++) {
             if (this.orthonormalOrder == i) {
-               this.pruneOrthonormal(points);
+               label.setText("Orthonormal Pruning...");
+               progress.setValue(0);
+               this.pruneOrthonormal(points, progress);
             }
 
             if (this.obstructionOrder == i) {
-               this.pruneObstructed(points);
+               label.setText("Obstruction Pruning...");
+               progress.setValue(0);
+               this.pruneObstructed(points, progress);
             }
 
             if (this.altitudeOrder == i) {
-               this.pruneByAltitude(points);
+               label.setText("Altitude Pruning...");
+               progress.setValue(0);
+               this.pruneByAltitude(points, progress);
             }
          }
       }
    }
 
-   private void pruneByAltitude(final Collection<Tuple3d> points) {
+   private void pruneByAltitude(final Collection<Tuple3d> points, final JProgressBar progress) {
       final TreeMap<Double, Tuple3d> altitudeMap = new TreeMap<>();
       double minAltitude = Double.MAX_VALUE;
       double maxAltitude = -Double.MAX_VALUE;
+      int i = 0;
 
       for (final Tuple3d point : points) {
          final Tuple3d lla = WGS84.cartesianToGeodesic(point);
          altitudeMap.put(lla.z, point);
          minAltitude = Math.min(minAltitude, lla.z);
          maxAltitude = Math.max(maxAltitude, lla.z);
+         progress.setValue(i++);
       }
 
       final double pruneAlt = minAltitude + ((maxAltitude - minAltitude) * 0.1);
@@ -487,13 +519,16 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       System.out.println("after: " + points.size());
    }
 
-   private void pruneObstructed(final Collection<Tuple3d> points) {
+   private void pruneObstructed(final Collection<Tuple3d> points, final JProgressBar progress) {
       final List<Tuple3d> pass = new ArrayList<>();
-
+      int i = 0;
+      
       for (final Tuple3d point : points) {
          if (!isObstructed(point, points)) {
             pass.add(point);
          }
+         
+         progress.setValue(i++);
       }
 
       points.clear();
@@ -517,10 +552,11 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return false;
    }
 
-   private void pruneOrthonormal(final Collection<Tuple3d> points) {
+   private void pruneOrthonormal(final Collection<Tuple3d> points, final JProgressBar progress) {
       final int k = Math.max(3, this.k);
       final List<Tuple3d> toRemove = new ArrayList<>();
       final Vector3d view = this.scene.getViewVector();
+      int i = 0;
 
       for (final Tuple3d point : points) {
          final TreeMap<Double, Tuple3d> neighbors = ContextAwarePointSelection.getNeighbors(point, points, k);
@@ -543,6 +579,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
                toRemove.add(point);
             }
          }
+         
+         progress.setValue(i++);
       }
 
       points.removeAll(toRemove);
@@ -594,19 +632,35 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return triangles.toArray(new Triangle3d[triangles.size()]);
    }
 
-   private static Triangle3d[] getTriangles(final Scene scene, final Collection<Tuple3d> points) {
+   private static Triangle3d[] getTriangles(final Scene scene, final Collection<Tuple3d> points, final JProgressBar progress, final JLabel label) {
+      System.out.println("get triangles");
       final Map<Tuple3d, Tuple3d> projectedPoints = new HashMap<>();
       final List<Tuple3d> visiblePoints = new ArrayList<>();
+
+      progress.setMinimum(0);
+      progress.setMaximum(points.size());
+      progress.setValue(0);
+      System.out.println("converting points");
+      label.setText("Converting points to 2D for triangulation...");
+      int i = 0;
 
       for (final Tuple3d point : points) {
          final Tuple3d xyDepth = CameraUtils.gluProject(scene, point);
          projectedPoints.put(xyDepth, point);
+         progress.setValue(i++);
       }
+      
+      i = 0;
+      progress.setMaximum(projectedPoints.size());
+      progress.setValue(0);
+      System.out.println("checking occlusion");
+      label.setText("Checking 2D point occlusion...");
 
       for (final Tuple3d xyDepth : projectedPoints.keySet()) {
          if (!ContextAwarePointSelection.isOccluded(xyDepth, projectedPoints.keySet())) {
             visiblePoints.add(xyDepth);
          }
+         progress.setValue(i++);
       }
 
       System.out.println("visible: " + visiblePoints.size());
@@ -626,6 +680,11 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       final Triangle2d boundingTriangle = new Triangle2d(c1, c2, c3, false);
       final DelaunayTriangulation dt = new DelaunayTriangulation(boundingTriangle);
       final Map<Tuple2d, Tuple3d> delaunayMap = new HashMap<>();
+      
+      i = 0;
+      progress.setMaximum(visiblePoints.size());
+      progress.setValue(0);
+      label.setText("Adding vertices to triangulation...");
 
       for (final Tuple3d xyDepth : visiblePoints) {
          try {
@@ -636,6 +695,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             if (!boundingTriangle.contains(xy)) {
                System.err.println("bounding triangle too small: " + xy + boundingTriangle.getBarycentricCoordinate(xy));
             }
+            
+            progress.setValue(i++);
          } catch (final InvalidActivityException e) {
             e.printStackTrace();
          }
@@ -647,8 +708,14 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       final List<Triangle3d> output = new ArrayList<>();
       final Vector3d viewVector = scene.getViewVector();
       final double averageDepth = MathUtils.clamp(0, 1, average.z);
+      final Collection<Triangle2d> triangles = dt.getImmutableTriangles();
+      
+      i = 0;
+      progress.setMaximum(triangles.size());
+      progress.setValue(0);
+      label.setText("Projecting triangulation to world space...");
 
-      for (final Triangle2d triangle : dt.getTriangles()) {
+      for (final Triangle2d triangle : triangles) {
          final Tuple2d[] corners = triangle.getCorners(false);
 
          if (ContextAwarePointSelection.isBoundingTriangle(triangle, boundingTriangle)) {
@@ -689,6 +756,8 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          if (p3 == null) {
             System.err.println("cannot find 3d match for p3: " + p3 + " for corner " + corners[2]);
          }
+         
+         progress.setValue(i++);
       }
 
       System.out.println("triangles: " + output.size());
