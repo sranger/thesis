@@ -148,32 +148,52 @@ public class TreeRenderable extends Renderable {
    public Timings getTimings() {
       return this.timings;
    }
+   
+   private void getPoints(final TreeCell cell, final Volume volume, final List<Tuple3d> output, final JLabel label) {
+      label.setText("Computing Volume Intersection: cell = " + cell.getPath());
+      if(volume.contains(cell.getBoundingVolume())) {
+         cell.forEach((point) -> {
+            final Tuple3d xyz = point.getXYZ(this.tree, null);
+            if (volume.contains(xyz, 2)) {
+               output.add(xyz);
+            }
+         });
+         
+         for(final String child : cell.getChildList()) {
+            final TreeCell childCell = this.tree.getCell(child);
+            getPoints(childCell, volume, output, label);
+         }
+      }
+   }
 
    public Collection<Tuple3d> getVolumeIntersection(final Volume volume, final JProgressBar progress, final JLabel label) {
-      final List<TreeCell> segments = new ArrayList<>(this.segments);
+      final TreeCell root = this.tree.getCell("");
       final List<Tuple3d> points = new ArrayList<>();
       progress.setMinimum(0);
-      progress.setMaximum(segments.size());
+      progress.setMaximum(0); // tree search so can't tell total number
       progress.setValue(0);
       label.setText("Computing Volume Intersection...");
-      int i = 0;
-
-      // TODO: go through tree structure to cull portions early
-      for (final TreeCell cell : segments) {
-         final BoundingVolume bounds = cell.getBoundingVolume();
-
-         if (volume.contains(bounds)) {
-            cell.forEach((point) -> {
-               final Tuple3d xyz = point.getXYZ(this.tree, null);
-
-               if (volume.contains(xyz, 2)) {
-                  points.add(xyz);
-               }
-            });
-         }
-         
-         progress.setValue(i++);
-      }
+      
+      getPoints(root, volume, points, label);
+      
+//      int i = 0;
+//
+//      // TODO: go through tree structure to cull portions early
+//      for (final TreeCell cell : segments) {
+//         final BoundingVolume bounds = cell.getBoundingVolume();
+//
+//         if (volume.contains(bounds)) {
+//            cell.forEach((point) -> {
+//               final Tuple3d xyz = point.getXYZ(this.tree, null);
+//
+//               if (volume.contains(xyz, 2)) {
+//                  points.add(xyz);
+//               }
+//            });
+//         }
+//         
+//         progress.setValue(i++);
+//      }
 
       return points;
    }
