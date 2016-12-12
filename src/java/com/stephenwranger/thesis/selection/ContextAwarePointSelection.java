@@ -62,13 +62,14 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    private int                    k                        = 25;
    private boolean                isDrawTriangles          = false;
    private boolean                isDrawPoints             = true;
-   private double                 normalOffset             = 0.98;
+   private double                 normalOffset             = 0.95;
    private double                 groundDistanceRatio      = 0.1;
    private int                    obstructionOrder         = 0;
    private int                    orthonormalOrder         = 1;
    private int                    altitudeOrder            = -1;
    private boolean                isPruningEnabled         = true;
    private double                 obstructedAngleThreshold = 0.1;
+   private boolean                isScreenOcclusionEnabled = true;
 
    private final List<Tuple3d>    selectedPoints           = new ArrayList<>();
 
@@ -141,6 +142,14 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
    
    public double getPruningObstructionThreshold() {
       return this.obstructedAngleThreshold;
+   }
+   
+   public boolean isScreenOcclusionEnabled() {
+      return this.isScreenOcclusionEnabled;
+   } 
+   
+   public void setScreenOcclusionEnabled(final boolean isEnabled) {
+      this.isScreenOcclusionEnabled = isEnabled;
    }
 
    @Override
@@ -259,9 +268,10 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
             dialog.setVisible(true);
             
             final Collection<Tuple3d> selectedPoints = this.tree.getVolumeIntersection(selection, progress, label);
-            this.prune(selectedPoints, progress, label);
-
             System.out.println("selected points count: " + selectedPoints.size());
+            
+            this.prune(selectedPoints, progress, label);
+            System.out.println("pruned points count: " + selectedPoints.size());
 
             if (!selectedPoints.isEmpty()) {
                this.selectedPoints.clear();
@@ -277,7 +287,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
                }
 
                if (this.isDrawTriangles) {
-                  final Triangle3d[] triangles = ContextAwarePointSelection.getTriangles(scene, selectedPoints, progress, label);
+                  final Triangle3d[] triangles = this.getTriangles(scene, selectedPoints, progress, label);
                   this.triangulation.clear();
                   this.triangulation.addAll(Arrays.asList(triangles));
 
@@ -556,7 +566,13 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       final int k = Math.max(3, this.k);
       final List<Tuple3d> toRemove = new ArrayList<>();
       final Vector3d view = this.scene.getViewVector();
+      final Vector3d globalNormal = GridCell.getAverageNormal(points);
       int i = 0;
+      
+      // if > 0 its facing same as camera so make it face "up"
+      if(view.dot(globalNormal) > 0) {
+         globalNormal.scale(-1);
+      }
 
       for (final Tuple3d point : points) {
          final TreeMap<Double, Tuple3d> neighbors = ContextAwarePointSelection.getNeighbors(point, points, k);
@@ -564,18 +580,19 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          if (neighbors.lastKey() > (this.gridSize * 2)) {
             toRemove.add(point);
          } else {
-            final Tuple3d lla = WGS84.cartesianToGeodesic(point);
-            final Vector3d up = Vector3d.getVector(point, WGS84.geodesicToCartesian(new Tuple3d(lla.x, lla.y, lla.z + 1)), true);
+//            final Tuple3d lla = WGS84.cartesianToGeodesic(point);
+//            final Vector3d up = Vector3d.getVector(point, WGS84.geodesicToCartesian(new Tuple3d(lla.x, lla.y, lla.z + 1)), true);
             final Vector3d normal = GridCell.getAverageNormal(neighbors.values());
 
-            // if normal vacing away from camera; swap its direction
-            if (normal.dot(view) > 0) {
-               normal.scale(-1);
-            }
+//            // if normal facing away from camera; swap its direction
+//            if (normal.dot(globalNormal) < 0) {
+//               normal.scale(-1);
+//            }
 
-            final double dot = normal.dot(up);
+            final double dot = Math.abs(normal.dot(globalNormal));
 
             if (dot > this.normalOffset) {
+//               System.out.println("normal offset: " + dot + " > " + this.normalOffset);
                toRemove.add(point);
             }
          }
@@ -632,7 +649,7 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
       return triangles.toArray(new Triangle3d[triangles.size()]);
    }
 
-   private static Triangle3d[] getTriangles(final Scene scene, final Collection<Tuple3d> points, final JProgressBar progress, final JLabel label) {
+   private Triangle3d[] getTriangles(final Scene scene, final Collection<Tuple3d> points, final JProgressBar progress, final JLabel label) {
       System.out.println("get triangles");
       final Map<Tuple3d, Tuple3d> projectedPoints = new HashMap<>();
       final List<Tuple3d> visiblePoints = new ArrayList<>();
@@ -650,19 +667,23 @@ public class ContextAwarePointSelection implements PostProcessor, MouseListener,
          progress.setValue(i++);
       }
       
-      i = 0;
-      progress.setMaximum(projectedPoints.size());
-      progress.setValue(0);
-      System.out.println("checking occlusion");
-      label.setText("Checking 2D point occlusion...");
-
-      for (final Tuple3d xyDepth : projectedPoints.keySet()) {
-         if (!ContextAwarePointSelection.isOccluded(xyDepth, projectedPoints.keySet())) {
-            visiblePoints.add(xyDepth);
+      if(this.isScreenOcclusionEnabled) {
+         i = 0;
+         progress.setMaximum(projectedPoints.size());
+         progress.setValue(0);
+         System.out.println("checking occlusion");
+         label.setText("Checking 2D point occlusion...");
+   
+         for (final Tuple3d xyDepth : projectedPoints.keySet()) {
+            if (!ContextAwarePointSelection.isOccluded(xyDepth, projectedPoints.keySet())) {
+               visiblePoints.add(xyDepth);
+            }
+            progress.setValue(i++);
          }
-         progress.setValue(i++);
+      } else {
+         visiblePoints.addAll(projectedPoints.keySet());
       }
-
+      
       System.out.println("visible: " + visiblePoints.size());
 
       if (visiblePoints.isEmpty()) {

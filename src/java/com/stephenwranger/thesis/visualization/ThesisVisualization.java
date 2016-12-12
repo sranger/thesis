@@ -117,10 +117,6 @@ public class ThesisVisualization extends JFrame {
          pointSelector.setNeighborCount(value.intValue());
       });
 
-      this.addSpinner(options, "Normal Offset", pointSelector.getNormalOffset(), 0.0, 1.0, 0.01, (value) -> {
-         pointSelector.setNormalOffset(value.doubleValue());
-      });
-
 //      this.addSpinner(options, "Min Density", pointSelector.getMinDensity(), 0.0, Double.MAX_VALUE, 0.1, (value) -> {
 //         pointSelector.setMinDensity(value.doubleValue());
 //      });
@@ -144,6 +140,10 @@ public class ThesisVisualization extends JFrame {
       this.addSpinner(options, "Pruning Orthonormal Index", pointSelector.getPruningOrthonormalOrder(), -1, 2, 1, (value) -> {
          pointSelector.setPruningOrthonormalOrder(value.intValue());
       });
+
+      this.addSpinner(options, "Orthonormal Offset", pointSelector.getNormalOffset(), 0.0, 1.0, 0.01, (value) -> {
+         pointSelector.setNormalOffset(value.doubleValue());
+      });
       this.addSpinner(options, "Pruning Obstruction Index", pointSelector.getPruningObstructionOrder(), -1, 2, 1, (value) -> {
          pointSelector.setPruningObstructionOrder(value.intValue());
       });
@@ -156,6 +156,8 @@ public class ThesisVisualization extends JFrame {
       this.addSpinner(options, "Altitude ratio removal", pointSelector.getGroundDistanceRatio(), 0.0, 1.0, 0.1, (value) -> {
          pointSelector.setGroundDistanceRatio(value.doubleValue());
       });
+
+      this.addCheckBox(options, "Enable Triangulation Occlusion Pruning", pointSelector.isScreenOcclusionEnabled(), pointSelector::setScreenOcclusionEnabled);
 
       final JCheckBox wireframeCheckBox = this.addCheckBox(options, "Earth Wireframe", this.earth.isWireframe(), this.earth::setWireframe);
 

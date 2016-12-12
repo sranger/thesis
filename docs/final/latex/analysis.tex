@@ -44,6 +44,7 @@ Figure \ref{fig:triCoords}.
 \end{figure}
 
 \begin{table}[htp]
+\caption{Octree Building Statistics}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{lllcccclll}
     \toprule
@@ -53,11 +54,11 @@ Figure \ref{fig:triCoords}.
       100x100x100 & 4h 42m & 389,771 & 15m 55s & 44223 & 419 & 31 & 389,771 & 779,543 & 11 GiB, 109 MiB \\
     \bottomrule 
   \end{tabular}}
-\caption{Octree Building Statistics}
 \label{table:octreeStats}
 \end{table}
 
 \begin{table}[htp]
+\caption{Icosatree Building Statistics}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{lllcccclll}
     \toprule
@@ -70,7 +71,6 @@ Figure \ref{fig:triCoords}.
       200x100 & 5h 49m & 235,156 & 20m 4s & 38081 & 695 & 29 & 235,156 & 470,313 & 11 GiB, 105 MiB \\
     \bottomrule 
   \end{tabular}}
-\caption{Icosatree Building Statistics}
 \label{table:icosatreeStats}
 \end{table}
 
@@ -174,6 +174,7 @@ Cartesian dimensions, surface area, and volume for cells at a number of select
 tree depths.
 
 \begin{table}[htp]
+\caption{Octree Cell Statistics}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{lllllll}
     \toprule
@@ -186,11 +187,11 @@ tree depths.
       22 & AABB & 4 & 4 & 4 & 16 & 64 \\
     \bottomrule 
   \end{tabular}}
-\caption{Octree Cell Statistics}
 \label{table:octreeCellStats}
 \end{table}
 
 \begin{table}[htp]
+\caption{Icosatree Cell Statistics}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{lllllllll}
     \toprule
@@ -203,7 +204,6 @@ tree depths.
       22 & Triangle Prism & 5.2361 & 6.0 & 4.0 & 1.8683 & 10.5854 & 10.5853 & 19.7771 \\
     \bottomrule 
   \end{tabular}}
-\caption{Icosatree Cell Statistics}
 \label{table:icosatreeCellStats}
 \end{table}
 
@@ -232,6 +232,7 @@ consistent. An example of the rendering result can be seen in Figure
 \ref{fig:rendering10}.
 
 \begin{table}[htp]
+\caption{Rendering Statistics (depth = 10.0)}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{llllll}
     \toprule
@@ -243,7 +244,6 @@ consistent. An example of the rendering result can be seen in Figure
       Octree (AABB) & 3692901 & 630 & 103 ms & 755 $\mu$s & 91 $\mu$s \\
     \bottomrule 
   \end{tabular}}
-\caption{Rendering Statistics (depth = 10.0)}
 \label{table:renderStats10}
 \end{table}
 
@@ -271,6 +271,7 @@ depth; such as all cells above a certain depth threshold or every third split,
 for example.
 
 \begin{table}[htp]
+\caption{Rendering Statistics (depth = 3.0)}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{llllll}
     \toprule
@@ -282,7 +283,6 @@ for example.
       Octree (AABB) & 880582 & 99 & 39 ms & 379 $\mu$s & 35 $\mu$s \\
     \bottomrule 
   \end{tabular}}
-\caption{Rendering Statistics (depth = 3.0)}
 \label{table:renderStats3}
 \end{table}
 
@@ -296,6 +296,7 @@ for example.
 
 %table 7
 \begin{table}[htp]
+\caption{Rendering Statistics (depth = 6.0)}
 \resizebox{\textwidth}{!}{%
   \begin{tabular}{llllll}
     \toprule
@@ -307,7 +308,6 @@ for example.
       Octree (AABB) & 1915896 & 223 & 126 ms & 312 $\mu$s & 46 $\mu$s \\
     \bottomrule 
   \end{tabular}}
-\caption{Rendering Statistics (depth = 6.0)}
 \label{table:renderStats6}
 \end{table}
 
